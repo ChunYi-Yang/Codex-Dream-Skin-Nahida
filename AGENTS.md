@@ -51,3 +51,12 @@ runtime state.
 CDP must remain loopback-only. Never modify WindowsApps, `app.asar`, official
 binaries, signatures, API keys, or Base URLs. Update `windows/CHANGELOG.md` for
 user-visible changes and `windows/VERSION` only for a deliberate release.
+
+## Repository Access
+
+- Canonical GitHub repository: `https://github.com/447662/Codex-Dream-Skin-Nahida`.
+- The `origin` SSH URL is `git@github.com:447662/Codex-Dream-Skin-Nahida.git`.
+- The registered SSH public key is `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPXwgZF7snJCUH1aJqEKvKwC3WH2R9L3LQp2ap+mDySt 447662@github-codex-dream-skin`.
+- Use the repository's configured `origin` and the matching private key already
+  available through the local SSH configuration. Never request, print, or
+  commit the private key.
