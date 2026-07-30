@@ -875,7 +875,7 @@ html.codex-dream-skin .dream-home::-webkit-scrollbar {
   padding-top: 6px !important;
 }
 
-.dream-home > div:first-child > div:has(.dream-home-hero-surface) > div:first-child {
+.dream-home > div:first-child > div:has(.dream-home-hero-surface) > div:first-child:not(.dream-home-hero-surface) {
   flex: 0 0 auto !important;
   min-height: 0 !important;
   height: auto !important;
@@ -891,8 +891,7 @@ html.codex-dream-skin .dream-home::-webkit-scrollbar {
   padding-bottom: 0 !important;
 }
 
-.dream-home .dream-home-hero-surface,
-.dream-home > div:first-child > div:first-child > div:first-child {
+.dream-home .dream-home-hero-surface {
   position: absolute !important;
   isolation: isolate;
   left: 50% !important;
@@ -928,8 +927,7 @@ html.codex-dream-skin main.main-surface.dream-home-shell .dream-home-composer-su
   transform: translateX(-50%) !important;
 }
 
-.dream-home .dream-home-hero-surface::before,
-.dream-home > div:first-child > div:first-child > div:first-child::before {
+.dream-home .dream-home-hero-surface::before {
   content: "";
   position: absolute;
   z-index: 0;
@@ -939,8 +937,7 @@ html.codex-dream-skin main.main-surface.dream-home-shell .dream-home-composer-su
   background: linear-gradient(90deg, rgba(16, 54, 42, .97) 0%, rgba(23, 74, 56, .92) 54%, rgba(34, 93, 70, .68) 76%, transparent 100%);
 }
 
-.dream-home .dream-home-hero-surface::after,
-.dream-home > div:first-child > div:first-child > div:first-child::after {
+.dream-home .dream-home-hero-surface::after {
   content: "";
   position: absolute;
   z-index: 0;
@@ -952,8 +949,7 @@ html.codex-dream-skin main.main-surface.dream-home-shell .dream-home-composer-su
   background: var(--dream-decor-art) 66.666% center / 400% 100% no-repeat;
 }
 
-.dream-home .dream-home-hero-surface > *,
-.dream-home > div:first-child > div:first-child > div:first-child > div:first-child {
+.dream-home .dream-home-hero-surface > * {
   position: relative;
   z-index: 1;
   height: 100%;
@@ -963,8 +959,7 @@ html.codex-dream-skin main.main-surface.dream-home-shell .dream-home-composer-su
   text-align: left !important;
 }
 
-.dream-home .dream-home-hero-surface [data-feature="game-source"],
-.dream-home > div:first-child > div:first-child > div:first-child > div:first-child > div:first-child {
+.dream-home .dream-home-hero-surface [data-feature="game-source"] {
   position: absolute !important;
   left: 40px !important;
   top: 50% !important;
@@ -1470,7 +1465,6 @@ html.codex-dream-skin ::selection {
   .dream-portrait,
   .dream-corner-leaf { display: none !important; }
   .dream-home { --thread-content-max-width: min(860px, calc(100cqw - 56px)) !important; }
-  .dream-home > div:first-child > div:first-child > div:first-child { width: calc(100% - 28px) !important; }
   .dream-home .dream-home-hero-surface { width: calc(100% - 28px) !important; }
 }
 
@@ -1480,9 +1474,8 @@ html.codex-dream-skin ::selection {
   .dream-brand b { font-size: 12px; }
   .dream-scene { width: 290px; height: 290px; }
   .dream-home > div:first-child > div:first-child:not(.home-banners) { flex-basis: 396px !important; min-height: 396px !important; }
-  .dream-home > div:first-child > div:first-child > div:first-child { height: 224px !important; min-height: 224px !important; background-position: 58% center !important; }
-  .dream-home > div:first-child > div:first-child > div:first-child > div:first-child { padding-left: 24px; }
-  .dream-home > div:first-child > div:first-child > div:first-child > div:first-child > div:first-child { width: 64% !important; }
+  .dream-home .dream-home-hero-surface { height: 224px !important; min-height: 224px !important; background-position: 58% center !important; }
+  .dream-home .dream-home-hero-surface > * { padding-left: 24px; }
   .dream-home .dream-home-hero-surface [data-feature="game-source"] { width: 64% !important; }
   .dream-home [data-feature="game-source"] { font-size: 19px !important; }
   .dream-home [data-feature="game-source"]::after { margin-top: 8px; font-size: 10px; }

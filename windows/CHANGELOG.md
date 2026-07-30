@@ -2,6 +2,8 @@
 
 ## 1.1.75 - 2026-07-30
 
+- Prevented the home hero artwork and overlay from being applied to both a legacy DOM path and the injected hero surface, removing the nested duplicate banner on current Codex builds.
+
 - Made the local layered Nahida theme the explicit Windows sign-in default even when CodexDreamSkin has another saved theme selected. The manager tray now exposes a validated “本地纳西妲 · 梦境林庭” entry and reports the actual local injector instead of the last saved-theme name.
 - Added coexistence with the locally installed CodexDreamSkin theme manager. When that manager is installed and unpaused, the desktop and login launchers hand control to its verified runtime before taking the shared operation lock; pausing the manager leaves Nahida as the normal launch target.
 - Updated the CodexDreamSkin tray's background and saved-theme switch actions to start its own runtime after changing the active theme, which safely stops the recorded Nahida watcher instead of leaving two injectors competing for the renderer.
