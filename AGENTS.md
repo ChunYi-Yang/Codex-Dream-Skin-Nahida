@@ -1,34 +1,53 @@
 # Repository Guidelines
 
-## Project Structure & Module Organization
+## Project Structure
 
-- `macos/` is the primary product: shell launchers, `scripts/` runtime logic, `assets/` CSS/injection payloads, `menubar/` SwiftBar integration, and `tests/` checks.
-- `windows/` contains PowerShell launch/install/restore scripts, Node CDP injection, platform assets, references, and Windows-specific tests.
-- `docs/` holds platform notes, project history, promotional copy, and preview images. Files under `docs/images/gallery/` are composites, not theme backgrounds.
-- `.github/` contains issue and pull-request templates. Keep platform behavior documented in `docs/platforms.md`.
+- `windows/` is the product: PowerShell launch/install/restore logic, Node CDP
+  injection, assets, installer sources, references, and Windows tests.
+- `docs/` contains Windows installation, customization notes, and public
+  screenshots used by the root README files.
+- `.github/` contains Windows CI, release automation, issue forms, and pull
+  request guidance.
+- `LICENSE` covers software source. `NOTICE.md` describes artwork and product
+  rights that are outside the MIT grant.
 
-## Build, Test, and Development Commands
+## Commands
 
-- `cd macos && npm test`: run shell/JavaScript syntax, payload, configuration round-trip, signature, and doctor checks.
-- `macos/scripts/doctor-macos.sh`: validate the installed Codex app, signed bundled Node runtime, theme payload, and optional live session.
-- `macos/scripts/build-release.sh`: test and build the macOS release ZIP plus SHA-256 file.
-- `macos/scripts/build-client-release.sh <output.zip>`: create the customer-facing double-click package.
-- `powershell -File windows/tests/run-tests.ps1`: run Windows configuration and static regression checks.
+- `powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File windows/tests/run-tests.ps1`:
+  run Windows configuration, state, payload, and regression checks.
+- `powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File windows/tests/installer-static.tests.ps1`:
+  validate installer inputs and safety contracts.
+- `node --test windows/tests/*.test.mjs`: run portable Node regressions.
+- `windows/installer/build-release.ps1`: build the Windows installer after the
+  full test suite passes.
 
-Do not bypass failing checks. Document platform-only test blockers in the PR.
+Do not bypass failing checks. Document host-only blockers in pull requests.
 
-## Coding Style & Naming Conventions
+## Style
 
-Use two-space indentation in shell, PowerShell, JavaScript, JSON, and CSS. Shell entry points use `set -euo pipefail`; Node files use ESM. Follow existing kebab-case script names such as `start-dream-skin-macos.sh`. Prefer existing platform helpers over new dependencies. Keep comments short and focused on safety or non-obvious behavior.
+Use two-space indentation in PowerShell, JavaScript, JSON, YAML, and CSS. Node
+files use ESM. Follow existing kebab-case script names. Prefer platform helpers
+already present in `windows/scripts/` over new dependencies. Keep comments
+short and focused on safety or non-obvious behavior.
 
-## Testing Guidelines
+## Testing
 
-Tests must cover changed install, start, inject, verify, pause, and restore behavior. For renderer or CSS changes, run live verification and inspect both home and task routes. Configuration tests must include Chinese/non-ASCII project names and prove unrelated TOML content survives install/restore. Never rewrite `config.toml` through an encoding-dependent API; require strict UTF-8, atomic writes, and a recoverable backup.
+Cover changed install, start, inject, verify, pause, theme switch, and restore
+behavior. Renderer or CSS changes require live checks on both home and task
+routes. Configuration tests must include Chinese or other non-ASCII project
+names and prove unrelated TOML survives install/restore. Preserve strict UTF-8,
+atomic writes, and recoverable backups for `config.toml`.
 
-## Commit & Pull Request Guidelines
+## Commits and PRs
 
-Prefer `type(scope): summary`, for example `fix(windows): preserve UTF-8 config on restore`. Complete the PR template with platform, rationale, actual test results, linked issues, and screenshots for visual changes. Do not include private chats, API keys, `auth.json`, or customer data.
+Prefer `type(scope): summary`, for example
+`fix(windows): preserve UTF-8 config on restore`. Do not add Codex as an author
+or co-author. Include actual test results and screenshots for visual changes.
+Never commit private chats, API keys, `auth.json`, customer data, or local
+runtime state.
 
-## Security & Release Notes
+## Security and Release
 
-CDP must remain loopback-only. Never modify official `.app`, WindowsApps, `app.asar`, signatures, API keys, or Base URLs. Update `macos/CHANGELOG.md` for user-visible macOS changes and bump `macos/VERSION` for release-worthy work. Maintain a clearly labeled Windows changelog as parity features and fixes ship.
+CDP must remain loopback-only. Never modify WindowsApps, `app.asar`, official
+binaries, signatures, API keys, or Base URLs. Update `windows/CHANGELOG.md` for
+user-visible changes and `windows/VERSION` only for a deliberate release.

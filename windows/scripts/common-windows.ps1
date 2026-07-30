@@ -83,6 +83,89 @@ function Get-DreamSkinPreferredManagerStartScript {
   return [System.IO.Path]::GetFullPath($startScript)
 }
 
+function Assert-DreamSkinLocalThemePath {
+  param([Parameter(Mandatory = $true)][string]$Path)
+
+  $fullPath = [System.IO.Path]::GetFullPath($Path)
+  $root = [System.IO.Path]::GetPathRoot($fullPath)
+  $current = $fullPath
+  while ($true) {
+    if (Test-Path -LiteralPath $current) {
+      $item = Get-Item -LiteralPath $current -Force -ErrorAction Stop
+      if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+        throw "Local theme path contains a junction or symbolic link: $current"
+      }
+    }
+    $currentNormalized = $current.TrimEnd('\')
+    $rootNormalized = $root.TrimEnd('\')
+    if ($currentNormalized.Equals($rootNormalized, [System.StringComparison]::OrdinalIgnoreCase)) {
+      break
+    }
+    $parent = [System.IO.Path]::GetDirectoryName($current)
+    if (-not $parent -or $parent.Equals($current, [System.StringComparison]::OrdinalIgnoreCase)) {
+      break
+    }
+    $current = $parent
+  }
+}
+
+function Register-DreamSkinLocalTheme {
+  param(
+    [Parameter(Mandatory = $true)][string]$StateRoot,
+    [Parameter(Mandatory = $true)][string]$StartScript,
+    [AllowNull()][string]$Name
+  )
+
+  $root = [System.IO.Path]::GetFullPath($StateRoot)
+  $start = [System.IO.Path]::GetFullPath($StartScript)
+  if ([System.IO.Path]::GetFileName($start) -cne 'start-dream-skin.ps1' -or
+    -not (Test-Path -LiteralPath $start -PathType Leaf)) {
+    throw "Local Nahida start script is invalid: $start"
+  }
+  $scriptsRoot = Split-Path -Parent $start
+  $skillRoot = Split-Path -Parent $scriptsRoot
+  $injector = Join-Path $scriptsRoot 'injector.mjs'
+  $themePath = Join-Path $skillRoot 'assets\theme.json'
+  foreach ($requiredPath in @($skillRoot, $scriptsRoot, $start, $injector, $themePath)) {
+    Assert-DreamSkinLocalThemePath -Path $requiredPath
+    if (-not (Test-Path -LiteralPath $requiredPath)) {
+      throw "Local Nahida theme is incomplete: $requiredPath"
+    }
+  }
+  try {
+    $theme = (Read-DreamSkinUtf8File -Path $themePath) | ConvertFrom-Json -ErrorAction Stop
+  } catch {
+    throw "Local Nahida theme metadata is invalid: $themePath"
+  }
+  if ($null -eq $theme -or $theme -is [string] -or $theme -is [array] -or
+    "$($theme.id)" -cne 'nahida-dream') {
+    throw 'Local theme registration only accepts the nahida-dream source theme.'
+  }
+  $trimmedName = if ($Name) { $Name.Trim() } else { "$($theme.name)".Trim() }
+  if (-not $trimmedName -or $trimmedName.Length -gt 80 -or
+    $trimmedName -match '[\u0000-\u001f]') {
+    throw 'Local theme display name must be between 1 and 80 visible characters.'
+  }
+
+  New-Item -ItemType Directory -Force -Path $root | Out-Null
+  Assert-DreamSkinLocalThemePath -Path $root
+  $registrationPath = Join-Path $root 'local-theme.json'
+  Assert-DreamSkinLocalThemePath -Path $registrationPath
+  $registration = [pscustomobject]@{
+    schemaVersion = 1
+    id = 'local-nahida-dream'
+    name = $trimmedName
+    themeId = 'nahida-dream'
+    startScript = $start
+    injectorPath = [System.IO.Path]::GetFullPath($injector)
+    themePath = [System.IO.Path]::GetFullPath($themePath)
+    registeredAt = (Get-Date).ToUniversalTime().ToString('o')
+  }
+  Write-DreamSkinUtf8FileAtomically -Path $registrationPath `
+    -Content (($registration | ConvertTo-Json -Depth 4) + "`r`n")
+  return $registration
+}
+
 function Test-DreamSkinCommandLineToken {
   param([string]$CommandLine, [string]$Token)
   if (-not $CommandLine -or -not $Token) { return $false }
@@ -110,23 +193,109 @@ function Get-DreamSkinProcessExecutablePath {
   }
 }
 
-function Get-DreamSkinNodeRuntime {
-  param([int]$MinimumMajor = 22)
+function Invoke-DreamSkinNative {
+  param(
+    [Parameter(Mandatory = $true)][string]$FilePath,
+    [Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$ArgumentList,
+    [switch]$DiscardStderr
+  )
 
-  $command = Get-Command node.exe -ErrorAction SilentlyContinue
-  if (-not $command) { $command = Get-Command node -ErrorAction SilentlyContinue }
-  if (-not $command) { throw "Node.js $MinimumMajor or newer is required and was not found in PATH." }
-  $version = "$(& $command.Source -p 'process.versions.node' 2>$null)".Trim()
-  if ($LASTEXITCODE -ne 0 -or -not $version) { throw 'The Node.js runtime could not be validated.' }
-  $runtimePath = "$(& $command.Source -p 'process.execPath' 2>$null)".Trim()
-  if ($LASTEXITCODE -ne 0 -or -not $runtimePath -or -not (Test-Path -LiteralPath $runtimePath)) {
+  $previousPreference = $ErrorActionPreference
+  $ErrorActionPreference = 'Continue'
+  try {
+    if ($DiscardStderr) {
+      $nativeOutput = @(& $FilePath @ArgumentList 2>$null)
+    } else {
+      $nativeOutput = @(& $FilePath @ArgumentList 2>&1)
+    }
+    $exitCode = $LASTEXITCODE
+    $output = @($nativeOutput | ForEach-Object { "$_" })
+    return [pscustomobject]@{ Output = $output; ExitCode = $exitCode }
+  } finally {
+    $ErrorActionPreference = $previousPreference
+  }
+}
+
+function Import-DreamSkinPowerShellSecurityModule {
+  $command = Get-Command Get-AuthenticodeSignature -CommandType Cmdlet -ErrorAction SilentlyContinue
+  if ($command) { return }
+  try {
+    Import-Module Microsoft.PowerShell.Security -ErrorAction Stop
+  } catch {
+    $modulePath = Join-Path $PSHOME 'Modules\Microsoft.PowerShell.Security\Microsoft.PowerShell.Security.psd1'
+    if (-not (Test-Path -LiteralPath $modulePath -PathType Leaf)) {
+      throw "PowerShell security module is unavailable: $($_.Exception.Message)"
+    }
+    Import-Module $modulePath -ErrorAction Stop
+  }
+  $command = Get-Command Get-AuthenticodeSignature -CommandType Cmdlet -ErrorAction SilentlyContinue
+  if (-not $command) {
+    throw 'PowerShell security module loaded, but Get-AuthenticodeSignature is unavailable.'
+  }
+}
+
+function Assert-DreamSkinTrustedNodeImage {
+  param([Parameter(Mandatory = $true)][string]$Path)
+
+  # Authenticity must be checked before the candidate binary is executed.
+  Import-DreamSkinPowerShellSecurityModule
+  $signature = Get-AuthenticodeSignature -LiteralPath $Path -ErrorAction Stop
+  if ("$($signature.Status)" -ine 'Valid') {
+    throw "The Node.js runtime is not validly signed: $Path ($($signature.Status))."
+  }
+  $subject = "$($signature.SignerCertificate.Subject)"
+  if ($subject -notmatch '(?i)O=("?)(OpenJS Foundation|Node\.js Foundation|Microsoft Corporation|GitHub, Inc\.)') {
+    throw "The Node.js runtime is signed by an unexpected publisher: $subject"
+  }
+}
+
+function Get-DreamSkinValidatedNodeRuntime {
+  param(
+    [Parameter(Mandatory = $true)][string]$Path,
+    [int]$MinimumMajor = 22
+  )
+
+  $candidate = [System.IO.Path]::GetFullPath($Path)
+  if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
+    throw "Node.js runtime does not exist: $candidate"
+  }
+  Assert-DreamSkinTrustedNodeImage -Path $candidate
+  $versionProbe = Invoke-DreamSkinNative -FilePath $candidate `
+    -ArgumentList @('-p', 'process.versions.node') -DiscardStderr
+  $version = ($versionProbe.Output -join '').Trim()
+  if ($versionProbe.ExitCode -ne 0 -or -not $version) {
+    throw 'The Node.js runtime could not be validated.'
+  }
+  $pathProbe = Invoke-DreamSkinNative -FilePath $candidate `
+    -ArgumentList @('-p', 'process.execPath') -DiscardStderr
+  $runtimePath = ($pathProbe.Output -join '').Trim()
+  if ($pathProbe.ExitCode -ne 0 -or -not $runtimePath -or
+    -not (Test-Path -LiteralPath $runtimePath)) {
     throw 'The Node.js executable path could not be validated.'
   }
   $major = 0
-  if (-not [int]::TryParse(($version -split '\.')[0], [ref]$major) -or $major -lt $MinimumMajor) {
+  if (-not [int]::TryParse(($version -split '\.')[0], [ref]$major) -or
+    $major -lt $MinimumMajor) {
     throw "Node.js $MinimumMajor or newer is required; found $version at $runtimePath."
   }
   return [pscustomobject]@{ Path = $runtimePath; Version = $version; Major = $major }
+}
+
+function Get-DreamSkinNodeRuntime {
+  param([int]$MinimumMajor = 22)
+
+  $runtimeRoot = Split-Path -Parent $PSScriptRoot
+  $bundledNode = Join-Path $runtimeRoot 'runtime\node\node.exe'
+  if (Test-Path -LiteralPath $bundledNode -PathType Leaf) {
+    return Get-DreamSkinValidatedNodeRuntime -Path $bundledNode -MinimumMajor $MinimumMajor
+  }
+
+  $command = Get-Command node.exe -ErrorAction SilentlyContinue
+  if (-not $command) { $command = Get-Command node -ErrorAction SilentlyContinue }
+  if (-not $command) {
+    throw "The bundled Node.js runtime is missing ($bundledNode) and Node.js $MinimumMajor or newer was not found in PATH."
+  }
+  return Get-DreamSkinValidatedNodeRuntime -Path $command.Source -MinimumMajor $MinimumMajor
 }
 
 function ConvertTo-DreamSkinCodexInstall {

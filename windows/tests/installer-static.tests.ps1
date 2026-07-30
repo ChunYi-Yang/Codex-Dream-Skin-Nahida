@@ -150,7 +150,9 @@ if ($fileSources.Count -ne 6 -or
 }
 
 foreach ($requiredBuilderContract in @(
-  'Release versions differ:',
+  '$licensePath = Join-Path $repositoryRoot ''LICENSE''',
+  '$noticePath = Join-Path $repositoryRoot ''NOTICE.md''',
+  '$publicPresetRoot = Join-Path (Join-Path $windowsRoot ''presets'')',
   'Get-FileHash -LiteralPath $archivePath -Algorithm SHA256',
   'Copy-ZipEntry -Archive $zip -EntryName "$($manifest.nodeEntry)"',
   'Copy-ZipEntry -Archive $zip -EntryName "$($manifest.licenseEntry)"',

@@ -315,6 +315,93 @@ function Get-DreamSkinThemePaths {
   }
 }
 
+function Get-DreamSkinLocalThemeRegistration {
+  param([string]$StateRoot = (Join-Path $env:LOCALAPPDATA 'CodexDreamSkin'))
+
+  $paths = Get-DreamSkinThemePaths -StateRoot $StateRoot
+  $registrationPath = Join-Path $paths.Root 'local-theme.json'
+  if (-not (Test-Path -LiteralPath $registrationPath -PathType Leaf)) { return $null }
+  Assert-DreamSkinNoReparseComponents -Path $registrationPath
+  try {
+    $registration = (Read-DreamSkinUtf8File -Path $registrationPath) |
+      ConvertFrom-Json -ErrorAction Stop
+  } catch {
+    throw "Local theme registration is invalid JSON: $registrationPath"
+  }
+  if ($null -eq $registration -or $registration -is [string] -or
+    $registration -is [array] -or $registration.schemaVersion -ne 1 -or
+    "$($registration.id)" -cne 'local-nahida-dream' -or
+    "$($registration.themeId)" -cne 'nahida-dream') {
+    throw 'Local theme registration has an unsupported contract.'
+  }
+  $name = "$($registration.name)".Trim()
+  if (-not $name -or $name.Length -gt 80 -or $name -match '[\u0000-\u001f]') {
+    throw 'Local theme registration has an invalid display name.'
+  }
+  $startScript = "$($registration.startScript)"
+  if (-not [System.IO.Path]::IsPathRooted($startScript)) {
+    throw 'Local theme start script must be an absolute path.'
+  }
+  $startScript = [System.IO.Path]::GetFullPath($startScript)
+  if ([System.IO.Path]::GetFileName($startScript) -cne 'start-dream-skin.ps1' -or
+    -not (Test-Path -LiteralPath $startScript -PathType Leaf)) {
+    throw 'Local theme start script is missing or has an unexpected name.'
+  }
+  $scriptsRoot = Split-Path -Parent $startScript
+  $skillRoot = Split-Path -Parent $scriptsRoot
+  $injectorPath = [System.IO.Path]::GetFullPath((Join-Path $scriptsRoot 'injector.mjs'))
+  $themePath = [System.IO.Path]::GetFullPath((Join-Path $skillRoot 'assets\theme.json'))
+  foreach ($requiredPath in @($startScript, $injectorPath, $themePath)) {
+    Assert-DreamSkinNoReparseComponents -Path $requiredPath
+    if (-not (Test-Path -LiteralPath $requiredPath -PathType Leaf)) {
+      throw "Local theme registration points to a missing file: $requiredPath"
+    }
+  }
+  if (-not (Test-DreamSkinPathEqual -Left "$($registration.injectorPath)" -Right $injectorPath) -or
+    -not (Test-DreamSkinPathEqual -Left "$($registration.themePath)" -Right $themePath)) {
+    throw 'Local theme registration paths do not match the registered start script.'
+  }
+  try {
+    $theme = (Read-DreamSkinUtf8File -Path $themePath) | ConvertFrom-Json -ErrorAction Stop
+  } catch {
+    throw 'Local theme metadata cannot be read from the registered source.'
+  }
+  if ($null -eq $theme -or $theme -is [string] -or $theme -is [array] -or
+    "$($theme.id)" -cne 'nahida-dream') {
+    throw 'Registered local theme is not the expected nahida-dream theme.'
+  }
+  $displayName = if ($name.StartsWith('本地', [System.StringComparison]::Ordinal)) {
+    $name
+  } else {
+    "本地$name"
+  }
+  return [pscustomobject]@{
+    Id = 'local-nahida-dream'
+    Name = $displayName
+    StartScript = $startScript
+    InjectorPath = $injectorPath
+    ThemePath = $themePath
+    RegistrationPath = $registrationPath
+  }
+}
+
+function Test-DreamSkinLocalThemeActive {
+  param(
+    [Parameter(Mandatory = $true)][object]$Registration,
+    [string]$StateRoot = (Join-Path $env:LOCALAPPDATA 'CodexDreamSkin')
+  )
+
+  $paths = Get-DreamSkinThemePaths -StateRoot $StateRoot
+  try { $state = Read-DreamSkinState -Path $paths.State } catch { return $false }
+  if ($null -eq $state -or -not $state.injectorPid -or -not $state.injectorPath -or
+    -not (Test-DreamSkinPathEqual -Left "$($state.injectorPath)" -Right $Registration.InjectorPath)) {
+    return $false
+  }
+  $startedAt = Get-DreamSkinProcessStartedAt -ProcessId ([int]$state.injectorPid)
+  return [bool]($startedAt -and
+    (-not $state.injectorStartedAt -or $startedAt -ceq "$($state.injectorStartedAt)"))
+}
+
 function Test-DreamSkinThemePathWithin {
   param([string]$Path, [string]$Root)
   if (-not $Path -or -not $Root) { return $false }
@@ -467,7 +554,7 @@ function Initialize-DreamSkinThemeStore {
   $presetTheme = Join-Path $presetDirectory 'theme.json'
   Assert-DreamSkinNoReparseComponents -Path $presetDirectory
   Assert-DreamSkinNoReparseComponents -Path $presetTheme
-  # Refresh the saved copy on every run (matching macOS seeding) so preset
+  # Refresh the saved copy on every run so preset
   # metadata upgrades — e.g. the #183 appearance pin — reach existing installs.
   Ensure-DreamSkinManagedDirectory -Path $presetDirectory -Root $paths.Root
   $presetImage = Join-Path $presetDirectory $assetImageName
@@ -477,7 +564,7 @@ function Initialize-DreamSkinThemeStore {
   Assert-DreamSkinImageFile -Path $presetImage
   Assert-DreamSkinNoReparseComponents -Path $presetTheme
   Copy-Item -LiteralPath (Join-Path $assetRoot 'theme.json') -Destination $presetTheme -Force
-  # Bundled Gothic Void Crusade (same pack as macOS presets/).
+  # Bundled, redistribution-reviewed Gothic Void Crusade preset.
   $gothicSource = Join-Path $SkillRoot 'presets\preset-gothic-void-crusade'
   $gothicDirectory = Join-Path $paths.Saved 'preset-gothic-void-crusade'
   $gothicTheme = Join-Path $gothicDirectory 'theme.json'
@@ -1322,7 +1409,7 @@ function Show-DreamSkinOperationUi {
   }
 }
 
-# Mirror macOS pause: mark paused, show in-app loading, then strip the live skin over CDP.
+# Pause marks state, shows in-app loading, then removes the live skin over CDP.
 # Writing only the pause file leaves CSS in the renderer until the watcher polls.
 function Invoke-DreamSkinLiveRemove {
   param(

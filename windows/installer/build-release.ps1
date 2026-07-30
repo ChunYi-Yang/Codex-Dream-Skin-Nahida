@@ -17,21 +17,19 @@ $manifestPath = Join-Path $installerRoot 'node-runtime.json'
 $definitionPath = Join-Path $installerRoot 'codex-dream-skin.iss'
 $bootstrapPath = Join-Path $installerRoot 'setup-bootstrap.ps1'
 $versionPath = Join-Path $windowsRoot 'VERSION'
-$macosVersionPath = Join-Path (Join-Path $repositoryRoot 'macos') 'VERSION'
-$macosPackagePath = Join-Path (Join-Path $repositoryRoot 'macos') 'package.json'
-$licensePath = Join-Path (Join-Path $repositoryRoot 'macos') 'LICENSE'
-$noticePath = Join-Path (Join-Path $repositoryRoot 'macos') 'NOTICE.md'
+$licensePath = Join-Path $repositoryRoot 'LICENSE'
+$noticePath = Join-Path $repositoryRoot 'NOTICE.md'
 $innoLanguageRoot = Join-Path $installerRoot 'languages'
 $innoChineseLanguagePath = Join-Path $innoLanguageRoot 'ChineseSimplified.isl'
 $innoSetupLicensePath = Join-Path $innoLanguageRoot 'Inno-Setup-License.txt'
 $innoChineseLanguageSha256 = '7d544b9bb1d142cfa11f2e5d3cc8abe2e55f8e066c5124e3772675aa236e1278'
 $innoSetupLicenseSha256 = '0c81595601bce47eeef8d865d5da7f9ca2c6a12235b7482b29f5ab23ed02ee5a'
-$publicPresetRoot = Join-Path (Join-Path (Join-Path $repositoryRoot 'macos') 'presets') `
+$publicPresetRoot = Join-Path (Join-Path $windowsRoot 'presets') `
   'preset-gothic-void-crusade'
 $publicPresetImagePath = Join-Path $publicPresetRoot 'background.jpg'
 $publicPresetThemePath = Join-Path $publicPresetRoot 'theme.json'
 $publicPresetImageSha256 = 'b76a7cbe2ff9d923846e931984d243a7ba1f25de8d190b5c6412c809c41aee42'
-$publicPresetThemeSha256 = '8316c6ad29e3b84806358ab4a730c7e063b261e379179b9608cf751c282d66a7'
+$publicPresetThemeSha256 = '7ae4cc2a9d80a21e1100d9c773d84b84dab2cd486b01704ade377fcc3d8ec867'
 
 function Read-ReleaseTextFile {
   param([Parameter(Mandatory = $true)][string]$Path)
@@ -264,12 +262,6 @@ $version = (Read-ReleaseTextFile -Path $versionPath).Trim()
 if ($version -cnotmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') {
   throw "windows/VERSION must contain a three-part semantic version: $version"
 }
-$macosVersion = (Read-ReleaseTextFile -Path $macosVersionPath).Trim()
-$macosPackage = (Read-ReleaseTextFile -Path $macosPackagePath) | ConvertFrom-Json
-if ($macosVersion -cne $version -or "$($macosPackage.version)" -cne $version) {
-  throw "Release versions differ: windows=$version macOS=$macosVersion package=$($macosPackage.version)"
-}
-
 $manifest = (Read-ReleaseTextFile -Path $manifestPath) | ConvertFrom-Json
 Assert-NodeRuntimeManifest -Manifest $manifest
 $null = Read-ReleaseTextFile -Path $definitionPath

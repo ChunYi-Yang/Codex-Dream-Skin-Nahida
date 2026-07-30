@@ -1,132 +1,197 @@
-# Codex Dream Skin
+# Codex Dream Skin · Nahida
 
 <p align="center">
   <a href="./README.md">中文</a> · <strong>English</strong>
 </p>
 
 <p align="center">
-  <strong>Give Codex a face that breathes.</strong><br>
-  External themes for the Codex desktop app · Local CDP inject · No official package mutation
+  <strong>A Nahida "Verdant Dream" theme for the Codex desktop app on Windows.</strong><br>
+  Layered assets · Native controls preserved · Loopback CDP injection · Reversible by design
 </p>
 
 <p align="center">
-  One image, one mood · Code with atmosphere
+  <img src="docs/images/nahida-home.png" alt="Nahida Verdant Dream running on the Codex Windows home screen" width="960">
+</p>
+
+> [!IMPORTANT]
+> This project is Windows-only and is not an official OpenAI product. It does
+> not modify WindowsApps, `app.asar`, official binaries, code signatures, API
+> keys, or provider base URLs.
+
+## Preview
+
+Verdant Dream does not cover the application with a fake screenshot.
+Background, sidebar, hero, portrait, decorations, and empty-state art are
+separate layers. The Codex sidebar, project picker, task menu, settings, and
+composer remain native and interactive.
+
+<p align="center">
+  <img src="docs/images/nahida-task.png" alt="Nahida theme on a real Codex task screen" width="960"><br>
+  <sub>The task route reduces background distraction while preserving the output panel and composer</sub>
 </p>
 
 <p align="center">
-  Unofficial. Does not modify <code>.app</code> / <code>app.asar</code> / WindowsApps.
+  <img src="docs/images/nahida-settings.png" alt="Nahida theme on the Codex settings screen" width="960"><br>
+  <sub>Settings, appearance controls, and other native routes share the same translucent visual layer</sub>
 </p>
 
-## Sponsors
+## Features
 
-<p align="center">
-  <a href="https://passion8.cc/register?aff=TuPe">
-    <img src="docs/images/sponsor-passion8.png" alt="Passion8" height="72">
-  </a>
-</p>
+- **Layered Nahida theme**: independent background, sidebar, hero, portrait,
+  decoration atlas, and scene assets for home and task routes.
+- **Native interaction**: decorative layers do not capture pointer events;
+  real controls, menus, settings, and the composer remain usable.
+- **Sign-in startup**: the installer can start the theme with Windows, with
+  the local Nahida theme registered as the explicit default.
+- **Tray management**: pause, reapply, replace the background, save/switch
+  themes, import ZIP packages, and restore the official appearance.
+- **Community compatibility**: supports DreamSkin.cc one-click apply and
+  locally validated theme ZIP packages.
+- **Controlled rollback**: startup, injection, and verification failures keep
+  diagnostics and use bounded recovery without patching the official app.
 
-<p align="center">
-  <strong>Smarter Connections · Passionate Creation</strong><br>
-  <sub>Connect AI · Power Creation</sub>
-</p>
+## Requirements
 
-<p align="center">
-  Thanks to <a href="https://passion8.cc/register?aff=TuPe"><strong>passion8.cc</strong></a> for sponsoring this project.<br>
-  Full-power AI gateway: official models, no silent downgrades, no wrapper shells.<br>
-  One-line setup for Codex / Claude Code / Grok.
-</p>
+- Windows 10 or newer, x64.
+- The official `OpenAI.Codex` app installed from Microsoft Store and
+  registered to the current user.
+- Release installers bundle Node.js. Source checkouts require Node.js 22 or
+  newer.
+- Windows PowerShell 5.1 or PowerShell 7.
 
-<p align="center">
-  <sub>
-    Theme install and API config stay separate — this project never rewrites your provider settings.
-  </sub>
-</p>
+## Installation
 
-## Gallery
+### Installer
 
-One image, one mood. Real theme previews you can ship:
+Download `CodexDreamSkin-Setup-vX.Y.Z.exe` from this repository's
+[Releases](https://github.com/447662/Codex-Dream-Skin-Nahida/releases).
+Close Codex, then follow the installer.
 
-<p align="center">
-  <img src="docs/images/gallery/skin-01.jpg" alt="Pink Custom" width="900"><br>
-  <sub>Pink Custom</sub>
-</p>
+The installer is per-user and does not take ownership of WindowsApps. An
+unsigned download may trigger SmartScreen; verify the repository and checksum,
+then use **More info → Run anyway**. Do not disable Defender.
 
-<p align="center">
-  <img src="docs/images/gallery/skin-02.jpg" alt="God of Wealth" width="900"><br>
-  <sub>God of Wealth</sub>
-</p>
+### From source
 
-<p align="center">
-  <img src="docs/images/gallery/skin-03.jpg" alt="Red-White Sci-Fi" width="900"><br>
-  <sub>Red-White Sci-Fi</sub>
-</p>
+After cloning the repository, run this from its root:
 
-<p align="center">
-  <img src="docs/images/gallery/skin-04.jpg" alt="Clear Custom" width="900"><br>
-  <sub>Clear Custom</sub>
-</p>
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned `
+  -File .\windows\scripts\install-dream-skin.ps1
+```
 
-<p align="center">
-  <img src="docs/images/gallery/skin-05.jpg" alt="Inspiration" width="900"><br>
-  <sub>Inspiration</sub>
-</p>
+Open `Codex Dream Skin` from the Start menu after installation, or launch the
+local Nahida theme directly:
 
-<p align="center">
-  <img src="docs/images/gallery/skin-06.jpg" alt="Purple Night" width="900"><br>
-  <sub>Purple Night</sub>
-</p>
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned `
+  -File .\windows\scripts\start-dream-skin.ps1 -UseLocalTheme -PromptRestart
+```
 
-<p align="center">
-  <img src="docs/images/gallery/skin-07.jpg" alt="Hatsune Miku" width="900"><br>
-  <sub>Hatsune Miku</sub>
-</p>
+Applying a theme may need to restart an existing Codex process. Save any
+unsent input first.
 
-<p align="center">
-  <img src="docs/images/gallery/skin-08.jpg" alt="Stage Black-Gold" width="900"><br>
-  <sub>Stage Black-Gold</sub>
-</p>
+## Verify and restore
 
-## What it does
+After launch, verify loopback CDP ownership, native controls, and theme markers
+while capturing a screenshot:
 
-- **Real UI** — Sidebar, cards, project picker, and input stay native. Not a fake full-window screenshot.
-- **Swappable art** — Drop in an image you like and it becomes your theme.
-- **Full theme packs** — The bundled Forest Spirit preset separates hero, sidebar, portrait, decoration atlas, and empty scene while preserving single-image fallback.
-- **Restorable** — One-click restore to the stock look.
-- **Safer path** — Local-loopback CDP inject only. No official binary or signature changes.
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned `
+  -File .\windows\scripts\verify-dream-skin.ps1 `
+  -ScreenshotPath "$env:TEMP\codex-dream-skin.png"
+```
 
-## Quick start
+Restore the official appearance:
 
-Platform scripts are ready — different plumbing, same goal: theme Codex.
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned `
+  -File .\windows\scripts\restore-dream-skin.ps1 `
+  -RestoreBaseTheme -PromptRestart
+```
 
-| Platform | Dir | Entry |
-|------|------|------|
-| Apple Silicon / Intel Mac | [`macos/`](./macos/) | Double-click `Install Codex Dream Skin.command` |
-| Windows | [`windows/`](./windows/) | `scripts/install-dream-skin.ps1` → `start-dream-skin.ps1` |
+Restore only handles Dream Skin-managed appearance settings and validated
+sessions. It does not delete tasks, plugins, pets, accounts, or authentication
+state.
 
-More detail:
+## Theme switching
 
-- Mac: [`macos/README.md`](./macos/README.md)
-- Windows: [`windows/SKILL.md`](./windows/SKILL.md)
-- Paths: [`docs/platforms.md`](./docs/platforms.md)
-- Project notes: [`docs/PROJECT.md`](./docs/PROJECT.md)
+The `Codex Dream Skin` tray menu can:
 
-## Feedback & contributions
+- reapply or pause the skin;
+- switch back to `Local Nahida · Verdant Dream`;
+- select a clean PNG, JPEG, or WebP background;
+- save the current theme or switch saved themes;
+- import a constrained `.zip` theme package;
+- open [DreamSkin Gallery](https://dreamskin.cc/gallery) and the
+  [online Studio](https://dreamskin.cc/studio).
 
-- **Issues:** Use the [issue templates](./.github/ISSUE_TEMPLATE/) (bug / feature). Blank issues are disabled. Please try Verify / Restore self-checks before filing bugs.
-- **PRs:** Follow the [PR template](./.github/pull_request_template.md) — describe the change and tick the self-checks you actually ran (e.g. `macos/tests/run-tests.sh`, verify / restore).
+Do not import a preview screenshot containing windows, controls, text, or a
+composer as a background. See the [Windows guide](./windows/README.en.md) for
+path, image, and ZIP limits. See the
+[theme replacement guide](./docs/windows-theme-replacement-guide.md) when
+building your own theme.
 
-## Safety
+## Repository layout
 
-- CDP binds `127.0.0.1` only — avoid untrusted local processes while the theme runs.
-- Does not touch the official install directory or code signature.
-- **Never** rewrites API Key / Base URL; relay and theme stay separate.
+```text
+Codex-Dream-Skin-Nahida/
+├── windows/
+│   ├── assets/       # Nahida art, CSS, renderer injection, and theme config
+│   ├── scripts/      # Install, start, tray, verify, and restore
+│   ├── installer/    # Windows release installer
+│   ├── presets/      # Redistributable installer preset
+│   ├── references/   # QA and runtime notes
+│   └── tests/        # Windows regression suite
+├── docs/             # Installation, customization, and README screenshots
+├── LICENSE
+└── NOTICE.md
+```
 
-## License
+## Development
 
-- See [`macos/LICENSE`](./macos/LICENSE) (MIT) and [`macos/NOTICE.md`](./macos/NOTICE.md)
-- Unofficial; Codex and related rights belong to their owners.
-- People / IP art in previews is illustrative only — clear rights before commercial redistribution.
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned `
+  -File .\windows\tests\run-tests.ps1
+
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned `
+  -File .\windows\tests\installer-static.tests.ps1
+```
+
+Renderer or visual changes also require live checks on both the home and task
+routes, followed by Verify, Restore, and reapply. Read the
+[contribution guide](./.github/CONTRIBUTING.en.md) and
+[Windows implementation constraints](./windows/SKILL.md) before contributing.
+
+## Security boundaries
+
+- CDP binds to `127.0.0.1` only. Do not run untrusted local software while a
+  themed session is active.
+- Process control requires Store package identity, executable path, port, and
+  Browser ID validation.
+- WindowsApps, `app.asar`, official binaries, signatures, and application
+  permissions are never modified.
+- API keys, base URLs, and provider settings are never written.
+- `config.toml` uses strict UTF-8, atomic writes, and a recoverable backup; only
+  managed appearance fields are changed.
+
+## Origin, license, and artwork
+
+This repository is based on the Windows implementation from
+[Codex Dream Skin](https://github.com/Fei-Away/Codex-Dream-Skin), with changes
+for the layered Nahida theme, sign-in startup, and local-theme switching.
+
+Software source is released under the [MIT License](./LICENSE). Nahida,
+Genshin Impact, and related character/IP artwork are outside the MIT grant.
+Verify copyright, character, and trademark permissions before public,
+commercial, or downstream redistribution. See [NOTICE.md](./NOTICE.md).
+
+## Sponsor
+
+Thanks to [Passion8](https://passion8.cc/register?aff=TuPe) for supporting the
+original project. Theme installation and API configuration stay separate;
+this project never rewrites model-provider settings.
 
 ---
 
-Star it, pick a look, and make Codex yours for today.
+May wisdom grow like new leaves, and every build reach a brighter dream.

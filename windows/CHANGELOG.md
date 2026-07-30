@@ -2,6 +2,7 @@
 
 ## 1.1.75 - 2026-07-30
 
+- Made the local layered Nahida theme the explicit Windows sign-in default even when CodexDreamSkin has another saved theme selected. The manager tray now exposes a validated “本地纳西妲 · 梦境林庭” entry and reports the actual local injector instead of the last saved-theme name.
 - Added coexistence with the locally installed CodexDreamSkin theme manager. When that manager is installed and unpaused, the desktop and login launchers hand control to its verified runtime before taking the shared operation lock; pausing the manager leaves Nahida as the normal launch target.
 - Updated the CodexDreamSkin tray's background and saved-theme switch actions to start its own runtime after changing the active theme, which safely stops the recorded Nahida watcher instead of leaving two injectors competing for the renderer.
 
@@ -10,6 +11,12 @@
 - Failed startup rollback now prefers a verified CDP `Browser.close` and bounded clean-exit wait before force termination, reducing repeated Chromium profile crash recovery.
 
 ## Unreleased
+
+### Repository
+
+- Focused the repository, CI, release workflow, documentation, and installer inputs on the supported Windows product; removed the retired macOS build dependency and moved software licensing to the repository root.
+- Added real Nahida home, task, and settings screenshots to the rewritten Chinese and English project READMEs.
+- Restored the explicit signed-Node validation required by the installer safety suite.
 
 ### Runtime recovery
 

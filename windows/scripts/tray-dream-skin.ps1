@@ -119,8 +119,21 @@ try {
     try { $state = Read-DreamSkinState -Path $paths.State } catch {}
     $active = $null
     try { $active = Read-DreamSkinTheme -ThemeDirectory $paths.Active -SkipImageMetadata } catch {}
-    $status = if ($paused) { '状态：已暂停' } elseif ($state) { '状态：运行中' } else { '状态：未运行' }
-    if ($null -ne $active -and $null -ne $active.Theme -and $active.Theme.name) {
+    $localTheme = $null
+    try { $localTheme = Get-DreamSkinLocalThemeRegistration -StateRoot $StateRoot } catch {}
+    $localThemeActive = [bool]($null -ne $localTheme -and
+      (Test-DreamSkinLocalThemeActive -Registration $localTheme -StateRoot $StateRoot))
+    $status = if ($localThemeActive) {
+      "状态：运行中 · $($localTheme.Name)"
+    } elseif ($paused) {
+      '状态：已暂停'
+    } elseif ($state) {
+      '状态：运行中'
+    } else {
+      '状态：未运行'
+    }
+    if (-not $localThemeActive -and $null -ne $active -and
+      $null -ne $active.Theme -and $active.Theme.name) {
       $status += " · $($active.Theme.name)"
     }
     $null = Add-DreamSkinTrayItem -Items $menu.Items -Text $status -Action $null -Enabled $false
@@ -140,7 +153,7 @@ try {
       }
       $notify.ShowBalloonTip(1800, 'Codex Dream Skin', '正在应用皮肤…', [System.Windows.Forms.ToolTipIcon]::Info)
     }
-    # Match macOS menubar: pause = mark + live remove; resume lets the serialized
+    # Pause = mark + live remove; resume lets the serialized
     # start path clear pause only after its safety checks and any restart consent.
     if ($paused) {
       $null = Add-DreamSkinTrayItem -Items $menu.Items -Text '继续显示皮肤' -Action {
@@ -165,7 +178,7 @@ try {
       }
     } else {
       $null = Add-DreamSkinTrayItem -Items $menu.Items -Text '暂停皮肤' -Action {
-        # Match macOS pause: marker + live remove with in-window loading / result.
+        # Keep the marker and live removal in one serialized operation.
         $removal = Invoke-DreamSkinTrayThemeOperation -Action {
           Set-DreamSkinPaused -Paused $true -StateRoot $StateRoot | Out-Null
           Invoke-DreamSkinLiveRemove -StateRoot $StateRoot
@@ -181,6 +194,24 @@ try {
         }
       }
     }
+    if ($null -ne $localTheme) {
+      $localThemeAction = {
+        $null = Invoke-DreamSkinTrayThemeOperation -Action {
+          Set-DreamSkinPaused -Paused $true -StateRoot $StateRoot | Out-Null
+        }
+        Start-DreamSkinPowerShell -Script $localTheme.StartScript -Arguments @(
+          '-UseLocalTheme', '-Port', "$Port", '-PromptRestart'
+        )
+        $notify.ShowBalloonTip(
+          1800,
+          'Codex Dream Skin',
+          "正在切换：$($localTheme.Name)",
+          [System.Windows.Forms.ToolTipIcon]::Info
+        )
+      }.GetNewClosure()
+      $null = Add-DreamSkinTrayItem -Items $menu.Items -Text '本地纳西妲 · 梦境林庭' `
+        -Action $localThemeAction -Checked $localThemeActive
+    }
     $null = Add-DreamSkinTrayItem -Items $menu.Items -Text '更换背景图' -Action {
       $dialog = [System.Windows.Forms.OpenFileDialog]::new()
       $dialog.Title = '选择 Codex Dream Skin 背景图'
@@ -193,7 +224,8 @@ try {
               -StateRoot $StateRoot
             Set-DreamSkinPaused -Paused $false -StateRoot $StateRoot | Out-Null
           }
-          $notify.ShowBalloonTip(1800, 'Codex Dream Skin', '背景图已更新。', [System.Windows.Forms.ToolTipIcon]::Info)
+          Start-DreamSkinPowerShell -Script $startScript -Arguments @('-Port', "$Port", '-PromptRestart')
+          $notify.ShowBalloonTip(1800, 'Codex Dream Skin', '背景图已更新，正在切换皮肤。', [System.Windows.Forms.ToolTipIcon]::Info)
         }
       } finally {
         $dialog.Dispose()
@@ -249,7 +281,8 @@ try {
             $null = Use-DreamSkinSavedTheme -ThemeDirectory $savedPath -StateRoot $StateRoot
             Set-DreamSkinPaused -Paused $false -StateRoot $StateRoot | Out-Null
           }
-          $notify.ShowBalloonTip(1800, 'Codex Dream Skin', "已应用：$savedName", [System.Windows.Forms.ToolTipIcon]::Info)
+          Start-DreamSkinPowerShell -Script $startScript -Arguments @('-Port', "$Port", '-PromptRestart')
+          $notify.ShowBalloonTip(1800, 'Codex Dream Skin', "正在应用：$savedName", [System.Windows.Forms.ToolTipIcon]::Info)
         }.GetNewClosure()
         $null = Add-DreamSkinTrayItem -Items $savedMenu.DropDownItems -Text $savedName -Action $savedAction
       }

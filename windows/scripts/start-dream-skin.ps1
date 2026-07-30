@@ -5,6 +5,7 @@ param(
   [switch]$PromptRestart,
   [string]$ProfilePath,
   [switch]$ForegroundInjector,
+  [switch]$UseLocalTheme,
   [switch]$AllowDeferredVerify,
   [ValidateRange(0, 10000)]
   [int]$RecoveryDelayMs = 0,
@@ -41,7 +42,7 @@ function Stop-DreamSkinLaunchedSession {
 
 if ($RecoveryDelayMs -gt 0) { Start-Sleep -Milliseconds $RecoveryDelayMs }
 $StateRoot = Join-Path $env:LOCALAPPDATA 'CodexDreamSkin'
-if (-not $ForegroundInjector) {
+if (-not $ForegroundInjector -and -not $UseLocalTheme) {
   $managerStart = Get-DreamSkinPreferredManagerStartScript -StateRoot $StateRoot
   if ($managerStart) {
     $managerParameters = @{
@@ -64,6 +65,15 @@ if (-not $ForegroundInjector) {
 $operationLock = Enter-DreamSkinOperationLock -WaitMilliseconds $OperationLockWaitMs
 try {
   Assert-DreamSkinPort -Port $Port
+  if ($UseLocalTheme) {
+    $null = Register-DreamSkinLocalTheme -StateRoot $StateRoot -StartScript $PSCommandPath
+    $localThemeRegistration = Join-Path $StateRoot 'local-theme.json'
+    if (-not (Test-Path -LiteralPath $localThemeRegistration -PathType Leaf)) {
+      throw 'Local Nahida registration was not committed before startup.'
+    }
+    Write-DreamSkinUtf8FileAtomically -Path (Join-Path $StateRoot 'paused') `
+      -Content "paused`r`n"
+  }
   if (-not $ProfilePath) { $ProfilePath = Join-Path $StateRoot 'Profile-v3' }
   $ProfilePath = [System.IO.Path]::GetFullPath($ProfilePath)
   $node = Get-DreamSkinNodeRuntime

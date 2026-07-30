@@ -37,6 +37,8 @@ try {
     throw 'The saved Codex path is still running but no longer matches a registered Store package. Close it manually before installing.'
   }
   New-Item -ItemType Directory -Force -Path $StateRoot | Out-Null
+  $null = Register-DreamSkinLocalTheme -StateRoot $StateRoot `
+    -StartScript (Join-Path $PSScriptRoot 'start-dream-skin.ps1')
   $ConfigPath = Join-Path $HOME '.codex\config.toml'
   $BackupPath = Join-Path $StateRoot 'config.before-dream-skin.toml'
   Install-DreamSkinBaseTheme -ConfigPath $ConfigPath -BackupPath $BackupPath

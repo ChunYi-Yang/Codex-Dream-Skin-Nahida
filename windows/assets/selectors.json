@@ -1,16 +1,14 @@
 {
   "schema": "codex-dream-skin-selectors/1",
-  "description": "双端统一选择器契约（初稿）。scope 与 required 均来自 2026-07-21 双端 DOM 快照实测，非猜测。doctor / CI 应逐条 querySelector 并按 tier 判级：L1 缺失=皮肤主行为受损，L2 缺失=精修静默降级。",
+  "description": "Windows 选择器契约。scope 与 required 来自 DOM 快照实测，非猜测。Verify / CI 应逐条 querySelector 并按 tier 判级：L1 缺失=皮肤主行为受损，L2 缺失=精修静默降级。",
   "verifiedAgainst": {
     "date": "2026-07-21",
     "chromium": "150.0.7871.124",
-    "codexVersionMac": "26.715.61943",
-    "codexVersionWindows": "版本号未记录；bundle hash 与 mac 不同（ModelPickerTrigger mac=1fm6a win=1w4ob），确认存在版本错位",
+    "codexVersionWindows": "版本号未记录；选择器已由 Windows 实机快照验证",
     "fixtures": [
-      "runtime/dom-fixtures/codex-dom-fixture-darwin-watch.json (15 状态)",
-      "runtime/dom-fixtures/codex-dom-fixture-win32-watch.json (7 状态)"
+      "Windows 实机 DOM 快照（7 状态）"
     ],
-    "verdict": "双端 DOM 同源：锚点语义、状态作用域、testid、模块命名一致；差异均可归因于版本错位或用户配置，非平台分叉"
+    "verdict": "关键锚点、状态作用域、testid 与模块命名已在 Windows Codex 上确认"
   },
   "appearanceSignal": {
     "dark": "html.electron-dark",
@@ -21,7 +19,7 @@
     "all": "除设置页外的全部路由（home / thread / detail）及其上的 menu / dialog 覆盖层",
     "home": "首页（建议卡屏）。注意首页渐进渲染：home-icon 先出现，utility bar 可晚 1~2 秒",
     "thread": "会话/任务页（含 markdown 内容）",
-    "settings": "设置页。mac 26.715.61943 实测设置页替换整个 shell（main/侧栏/header 全部消失）；win 实测设置页保留 shell。皮肤不得假设二者其一，锚点缺失时降为 L0",
+    "settings": "设置页。Windows 实测保留主 shell；皮肤仍需容忍 Codex 更新后锚点缺失并降级为 L0",
     "overlay": "菜单 / 弹窗 / popper 浮层",
     "config": "依赖用户配置才出现（如未配置项目则无项目选择器）"
   },
