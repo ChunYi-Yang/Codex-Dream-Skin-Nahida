@@ -42,9 +42,10 @@ async function buildWith(themeFields) {
 }
 
 function payloadArguments(payload) {
-  const start = payload.lastIndexOf("})(");
-  assert.ok(start >= 0 && payload.endsWith(")"), "Could not locate renderer arguments.");
-  return JSON.parse(`[${payload.slice(start + 3, -1)}]`);
+  const normalized = payload.trimEnd();
+  const start = normalized.lastIndexOf("})(");
+  assert.ok(start >= 0 && normalized.endsWith(")"), "Could not locate renderer arguments.");
+  return JSON.parse(`[${normalized.slice(start + 3, -1)}]`);
 }
 
 function assertIntact(payload, label) {

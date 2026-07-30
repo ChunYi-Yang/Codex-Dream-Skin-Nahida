@@ -3,7 +3,8 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-const here = path.dirname(fileURLToPath(import.meta.url));
+const scriptPath = fileURLToPath(import.meta.url);
+const here = path.dirname(scriptPath);
 const root = path.resolve(here, "..");
 const SKIN_VERSION = "1.1.75";
 const MAX_ART_BYTES = 16 * 1024 * 1024;
@@ -423,8 +424,7 @@ async function launchVerifiedRecovery(port) {
   return child.pid;
 }
 
-async function loadTheme() {
-  const assetsRoot = path.join(root, "assets");
+async function loadTheme(assetsRoot = path.join(root, "assets")) {
   const configPath = path.join(assetsRoot, "theme.json");
   const raw = JSON.parse(await fs.readFile(configPath, "utf8"));
   if (raw.schemaVersion !== 1 || typeof raw.image !== "string" || !raw.image) {
@@ -512,11 +512,11 @@ async function loadTheme() {
   return { imagePaths, theme };
 }
 
-async function loadPayload() {
+export async function loadPayload(assetsRoot = path.join(root, "assets")) {
   const [css, template, loaded] = await Promise.all([
-    fs.readFile(path.join(root, "assets", "dream-skin.css"), "utf8"),
-    fs.readFile(path.join(root, "assets", "renderer-inject.js"), "utf8"),
-    loadTheme(),
+    fs.readFile(path.join(assetsRoot, "dream-skin.css"), "utf8"),
+    fs.readFile(path.join(assetsRoot, "renderer-inject.js"), "utf8"),
+    loadTheme(assetsRoot),
   ]);
   const artDataUrls = {};
   const encodedByPath = new Map();
@@ -530,11 +530,19 @@ async function loadPayload() {
     }
     artDataUrls[slot] = encodedByPath.get(imagePath);
   }
-  return template
-    .replace("__DREAM_CSS_JSON__", JSON.stringify(css))
-    .replace("__DREAM_ARTS_JSON__", JSON.stringify(artDataUrls))
-    .replace("__DREAM_THEME_JSON__", JSON.stringify(loaded.theme))
-    .replace("__DREAM_VERSION_JSON__", JSON.stringify(SKIN_VERSION));
+  const replacements = [
+    ["__DREAM_CSS_JSON__", css],
+    ["__DREAM_ARTS_JSON__", artDataUrls],
+    ["__DREAM_THEME_JSON__", loaded.theme],
+    ["__DREAM_VERSION_JSON__", SKIN_VERSION],
+  ];
+  let payload = template;
+  for (const [placeholder, value] of replacements) {
+    payload = payload.replace(placeholder, () => JSON.stringify(value));
+  }
+  const unresolved = replacements.find(([placeholder]) => payload.includes(placeholder));
+  if (unresolved) throw new Error(`Payload still contains ${unresolved[0]}`);
+  return payload;
 }
 
 async function probeSession(session) {
@@ -629,13 +637,13 @@ async function connectTarget(target, port) {
   return new CdpSession(target, port).open();
 }
 
-async function connectCodexTargets(port, timeoutMs) {
+async function connectCodexTargets(port, timeoutMs, expectedBrowserId) {
   const deadline = Date.now() + timeoutMs;
   let lastError;
   let lastDiagnostics = null;
   while (Date.now() < deadline) {
     try {
-      const targets = await listAppTargets(port, options.browserId);
+      const targets = await listAppTargets(port, expectedBrowserId);
       lastDiagnostics = { targets: targets.diagnostics, probes: [] };
       const connected = [];
       for (const target of targets) {
@@ -713,7 +721,7 @@ async function verifyRemovedSession(session) {
   )()`);
 }
 
-async function verifySession(session) {
+export async function verifySession(session) {
   return session.evaluate(`(() => {
     const box = (node) => {
       if (!node) return null;
@@ -827,7 +835,7 @@ async function capture(session, outputPath) {
 }
 
 async function runOneShot(options) {
-  const connected = await connectCodexTargets(options.port, options.timeoutMs);
+  const connected = await connectCodexTargets(options.port, options.timeoutMs, options.browserId);
   const payload = (options.mode === "once" || options.reload) ? await loadPayload() : null;
   const results = [];
   let screenshotCaptured = false;
@@ -989,6 +997,7 @@ async function runWatch(options) {
   }
 }
 
+if (path.resolve(process.argv[1] || "") === path.resolve(scriptPath)) {
 const options = parseArgs(process.argv.slice(2));
 try {
 if (options.mode === "self-test") {
@@ -1063,6 +1072,7 @@ else await runOneShot(options);
 } catch (error) {
   console.error(`[dream-skin] ${error instanceof Error ? error.message : String(error)}`);
   process.exitCode = 1;
+}
 }
 
 
