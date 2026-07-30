@@ -1,159 +1,117 @@
 # Windows Changelog
 
+## 1.1.75 - 2026-07-30
+
+- Added coexistence with the locally installed CodexDreamSkin theme manager. When that manager is installed and unpaused, the desktop and login launchers hand control to its verified runtime before taking the shared operation lock; pausing the manager leaves Nahida as the normal launch target.
+- Updated the CodexDreamSkin tray's background and saved-theme switch actions to start its own runtime after changing the active theme, which safely stops the recorded Nahida watcher instead of leaving two injectors competing for the renderer.
+
+- Migrated normal, login, default, and browser-recovery launches to retained clean `Profile-v3` after Chromium marked `Profile-v2` as crashed; older profiles remain untouched.
+- Browser-rebuild recovery now waits up to 180 seconds for an in-flight startup lock and carries explicit restart authorization, preventing the recovery worker from losing its race with initial verification and leaving the official theme active.
+- Failed startup rollback now prefers a verified CDP `Browser.close` and bounded clean-exit wait before force termination, reducing repeated Chromium profile crash recovery.
+
 ## Unreleased
 
-### 修复
+### Runtime recovery
 
-- 修复 Windows 上从 Chrome/Edge 点击 DreamSkin.cc「一键换肤」无法稳定唤起或完成的问题（#307）。安装器持久注册项不再把 64 位浏览器不可访问的 `{sysnative}` 写入 HKCU `dreamskin://` handler；handler 同时接受网页规范链接和 Windows/浏览器归一化后的 `dreamskin://apply/?version=...` 形式；应用阶段与 macOS 对齐为 `colors` 合同、可见首页验证和首次失败后的激活 + `--once` 重试，并加固 watcher 进程关闭与成功提示。
-- 修复安装器遇到 Codex `config.toml` 中合法多行数组时直接拒绝写入的问题（#313）。配置编辑器现在按 TOML 结构扫描 table header，安全跨过普通多行数组并保持原字节风格；未闭合数组、括号不匹配，以及 Dream Skin 需要改写的目标 key 自身为多行值时仍会在写入前 fail-closed。
-- 修复 v1.5.6 安装器在部分 Windows 10/11 环境中校验自带 Node.js 签名时，PowerShell 自动加载 `Microsoft.PowerShell.Security` / `Get-AuthenticodeSignature` 失败而中止安装的问题（#313、#314）。签名校验现在会在执行 `node.exe` 前显式加载安全模块，并在模块名加载失败时回退到 `$PSHOME` 下的系统模块清单路径；签名状态和发行者校验仍保持 fail-closed。
-- 修复社区主题一键换肤和 ZIP 导入拒绝 `backdrop-filter: blur(var(--ds-theme-surface-blur))` 的问题（#307、#312）。Safe CSS 仍只允许 `none`、0-20px blur 或注册的主题 blur 变量，不放宽到任意 filter 函数。
-- 修复 Codex Desktop 26.721.x 首页在 `home-icon` 延迟渲染时被误判为注入校验失败的问题（#307）。Windows 校验现在与 macOS 一样复用已由首页内容信号解析出的 `[role="main"]` 容器；严格的 `home-icon` 路径仍优先，旧版行为不变。
+- Login startup now uses deferred renderer verification: if Windows opens only Codex's early avatar/loading windows during boot, Dream Skin keeps the watcher and state alive so the theme can apply when the main shell finally mounts instead of rolling back to the official theme.
+- Migrated every launch and browser-recovery path to a clean `Profile-v2` after repeated timeout rollback left the original Chromium profile in a crash-recovery loop; the replacement reached the verified shell in 37.8 seconds instead of roughly 140 seconds, while the old profile remains untouched.
+- Raised first-renderer verification to 120 seconds for slower boot-time Store initialization without relaxing package, loopback, Browser ID, protocol, or DOM marker validation.
+- Extended first-renderer verification to 90 seconds for Codex `26.715.4045.0`, whose native shell can mount after the previous 30-second limit, and shortened the login pre-delay to 5 seconds so automatic launch begins promptly without weakening CDP checks.
+- Preserved complete renderer-verification diagnostics in dedicated files and limited failed target reports to structural DOM markers plus target protocols, making Store-update selector changes diagnosable without logging task text.
+- Added a code-signed Node login launcher and Startup shortcut that waits for the Windows desktop, starts Dream Skin with its dedicated profile, and retries only bounded operation-lock collisions without changing the normal desktop launch path or showing startup dialogs.
+- Redirected the signed Node launcher's PowerShell output to bounded runtime log files instead of synchronous pipes, preventing a successfully started background injector from keeping the normal desktop launcher alive indefinitely.
+- Allowed startup verification to pass on the Scheduled and Plugins routes by checking their stable search IDs, so reopening Codex on a non-chat page no longer causes a false theme failure.
+- Added bounded automatic recovery when Codex rebuilds its Chromium browser and changes the CDP Browser ID. The old watcher never injects into the replacement endpoint directly; it delegates to the existing start script so Store package identity, loopback port ownership, and renderer markers are revalidated before a new watcher is recorded.
+- Kept normal app closure distinct from an internal browser rebuild: if no replacement endpoint appears within 45 seconds, the watcher exits without reopening Codex. Recovery diagnostics are isolated in `%LOCALAPPDATA%\CodexDreamSkin\browser-recovery.log`.
 
-## 1.5.6 — 2026-07-26
+### Nahida theme
 
-### 安全
-
-- 修复 Node.js 运行时可被环境变量重定向、导致全部校验器被整体旁路的问题。`Get-DreamSkinNodeRuntime` 接受 `$env:CODEX_DREAM_SKIN_NODE` 指定的任意路径,而"校验"方式是执行候选二进制读取版本号——恶意程序在任何检查发生之前就已运行,校验本身即是执行。该运行时承载本项目全部校验逻辑:Safe CSS 白名单、主题包 manifest 与 SHA-256 校验、图片尺寸与解码炸弹限制,以及注入器。任何能写入 `HKCU\Environment` 的进程(无需管理员权限)都可让四者全部跑在自己的 `node.exe` 上,社区主题赖以把关的 Safe CSS 白名单随之失效。现已移除环境变量覆盖;新增 Authenticode 签名校验,在候选二进制被执行**之前**验证签名状态与签发者;已安装的引擎始终优先使用自带的、经引擎清单哈希校验的运行时。macOS 侧从来没有这个问题——它钉死 ChatGPT 包内路径、做代码签名校验并比对 team ID,不接受任何覆盖。此前的回归测试断言该环境变量**必须存在**,反而把不安全形态锁定在原地;现改为断言相反的性质,并额外锁定"自带运行时优先于 PATH"与"验签先于执行"两项顺序。
-- 修复主题展示文案里的 `$` 破坏注入载荷的问题,与 macOS 同源同修:六处占位符替换改为函数形式,新增载荷完整性断言。详见 macOS changelog 同批条目。
-
-### 修复
-
-- 修复皮肤已正常显示、却在约 90 秒后被强制关闭并重启 Codex 的问题(#267)。启动脚本在自己拉起 Codex 的情况下,把**任何**验证失败都当作重启 Codex 的理由;而 `verifySession` 是整体判定,`Browser.getWindowForTarget` 在部分 Codex 版本上对真实、可见的窗口也返回无用结果。用户看到的是:主题应用成功、界面正常、可交互,一分多钟后 Codex 突然自己重启并恢复官方外观。把用户正在使用的、工作正常的窗口杀掉,比保持"未验证"状态糟糕得多。现在验证循环会记录渲染器是否报告皮肤已安装、有样式、文档可见、视口正常且外壳结构完整;若是,回滚照常停止注入器并删除状态文件(不会有任何东西声称该会话已验证),但**保留 Codex 继续运行**并说明原因。文档隐藏、结构缺失、样式未注入等真正损坏的会话仍然会回滚重启。macOS 从来不做强制重启,本次修复使 Windows 与之对齐。注意这条不依赖 CDP 错误码分类——即使遇到未被识别的错误(如报告中的 `This operation was aborted`),损害面同样被限制。
-- 修复 Codex 26.721.x 上换肤永远失败的问题。CDP `Browser.getWindowForTarget` 在 Chrome/150 上对真实、聚焦、可见的窗口也返回 `-32000`,而 Windows 侧仅识别 `-32601`、且原生窗口检查没有降级通道,导致校验永久报错。macOS 已于 1.5.4 修正(#256),Windows 未同步。现与 macOS 采用同一分类语义,并把 CDP 数字错误码传播到分类器,不再仅依赖错误文案匹配。`documentVisible`、视口尺寸与结构检查仍是硬性条件,真正隐藏的窗口依旧拒绝通过——被豁免的只是这个本就无信息量的原生窗口信号。原有回归测试把 `-32000` 判负当作正确行为锁定,已一并修正。
-
-## 1.5.5 — 2026-07-25
-
-### 修复
-
-- 随 macOS 版本号推进,Windows 侧仅更新版本常量与对应断言,无功能改动。该版修复的是 macOS 菜单栏应用的焦点竞态(`LSUIElement` 弹窗关闭后系统不归还焦点),Windows 托盘的焦点语义不同,不适用。
-
-## 1.5.4 — 2026-07-25
-
-### 修复
-
-- 随 macOS 版本号推进,Windows 侧仅更新版本常量与对应断言,无功能改动。该版的 CDP `-32000` 修复当时只落在 macOS,Windows 上同一个缺陷一直存在到本次修复(见上方未发布条目)。
-
-## 1.5.3 — 2026-07-25
-
-### 修复
-
-- 随 macOS 版本号推进,Windows 侧仅更新版本常量与对应断言,无功能改动。该版修复的是 macOS shell 脚本中裸变量紧邻全角标点在 `set -u` 下崩溃的问题,PowerShell 的变量展开规则不同,不受同类影响。
-
-## 1.5.2 — 2026-07-25
-
-### 修复
-
-- 修复 Codex 26.721+ 首页/新建任务页只剩壁纸、内容完全不可见的问题（#244）：新版官方客户端把首页内容列从 home-route 首个子节点的后代改成了它的兄弟节点，首个子节点现在只包着通常为空的原生 `.home-banners` 插槽。旧版 `min-height: 100%` / `flex: 0 0 440px` 规则仍按旧嵌套把该插槽撑满整列，把真实内容挤出视口。新增仅在 `.home-banners` 存在时生效的覆盖规则（不影响旧版 DOM），并把注入器的 hero 校验探针改为优先检查该插槽的兄弟节点，修复后 `verifySession` 不再因此报 "Initial theme verification failed"。
-
-## 1.5.1 — 2026-07-25
-
-### 修复
-
-- 渲染验证不再把仅有 CDP/DOM 的后台 target 当成真实换肤成功：每个目标必须绑定到非最小化且具有有效边界的原生窗口，同时要求文档处于可见状态、viewport 尺寸合理、对应界面锚点具有可见面积。L0 只豁免普通 shell 结构，并仍须显示设置页或首页锚点；Browser window API 不可用、无窗口、零尺寸或隐藏 renderer 均 fail closed，启动流程会沿用现有回滚而不宣称皮肤已激活。
-
-## 1.5.0 — 2026-07-25
+- Reduced the writing-block prompt-card glass opacity from 30% to 15% after live review, keeping the copyable prompt card themed but much more transparent.
+- Reduced the writing-block prompt-card glass opacity from 42% to 30% so copyable prompt cards read lighter while normal assistant output remains transparent.
+- Retinted Codex writing-block prompt cards (`data-oai-writing-block-surface` copy blocks) with the leaf-green glass treatment while leaving normal assistant output, markdown text, user bubbles, and the conversation column transparent.
+- Removed the remaining leaf-green glass from assistant output content, leaving the assistant turn, markdown container, and markdown text/list/table/quote elements transparent while preserving green glass on non-output controls.
+- Moved the assistant glass background one level deeper from the markdown container to its direct text/list/table/quote children, so blank space beside generated text stays transparent instead of becoming a full-width panel.
+- Restored the assistant output boundary so `data-content-search-unit-key$=":assistant"` stays transparent while only the inner markdown/text surfaces receive the leaf-green glass treatment.
+- Moved the assistant output glass treatment from the markdown child to the full `data-content-search-unit-key$=":assistant"` output block, so the generated answer panel is themed while the composer, user bubbles, and conversation column stay untouched.
+- Scoped the visible leaf-green conversation treatment to assistant markdown output blocks only, restoring the surrounding conversation column to transparent and returning user bubbles to a subtle neutral tint.
+- Darkened the conversation surface and composer add-panel from near-white translucency to visible leaf-green glass, and targeted the real `data-composer-overlay-floating-ui` attachment popover used by the current Codex build.
+- Forced conversation thread token variables and virtualized message cards to the same 15% translucent leaf-green surface so assistant output cards no longer fall back to the global near-white main-panel color.
+- Recolored the assistant output's large markdown panel and add/plugin selection popovers to the translucent leaf-green glass treatment, removing the remaining opaque white container surfaces.
+- Broadened conversation-thread surface overrides to cover token, arbitrary, and white background utility classes so inline task cards match the translucent green code/reference treatment.
+- Matched inline task/reference cards in conversation threads to the translucent code-block treatment, removing the remaining opaque white card background.
+- Reduced the Pull Request route's full-page surface to 5% translucent green and removed the large blur layer so it reads as transparent as the scheduled/plugins pages.
+- Matched the Pull Request route to the scheduled/plugins page treatment by marking it as a themed route and replacing opaque main surfaces with translucent leaf-green glass.
+- Let the selected-project chip use automatic height and normal line-height so English project names are no longer vertically clipped.
+- Blocked home-banner mode on plugin and scheduled detail pages by treating their active sidebar navigation as real page content, so the large home hero no longer covers plugin details.
+- Separated the compact home project selector from the composer with a real outer gap, so the selector row no longer sits flush against the input surface.
+- Gave the compact home project selector symmetric top and bottom breathing room, keeping the selected-project chip on the same row without touching the lower edge.
+- Changed the home project selector into a compact inline label-plus-project row so the selected project sits to the upper right of the label and the selector no longer needs a full-width band.
+- Raised the home project selector above the composer surface and added a small safety gap so the selected-project chip is no longer clipped by the input box.
+- Moved the home hero copy farther left and collapsed the visible blank band between the project selector and composer while keeping the selected-project chip above the input.
+- Shifted the home hero copy to the left side of the banner and separated the selected-project row from the composer glass so the input box no longer covers the project selector.
+- Hardened the home-route detector for Codex re-renders that briefly mount then remove the native `home-icon`: visible task, settings, and search surfaces now block home mode first, while native game-source and composer-only start surfaces still keep the hero and composer in a single non-scrolling viewport.
+- Restored the July 23 home composition on newer Codex builds that no longer expose the legacy `home-icon` marker: empty start surfaces receive the themed hero fallback, while task pages remain excluded by their conversation marker. Corrected the escaped native home-suggestion selector so the fallback also renders on the current empty-start DOM.
+- Restored the sidebar brand override on newer Codex builds where the visible `Codex` label moved out of the old mode-switch button; it now falls back to the first branded sidebar heading and keeps the green text treatment.
+- Treated headerless new-task surfaces as home even when Codex leaves an offscreen stale conversation node behind, and widened the fallback hero so the empty start page matches the July 23 composition.
+- Required task and scheduled/plugin markers to be visible before they can block the home fallback, fixing blank new-task surfaces that retained hidden header/search DOM.
+- Relaxed startup verification to validate only visible home hero/suggestion surfaces; hidden offscreen home DOM no longer causes a successful injection to be rolled back to the official theme.
+- Prevented visible task conversations from being mistaken for the empty home route, added a stable `.dream-home-hero-surface` marker for the native home banner, and removed the extra home composer decoration/project-frame chrome so the selected-project row keeps the compact input layout.
+- Made the home route fit in a single viewport by hiding native suggestion cards, collapsing the empty home banner spacer, removing the home scrollbar, and keeping the hero plus composer visible without scrolling.
+- Removed the opaque sticky search bands and fade masks around the Scheduled and Plugins page searches, matching their input surfaces to the keyboard-shortcuts settings search.
+- Restored the floating thread summary to the translucent green glass treatment after Codex added a nested opaque dropdown surface; the override is scoped to `thread-summary-panel-*` slots and leaves unrelated dialogs unchanged.
+- Added a five-layer Nahida dream-garden asset pack with dedicated hero, sidebar, portrait, transparent decoration atlas, and scene artwork.
+- Updated the renderer palette and native Codex control styling to use cream, leaf green, teal, and gold while keeping controls interactive.
+- Fixed the nested settings surface so the Nahida artwork remains visible, restored the output collapse indicator, and refined project popovers and the composer transparency.
+- Replaced the white composer surround and settings cards with a shared 50% translucent leaf-green glass surface.
+- Made the project header 50% translucent and added an accessible close control to the floating thread summary panel.
+- Reduced the composer itself to 50% opacity and removed the extra sticky footer backdrop around it.
+- Fixed the summary close button so it hides only the floating summary and no longer opens Codex's full task sidebar; added a separate restore control.
+- Matched the header, summary panel, and composer to the settings glass border treatment, and removed the native white composer fade mask and dock padding.
+- Expanded thread content into the space released when the summary panel is hidden, while cancelling Codex's retained horizontal rail offset.
+- Replaced the native white file-change card surface and hairline with the shared leaf-green glass treatment.
+- Lifted the composer 12px above the window edge and reinforced its translucent green inset border.
+- Kept the expanded conversation width while sizing the composer to about 40% of the work area, bounded between 520px and 760px.
+- Removed the remaining white fade behind the live file-change summary and matched its capsule to the green glass theme.
+- Replaced the home hero artwork with `纳西妲/386062b8f1876a27a8168a2bab751456_4170308972841738428.jpg` while preserving the existing banner layout and text treatment.
+- Made every home hero prompt display the project alias `虚空` without changing project names or selection behavior elsewhere.
+- Added a dedicated illustrated background for the native right-side task panel while leaving the left project navigation unchanged.
+- Reduced the project header to about 40% of the main workspace, centred it, and cancelled Codex's duplicated inline left offset.
+- Removed the empty project header from the home route while retaining the compact header on task routes.
+- Removed the empty project header and top divider from the home and settings routes, preserving transparent top clearance only on home while collapsing it in settings and retaining the task header.
+- Moved the illustrated right-panel artwork onto the panel root and cleared the stacked native surface masks that had made it appear blank.
+- Restyled the four right-panel tool buttons as separate settings-style green glass capsules.
+- Aligned the illustrated right panel with the thread content frame so it no longer protrudes into the project-header row.
+- Removed the custom summary close/reopen controls and hidden-panel reflow overrides so Codex's native sidebar controls own that workflow again.
+- Restored Codex's default composer width while retaining the themed glass surface and bottom clearance.
+- Added a reusable Windows image/color replacement guide and reduced the retained source bundle to the assets required to reproduce the current theme.
+- Added a configurable `appLabel` and changed only the visible sidebar brand from `Codex` to `虚空终端`, with cleanup restoring the official text.
+- Aligned the file-diff review panel with the task content frame, reused the illustrated right-panel background beneath readable green glass surfaces, and made the main shell non-scrollable so opening a changed file cannot shift the composer and panel upward.
+- The native file explorer and terminal tabs now reuse the illustrated right-panel background with themed green glass search, tree, toolbar, and terminal surfaces while preserving file and ANSI terminal behavior.
+- Removed the file tree's remaining Shadow DOM white canvas, themed its path toolbar, and set both the file tree and terminal glass layers to 15% opacity so the shared right-panel artwork remains visible.
+- Matched the review body, diff renderer, and review file tree to the same 15% glass treatment while retaining stronger toolbar and filter surfaces for readability.
+- Made the canonical desktop `Codex` shortcut launch Dream Skin across Windows restarts, with an exact backup restored by the official-appearance workflow.
+- Extended recorded-injector shutdown verification to a 15-second polling window so delayed Windows process cleanup no longer aborts a valid desktop launch after five seconds.
+- Defaulted Windows Dream Skin launches to a dedicated local user-data directory because current Chromium builds ignore remote-debugging flags on the default profile and otherwise roll back to the official theme.
+- Matched the appearance diff preview, Git instruction editors, shortcut search toolbar, voice dictionary field, and personalization editor to the review panel's three-level green glass treatment, including the diff preview's Shadow DOM canvas.
+- Allowed live injector verification to succeed on the themed settings route, where Codex legitimately omits the task composer.
+- Removed the shortcut search area's upper and lower toolbar bands while retaining the themed search field.
+- Replaced PowerShell-targeting desktop and Start Menu links with a bounded script hosted by code-signed OpenJS Node.js, avoiding both `LNK.Agent` heuristic quarantine and Smart App Control rejection of an unsigned custom executable.
+- Persisted bounded launcher diagnostics under `%LOCALAPPDATA%\CodexDreamSkin\launcher.log` so post-restart failures retain their exit code and script error without recording task content.
 
 ### 新增
 
-- 支持从 DreamSkin.cc 的兼容主题页面一键唤起客户端换肤。安装器按当前用户注册严格的 `dreamskin://apply?version=ver_...` 协议；客户端只连接固定官方 API，拒绝重定向，要求详情中的 `applyCompatible` 是严格的 JSON `true`，并在原生确认后核对版本、包大小、实际下载字节数与 SHA-256，再复用现有 ZIP、manifest、图片和 Safe CSS 校验导入并应用。并发请求会被拒绝，临时下载始终清理；启动失败时尝试恢复此前活动主题。链接不能携带任意 URL、文件路径或命令，也不存在静默应用参数。
-
-## 1.4.0 — 2026-07-24
-
-### 新增
-
-- 发布流程改为由 `main` 上的版本变更自动创建对应 tag、构建并公开 DMG/Setup 资产；版本未变化的普通合并只做幂等跳过，`workflow_dispatch` 可安全重试未完成的同一版本。
-
-- 系统托盘新增普通 `.zip` 主题包导入与主题目录快捷入口；正式 Studio 包和仅供可信本地内容使用的简化包均须包含非空 `theme.json`、不超过 10 MiB 的背景图及非空 `theme.css`。导入只写入已保存主题，不自动改变活动主题。基于 .NET `ZipArchive` 逐条受限解压，限制 32 MiB 压缩文件、32 个条目和 64 MiB 解压总量，并拒绝 `.dreamskin`、路径穿越、链接/reparse、Windows 保留路径、嵌套压缩包及未通过负载校验的内容。正式包会校验平台、最低客户端版本、逐文件大小与 SHA-256，并要求 `theme.css` 与 `safe-css` capability 一致；Safe CSS 在导入及每次应用时按本地白名单重新校验后执行，预留签名不验证。重复内容不再写入，同 ID 冲突自动保存为新标识；现有已保存的无 CSS 旧主题仍可切换但不会注入附加 CSS，同时保留手动移动完整主题目录的工作流。
-
-### 修复
-
-- 对齐正式 Studio 主题合同：注入器完整保留 `#rgb`、`#rgba`、`#rrggbbaa` 与 RGB/A 颜色，文案统一按 Unicode code point 执行名称 80、其余受支持字段 120 的限制；浅色自动外观不再覆盖显式十色，并补齐 `taskMode=full` 的完整画面与基础可读性遮罩。
-- 处理 Codex Store `26.715.10079.0` 的 owl runtime 兼容性断点（#235）：继续优先使用清单派生 AUMID 的系统包激活；只有进程命令行明确证实 `--remote-debugging-port` 被转换成 `codex://...path=` 时，才保留启动前记录的 Codex PID、关闭本轮新增进程，并对同一个已验证 Store 包内的精确 `app\ChatGPT.exe` 尝试原始参数启动。该回退只在本机 ACL 允许且 production runtime 实际开放 CDP 时生效；Access Denied、参数仍未保留或最终没有可信监听都会给出对应错误并正常回滚。实机反馈已在 `26.715.10079.0` 确认 ACL 拒绝，并在 `26.721.3404.0` 确认参数保留但无监听，因此当前能力定位为诊断加固，不宣称受影响 owl 版本已恢复兼容。
-- 新策略不接管 WindowsApps 权限、不复制或修改官方二进制、`app.asar` 或签名；旧版仍走原有包激活路径。新增参数转发/协议重定向识别、Store 目标约束、兼容旧版、直启回退与 Access Denied 错误回归测试。
-
-## 1.3.3 — 2026-07-23
-
-### 修复
-
-- 启动编排三处加固（#222）：① 启动后的一次性验证改为 90 秒重试窗口——慢机器上 Codex 首屏尚未渲染完时不再被误判失败，进而不再连带停掉刚拉起的 watcher、也不再把 Codex 无调试口重启（此前皮肤因此完全不出现）；② 启动失败回滚改用自有进程对象停止注入器并把等待延长到 15 秒——过早判定「did not stop」曾遗留互相清除对方运行时的双 watcher；③ 端点归属校验放宽到任一已注册 OpenAI.Codex 版本——商店自动更新中途换包目录后，不再拒认仍在运行的健康皮肤会话（`verify-dream-skin.ps1` 同步生效，托盘经由 start 脚本自动继承全部修复）。新增回归断言锁定重试窗口、回滚等待与版本回退逻辑。
-- 修复 `--verify` 缺少 `--theme-dir` 参数的隐性错配：注入器在无该参数时回退到引擎 `assets` 内置主题作为期望值，源码安装下 watcher 应用的是暂存激活主题，二者永不一致——验证从一开始就注定失败（重试窗口暴露了这一点）。start 与 `verify-dream-skin.ps1` 现与 watcher 使用同一 `--theme-dir`（macOS 包装器一直如此），并新增断言防回退。
-
-## 1.3.2 — 2026-07-23
-
-### 修复
-
-- 与 macOS 同修：1.3.1 统一 runtime 的路由门控使用了嵌套 `:has()`（CSS 规范禁止，浏览器整条丢弃），导致宽幅画作退化为首页横幅卡、任务页氛围背景失效。契约新增无 `:has()` 的 `home-route-css` 别名并等价改写全部 41 处规则；双端产物同一份源码编译，Windows 侧随包生效。
-- Windows 回归套件中锁定旧嵌套选择器的断言同步更新，并新增编译产物「嵌套 `:has()`」回归测试。
-
-## 1.3.1 — 2026-07-23
-
-### 修复
-
-- Gothic Void Crusade 预设的 `appearance` 从 `auto` 固定为 `dark`（与 macOS 同步，#134 引入时误用了 auto）：暗色专属背景不再跟随客户端浅色外壳渲染。已在用该预设的用户需重新切换一次该主题才会拿到修复。
-- Windows Release 构建不再依赖 Chocolatey 精简版 Inno Setup 是否附带非官方翻译目录；固定并校验 Inno 6.7.1 官方简体中文语言文件后从隔离 staging 编译，保证 CI 与 Release runner 都能生成双语 Setup.exe。
-- 收起或重建左侧栏时不再因找不到 `aside.app-shell-left-panel` 而整页卸掉皮肤；只要主内容壳层仍在就继续应用当前主题，避免闪回 Codex 原生配色。透明辅助窗口仍会清理残留样式。
-- 托盘「暂停皮肤」现在与 macOS 一致：写入暂停标记后立刻通过 CDP 执行 `injector --remove` 卸下当前窗口皮肤，不再只等 watcher 轮询；「继续显示皮肤」会清除暂停并重新应用。
-- Windows 注入器补齐与 macOS 相同的窗口内操作浮层（loading / 成功 / 失败）；暂停、继续与重新应用时在 Codex 主区显示「正在暂停皮肤…」「正在应用皮肤…」等进度，不再只有托盘气泡。
-- 源码安装/主题库初始化会把 macOS 同款「Gothic Void Crusade / 哥特虚空远征」播种到已保存主题（`presets/preset-gothic-void-crusade`），可与源码中的「桥本有菜」参考主题一并在托盘切换；公开 Setup.exe 只携带并默认播种 Gothic Void Crusade。
-- 同步 macOS 的首页建议卡图标居中修复（#176 / #181 核心部分）：原生 span 的 `justify-start` 使 grid + `place-items` 无法居中图标徽章内的字形，改为 flex 强制居中。
+- 默认替换为“森息工坊”多图主题：去水印主背景、侧栏、人物装饰、透明元素图集和空任务场景。
+- 新增 `assets/theme.json`，可配置主图及 `sidebar`、`portrait`、`decorations`、`scene`；资源均限制在主题目录内并校验格式与 16 MB 上限。
+- 草元素徽记、晶蝶和四个抠图角色合并为一张透明图集，首页建议卡和装饰层通过图集定位复用。
 
 ### 改进
 
-- 托盘、安装器与开始菜单/自启快捷方式的 ICO 改绘为 DreamSkin 品牌 mark，与 dreamskin.cc 网站 favicon 同源：纸白圆角方、发丝描边、墨色对角半区与青色圆点（#217）。
-- 皮肤 runtime 双端统一（#216）：与 macOS 共用 `tools/selectors.json` 选择器契约与单源渲染器，双端注入产物由工具链编译并强制字节一致；运行时只写 `data-dream-*` 属性与 CSS 变量，锚点缺失场景降级 L0。
-
-## 1.3.0 — 2026-07-19
-
-### 发布
-
-- 新增面向普通用户的 Inno Setup 安装包；安装器内置经过 SHA-256 校验的 Node.js 运行时，按当前用户安装，不需要源码目录或全局 Node.js。
-- 新增 SmartScreen 未签名发行包的图形界面放行说明。只在确认文件来自项目 Release 后使用“更多信息 → 仍要运行”，不要求关闭 Defender 或执行 PowerShell 放行命令。
-- 新增手动覆盖更新流程与状态保留说明；主题、图片和配置备份不会因更新安装器而删除。
-- 新增 Release workflow：校验 tag 与双端版本一致性，构建 Setup.exe、生成 SHA-256 校验和并创建待审核的 Draft Release。
-- Setup.exe 只把安装目录中的 payload 作为不可变种子，实际执行统一来自 `%LOCALAPPDATA%\CodexDreamSkin\engine`；同版本缺文件时会自动修复，升级时先安全关闭旧托盘并原子替换引擎。
-- 托盘新增正式图标、点击检查更新、打开 DreamSkin.cc 与登录启动开关；不做后台联网，登录启动在安装向导中默认不勾选。
-- 卸载确认后先调用受管恢复引擎；只有 Codex 外观、CDP 与运行状态安全恢复成功才删除安装文件，失败会中止卸载并保留修复入口。
-- 安装、启动、托盘与恢复均使用 `RemoteSigned`，不再要求普通用户执行 `.ps1`、修改 Execution Policy 或安装全局 Node.js。
-- Release 构建会用固定 SHA-256 核验的 Gothic Void Crusade 替换源码中的人物参考素材；Setup.exe 同时携带项目 LICENSE/NOTICE 与 Node.js 自带许可证。
-
-## 1.2.0 — 2026-07-17
-
-### 新增
-
-- Windows 安装器会先校验并原子复制运行所需的 `assets/` 与 `scripts/` 到 `%LOCALAPPDATA%\CodexDreamSkin\engine`，启动、恢复和托盘快捷方式统一指向该受管副本；安装完成后可移动或删除源码克隆。重装前若旧托盘仍在运行，安装器会明确要求退出，避免新旧脚本混用。
-- 渲染层支持通用自适应图像主题：本地 Canvas 采样图像亮度、主色、焦点和比例，为壁纸层提供自适应色彩与构图建议；支持 `appearance: auto | light | dark`、`art.focusX/focusY`（`0..1`）、`art.safeArea: auto | left | right | center | none`、`art.taskMode: auto | ambient | banner | off`。外观壳仍由显式主题或原生外观信号决定。
-- 显式外观与艺术元数据优先于分析结果；超宽图默认任务横幅，普通比例图默认环境背景，`off` 可关闭任务页图像。分析完全在渲染器本地完成，不上传图片。
-- Windows 发行 payload 直接读取受管 `theme.json`，完整支持与 macOS 一致的外观、焦点、安全区和任务页模式契约，不再依赖预先设置的 renderer 全局变量。
-- 新增纯 PowerShell/Windows Forms 系统托盘入口，可快速查看状态、应用或暂停皮肤、更换背景、保存和切换主题、打开图片文件夹，以及执行完整恢复；不引入第三方依赖。
-- 新增 `%LOCALAPPDATA%\CodexDreamSkin` 主题仓库，用户图片会复制到受管目录，活动主题和已保存主题均保持图片与配置自包含。
-- Windows 首次安装会把 UI-free 的 2560 × 1440「桥本有菜」设为活动主题并播种到「已保存主题」，无需再从 macOS 目录手动导入。
+- 移除写死的人名、粉紫文案和丝带装饰，统一使用森林绿、青绿、嫩绿与暖橙 token，并覆盖任务页、输入区、弹层、代码块、滚动条和空状态。
+- 新增资源契约测试，校验两端图片尺寸、透明通道、文件大小和引用完整性。
 
 ### 修复
 
-- 安装器在完成受管运行时副本的 SHA-256 校验后，仅清除其中 PowerShell 脚本的下载区标记；启动、恢复、托盘快捷方式和托盘子进程改用 `RemoteSigned`，不再组合隐藏 PowerShell 与 `ExecutionPolicy Bypass` 触发常见 LNK 启发式告警，同时继续服从系统和企业组策略。
-- 保留 Codex 原生固定顶栏的定位与层级，避免打开任务侧边面板后开关被推出主区、导致面板无法关闭。
-- 暗色外观下，原生顶部菜单栏现在使用深色半透明可读性层，并提高菜单按钮与图标的文字对比度，避免浅色壁纸让导航项难以辨认。
 - 渲染层现在只在检测到完整 Codex 主界面壳层时启用皮肤；宠物等透明辅助窗口会主动清理主题背景与装饰节点，避免出现遮挡宠物的矩形背景框。
-- 16:9 及更宽图像现在作为侧栏与主区共享的单张整窗背景；首页、任务、插件、计划任务和 Pull Requests 路由使用同一透明顶栏与连续表面，不再在卡片或任务层重复裁切图片。
-- 移除主区原生顶部渐隐和 composer 后方底部渐隐；浅色与深色 composer 均只保留一个可读表面，避免出现双层输入框或不连续底板。
-- watcher 可在不重启 Codex 的情况下响应主题文件和暂停标记变化，重载 renderer 后仍保持当前应用或暂停状态。
-- watcher 会为已连接的 renderer 注册带 generation 检查的 early payload；后续 reload/navigation 优先在新文档建立皮肤，CDP 不支持时仍保留 load-event 兜底注入。
-- watcher 改用主题 JSON 与图片字节的 SHA-256 修订值识别热更新，并以轻量 stat 快速路径配合 30 秒强哈希审计，避免每 1.2 秒重读整张图片；同步读取图片尺寸后再构建首帧 payload，避免宽屏主题先以错误比例闪现。
-- 主题导入与注入均拒绝空图片和超过 16 MB 的图片；注入前还会拒绝任一边超过 16384px 或总像素超过 50MP 的声明尺寸，降低压缩炸弹风险。完整恢复会终止托盘进程，暂停菜单使用独立闭包值，避免旧托盘重新应用皮肤或连续点击状态反转错误。
-- 托盘导入新背景时会重置为 `auto` 焦点、安全区、任务模式和外观，不再错误继承上一张预设的人物位置；从「已保存主题」切换时仍保留该主题的显式元数据。
-- PowerShell 主题仓库除词法路径包含检查外，还会逐级拒绝 junction、符号链接等 reparse point；已保存主题不能借链接逃出受管目录。
-- 主题仓库会在创建受管目录以及关键图片复制/移动的前后拒绝 reparse point，暂停标记写入前也会检查路径；状态文件仍写入受管根目录并使用 UTF-8 原子替换。导入在复制前复用 Node 图片元数据解析器拒绝超过 16384px 或 50MP 的图片。
-- `appearance: auto` 优先读取原生计算后的 `color-scheme`，只有缺少可信原生信号时才回退到系统 `prefers-color-scheme`；横幅任务页与环境任务页共用连续整窗壁纸，不再单独截一块图。
-- 启动会先完成 state 校验和重启确认，再清除暂停标记；取消重启提示或遇到校验失败时，已有的暂停 watcher 会继续保持暂停。
-- 原生 `color-scheme` 采样会抑制并排空临时 class 变更产生的 observer 记录，不再每约 180ms 自触发一次完整 renderer ensure。
-- 安装不再把用户的 `appearanceTheme` 强制改成 `light`；检测到旧版精确托管的浅色三元组时才按已有备份安全迁移，当前安装的恢复也不会覆盖用户后来选择的外观。
-- `--verify`、`--once` 和 `--remove` 现在显式把预期 Browser ID 传入一次性目标发现，不再因引用越域的 CLI 变量而等待超时并导致启动验证回滚。
-- 记录中的 injector PID 若仍存活但身份不匹配，启动与恢复会保留 state 并中止，不再归档后继续操作未知进程。
-- Windows PowerShell 5.1 现在使用同目录临时备份调用 `File.Replace`，避免空备份参数被绑定为非法路径而导致现有 `config.toml` 无法更新。
-- 修复 Windows PowerShell 5.1 下注入器/Node 一旦向 stderr 输出（崩溃堆栈、超时报错、Node 警告）就把启动脚本炸成 `NativeCommandError` 的问题：现在原生命令统一经 `Invoke-DreamSkinNative` 执行，verify 失败时 `verify.log` 能真正写出本次输出与退出码，回滚清除注入的路径也不再被 stderr 干扰误判。
-- 带引号键名和 CRLF 的 `[desktop]` 配置现在可以逐字节往返恢复；新版 Codex 写入的非冲突 `[desktop.*]` 子表会原样保留，仅在子表与 Dream Skin 必须管理的标量键冲突时拒绝修改。
-- Codex 的启动、失败回滚和恢复重开统一通过已注册 Store 包清单中的 AppUserModelId 激活，不再直接执行可能被 WindowsApps 权限拒绝的 `ChatGPT.exe`；CDP 和自定义 profile 参数仍通过系统包激活接口传递。
 - 安装与 `-RestoreBaseTheme` 现在严格按 UTF-8 读取，保留原换行风格，并以无 BOM、同目录原子替换方式写回 `config.toml`，避免中文项目名称乱码或导致 Codex 无法启动。
 - 遇到带 BOM/无 BOM 的 UTF-16、NUL 字符、无效 UTF-8 或写入期间被其他程序改动的配置时停止修改，不再静默转码或覆盖较新的内容。
 - 安装会在当前注册包或 state 记录的旧 Codex 仍运行时明确提示先关闭；配置临时文件写完后会在原子替换前再次核对原始字节，进一步缩小并发覆盖窗口。
@@ -168,7 +126,6 @@
 - Store 更新时，仍在运行且身份有效的旧版本 CDP 会直接热重应用；旧版本若未开启 CDP，则在获得现有重启授权后关闭并启动当前注册版本，避免并行打开两个 Codex。
 - 遇到 `[desktop.*]` 子表时会在写配置前停止，避免外观标量键与 TOML 子表冲突；热重应用验证失败时会尽力移除本次残余样式。
 - Restore 不再要求当前环境仍能找到 Node；schema 3 清理会严格匹配安装时记录的 Node 路径，Node 已升级或卸载也不影响安全恢复。
-- 截图验证不再派发 Escape、移动鼠标或额外等待 300ms，避免验证过程改变当前窗口状态。
 
 ### 安全
 
@@ -176,16 +133,14 @@
 - 说明：loopback 可阻止局域网访问，但 CDP 不验证同一 Windows 用户下的其他本地进程；不用皮肤时建议执行 Restore 关闭调试会话。
 - Appx 发现要求 `SignatureKind=Store` 且不是 development mode，同名开发包或侧载包不会被当作官方 Codex 启动或关闭。
 - injector 只连接相同端口、page ID 与路径一致的 loopback WebSocket，并在注入前确认真实 Codex shell DOM 标记。
-- watcher 绑定启动时的 CDP Browser ID，并持续持有 Browser WebSocket 作为身份锚；原浏览器关闭或端口被复用时直接退出，不会连接到新端点。
+- watcher 绑定启动时的 CDP Browser ID，并持续持有 Browser WebSocket 作为身份锚；它不会直接连接身份变化后的端点，Codex 内部重建浏览器时只会委托启动脚本重新校验并恢复，普通关闭或端口被其他进程复用时仍安全退出。
 - CDP HTTP、WebSocket 建连与命令均加入超时，HTTP 探测拒绝重定向，异常目标不会无限挂起或把探测带离 loopback。
-- injector 收到畸形 JSON 或 `null`、字符串、数字等非对象 CDP 帧时会安全关闭会话，不再因直接读取消息字段而抛出未处理异常。
 - injector 日志与验证文件不再记录窗口标题、页面路由、页面文本或被拒绝 URL 的内容，只保留临时 target ID、结构标记和布局结果。
 - 快捷方式不再静默携带 `-RestartExisting`；需要重启时先向用户确认。
 - install、start、restore 和 verify 使用当前用户互斥锁，避免双击或并发命令竞争端口、配置和 state。
 
 ### 改进
 
-- 预置主题的稳定 ID 从 `preset-romantic-rose` 更名为 `preset-arina-hashimoto`；初始化只清理旧预置目录，继续保留用户自建主题。
 - 默认端口被占用时自动在后续 100 个端口内选择空闲端口；显式指定的冲突端口仍安全失败。
 - injector 会等待首轮注入完成再判定启动成功；目标异常时使用有上限的指数退避和限频日志，减少后台唤醒和日志膨胀。
 - 明确要求 Node.js 22 或更新版本，并记录 `process.execPath`，兼容 PATH 中的启动转发程序。
@@ -193,8 +148,5 @@
 
 ### 测试
 
-- 增加渲染层辅助窗口与 early-bootstrap 回归测试，覆盖主窗口正常注入、透明辅助窗口清理残余样式、shell guard、generation 切换、computed-scheme observer 排空，以及辅助目标随后成为完整主界面时可重新启用皮肤。
-- 增加本地 HTTP/CDP fixture，逐项执行 `--verify`、`--once` 和 `--remove`，确认一次性目标发现会校验 Browser ID 且不再访问未定义变量。
-- 增加受管主题初始化、换图、保存、切换、暂停标记、payload 配置嵌入、整窗 CSS 和托盘菜单静态回归检查。
+- 增加渲染层辅助窗口回归测试，覆盖主窗口正常注入、透明辅助窗口清理残余样式，以及辅助目标随后成为完整主界面时可重新启用皮肤。
 - 增加中文项目路径、CRLF/LF、UTF-16 与歧义 TOML 拒绝、并发写检测、section 隔离、精确恢复、Appx/state 身份、状态归档、payload 构造、Browser ID 和不安全 CDP URL 的回归检查。
-- injector 自检覆盖非对象 CDP 帧拒绝和截图流程不派发 renderer 输入事件。

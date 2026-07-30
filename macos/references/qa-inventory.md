@@ -2,7 +2,7 @@
 
 ## Required user-visible behavior
 
-1. Home route paints one continuous wallpaper across sidebar and main content, with a live native heading, the real project utility row/composer, and any native suggestion cards exposed by the current Codex version.
+1. Home route shows an independent hero, atlas-backed decorative icons, live native heading, two to four native suggestion cards, the real project selector, and native composer.
 2. Normal tasks show the selected image behind restrained gradients and translucent live content surfaces.
 3. Sidebar, navigation, messages, approvals, project selector, attachments, composer, menus, hover, focus, and keyboard input remain native and interactive.
 4. Decorative layers have `pointer-events: none`; no screenshot or raster UI is used as an overlay.
@@ -13,7 +13,7 @@
 ## Automated checks
 
 - Shell and JavaScript syntax checks.
-- Payload construction with bundled demo and an isolated custom theme.
+- Payload construction with the bundled five-resource theme and an isolated single-image fallback theme.
 - Reject unsupported theme config, unsafe image paths, invalid colors, oversized images, non-loopback WebSocket URLs, and unrecognized renderer targets.
 - Exact install/restore round trip for the two TOML settings while preserving unrelated values.
 - Empty `HOME` recovery.
@@ -21,16 +21,15 @@
 - Port collision selection and saved-port reuse.
 - PID reuse protection through PID, start time, executable, script path, and command-line matching.
 - Live verification after `Page.reload` returns version `1.2.0` and `pass: true`.
-- Strict home verification requires a visible wallpaper composition region of at least 320×160, composer, sidebar, non-interactive decoration, and no horizontal overflow. Suggestion cards and the standalone project button are optional only when the current Codex host does not render them.
+- Strict home verification requires a visible banner of at least 320×160, two to four visible native cards, visible project button, composer, sidebar, non-interactive decoration, and no horizontal overflow.
 
 ## Visual checks
 
-- Home at normal desktop size: the subject stays clear of the text-safe area, text remains live, native cards are not clipped when present, and the merged project/composer surface does not overlap content.
-- Narrower window: wallpaper cropping preserves the declared focus and safe area before essential controls are compressed.
+- Home at normal desktop size: banner crop is readable, text remains live, cards are not clipped, and composer does not overlap content.
+- Narrower window: quote/orbit decoration hides before covering essential controls.
 - Task route: background remains atmospheric, messages and output panels keep high contrast, and the composer remains reachable.
-- Task side panel: open and close the native thread panel twice, resize the window, and repeat; the toggle remains visible and clickable.
 - Selected image contains no fake interface controls or raster text intended to impersonate Codex.
-- Inspect sidebar selection, header, wallpaper edges, cards, project utility row, composer buttons, scrollbars, focus outlines, dialogs, and menus.
+- Inspect sidebar selection, header, banner edges, cards, project label, composer buttons, scrollbars, focus outlines, dialogs, and menus.
 
 ## Release signoff
 

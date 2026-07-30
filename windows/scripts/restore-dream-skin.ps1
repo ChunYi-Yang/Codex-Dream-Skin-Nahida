@@ -12,7 +12,6 @@ param(
 $ErrorActionPreference = 'Stop'
 $PortExplicit = $PSBoundParameters.ContainsKey('Port')
 . (Join-Path $PSScriptRoot 'common-windows.ps1')
-. (Join-Path $PSScriptRoot 'theme-windows.ps1')
 
 $operationLock = Enter-DreamSkinOperationLock
 try {
@@ -22,8 +21,6 @@ try {
   Assert-DreamSkinPort -Port $Port
 
   $StateRoot = Join-Path $env:LOCALAPPDATA 'CodexDreamSkin'
-  $themePaths = Get-DreamSkinThemePaths -StateRoot $StateRoot
-  Ensure-DreamSkinManagedDirectory -Path $themePaths.Root -Root $themePaths.Root
   $StatePath = Join-Path $StateRoot 'state.json'
   $state = Read-DreamSkinState -Path $StatePath
   if (-not $PortExplicit -and $null -ne $state -and $state.port) {
@@ -101,7 +98,6 @@ try {
 
   $restoreError = $null
   try {
-    Stop-DreamSkinTrayProcess
     if ($shouldCloseCodex) {
       Stop-DreamSkinCodex -Codex $codex -AllowForce:$forceAuthorized
       if ($portOwnedByCodex -and -not (Wait-DreamSkinPortAvailable -Port $Port -TimeoutSeconds 5)) {
@@ -130,17 +126,27 @@ try {
       Write-Host "Archived the completed pre-install backup at $archivePath"
     }
 
-    Remove-Item -LiteralPath $StatePath -Force -ErrorAction SilentlyContinue
-    Remove-Item -LiteralPath (Join-Path $StateRoot 'paused') -Force -ErrorAction SilentlyContinue
-    if ($Uninstall) {
+    if ($RecoverConfigBackup -or $RestoreBaseTheme -or $Uninstall) {
       $desktop = [Environment]::GetFolderPath('Desktop')
+      $desktopCodex = Join-Path $desktop 'Codex.lnk'
+      $desktopCodexBackup = Join-Path $StateRoot 'desktop-codex.before-dream-skin.lnk'
+      if (Test-Path -LiteralPath $desktopCodexBackup) {
+        Copy-Item -LiteralPath $desktopCodexBackup -Destination $desktopCodex -Force -ErrorAction Stop
+        Write-Host 'Restored the original desktop Codex shortcut.'
+      } else {
+        Write-Warning 'No original desktop Codex shortcut backup was available; the current desktop shortcut was left unchanged.'
+      }
+    }
+
+    Remove-Item -LiteralPath $StatePath -Force -ErrorAction SilentlyContinue
+    if ($Uninstall) {
       $startMenu = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'
+      $startup = Join-Path $startMenu 'Startup'
       @(
         (Join-Path $desktop 'Codex Dream Skin.lnk'),
         (Join-Path $desktop 'Codex Dream Skin - Restore.lnk'),
-        (Join-Path $desktop 'Codex Dream Skin - Tray.lnk'),
         (Join-Path $startMenu 'Codex Dream Skin.lnk'),
-        (Join-Path $startMenu 'Codex Dream Skin - Tray.lnk')
+        (Join-Path $startup 'Codex Dream Skin Auto Start.lnk')
       ) | ForEach-Object { Remove-Item -LiteralPath $_ -Force -ErrorAction SilentlyContinue }
     }
 
@@ -148,13 +154,13 @@ try {
       if ($null -eq $relaunchCodex -or -not (Test-Path -LiteralPath $relaunchCodex.Executable)) {
         throw 'Codex cannot be reopened because its current executable is unavailable.'
       }
-      $null = Start-DreamSkinCodex -Codex $relaunchCodex
+      Start-Process -FilePath $relaunchCodex.Executable | Out-Null
     }
   } catch {
     $restoreError = $_
     if ($shouldCloseCodex -and -not $NoRelaunch -and $null -ne $relaunchCodex -and
       (Get-DreamSkinCodexProcesses -Codex $codex).Count -eq 0 -and (Test-Path -LiteralPath $relaunchCodex.Executable)) {
-      try { $null = Start-DreamSkinCodex -Codex $relaunchCodex } catch {
+      try { Start-Process -FilePath $relaunchCodex.Executable | Out-Null } catch {
         Write-Warning 'Restore failed and Codex could not be reopened automatically.'
       }
     }
