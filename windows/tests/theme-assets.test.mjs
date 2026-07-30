@@ -78,6 +78,10 @@ assert.match(css, /\.dream-home \.group\\\/home-suggestions \{[\s\S]*display: no
 assert.match(css, /\.dream-home \.dream-home-composer-surface[\s\S]*bottom: 18px[\s\S]*width: min\(980px/);
 assert.match(css, /\.dream-home \{[\s\S]*position: relative !important[\s\S]*overflow: hidden !important[\s\S]*scrollbar-width: none/);
 assert.match(css, /\.dream-home \*:has\(\.dream-home-hero-surface\)[\s\S]*position: static !important/);
+assert.match(
+  css,
+  /div:has\(\.dream-home-hero-surface\) > div:first-child:not\(\.dream-home-hero-surface\)[\s\S]*height: auto !important/,
+);
 assert.match(css, /main\.main-surface\.dream-home-shell[\s\S]*app-shell-main-content-frame[\s\S]*overflow: hidden/);
 assert.match(css, /main\.main-surface\.dream-home-shell \.dream-home-composer-surface[\s\S]*bottom: 18px/);
 assert.match(css, /dream-home-hero-surface \[data-feature="game-source"\][\s\S]*left: 40px[\s\S]*transform: translateY\(-50%\)/);
