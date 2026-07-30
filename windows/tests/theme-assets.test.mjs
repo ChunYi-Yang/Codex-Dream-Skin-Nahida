@@ -69,6 +69,11 @@ for (const [slot, filename] of Object.entries(files)) {
 assert.match(css, /\.dream-settings-surface[\s\S]*var\(--dream-background-art\)/);
 assert.match(css, /\.composer-surface-chrome[\s\S]*background: var\(--dream-panel-glass\)/);
 assert.match(css, /\.dream-home \.dream-home-hero-surface[\s\S]*width: min\(980px[\s\S]*background: var\(--dream-art\)/);
+assert.doesNotMatch(
+  css,
+  /\.dream-home > div:first-child > div:first-child > div:first-child/,
+  "home hero art must target only the injected hero surface",
+);
 assert.match(css, /\.dream-home \.group\\\/home-suggestions \{[\s\S]*display: none !important/);
 assert.match(css, /\.dream-home \.dream-home-composer-surface[\s\S]*bottom: 18px[\s\S]*width: min\(980px/);
 assert.match(css, /\.dream-home \{[\s\S]*position: relative !important[\s\S]*overflow: hidden !important[\s\S]*scrollbar-width: none/);
