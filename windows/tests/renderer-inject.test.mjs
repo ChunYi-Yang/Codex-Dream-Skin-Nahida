@@ -44,6 +44,8 @@ function createFixture({
   semanticSettingsSurfacePresent = false,
   summaryPanelPresent = false,
   staleSkin = false,
+  existingStyleText = null,
+  existingStyleVersion = "",
 }) {
   const nodes = new Map();
   const rootClasses = new Set([
@@ -232,6 +234,13 @@ function createFixture({
     chrome.id = "codex-dream-skin-chrome";
     nodes.set(chrome.id, chrome);
   }
+  if (existingStyleText !== null) {
+    const style = createElement();
+    style.id = "codex-dream-skin-style";
+    style.textContent = existingStyleText;
+    style.dataset.dreamVersion = existingStyleVersion;
+    nodes.set(style.id, style);
+  }
   if (summaryPanelPresent) {
     for (const id of ["codex-dream-summary-panel-close", "codex-dream-summary-panel-reopen"]) {
       const control = createElement();
@@ -399,6 +408,14 @@ assert.equal(main.rootStyles.has("--dream-decor-art"), false);
 assert.equal(main.nodes.has("codex-dream-skin-style"), false);
 assert.equal(main.nodes.has("codex-dream-skin-chrome"), false);
 assert.deepEqual(main.revokedUrls, ["blob:fixture"]);
+
+const staleStyle = createFixture({
+  shellPresent: true,
+  existingStyleText: ".stale { color: red; }",
+  existingStyleVersion: "1.1.74",
+});
+vm.runInNewContext(payload, staleStyle.context);
+assert.equal(staleStyle.nodes.get("codex-dream-skin-style").textContent, ".fixture { color: blue; }");
 
 const collapsedSidebar = createFixture({ shellPresent: true, sidebarPresent: false });
 vm.runInNewContext(payload, collapsedSidebar.context);
