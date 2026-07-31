@@ -40,6 +40,8 @@ function createFixture({
   pageSearchPresent = false,
   activeNavText = "",
   settingsPresent = false,
+  legacySettingsSurfacePresent = settingsPresent,
+  semanticSettingsSurfacePresent = false,
   summaryPanelPresent = false,
   staleSkin = false,
 }) {
@@ -269,7 +271,13 @@ function createFixture({
       }
       if (selector === "aside.app-shell-left-panel") return hasSidebar ? {} : null;
       if (selector === "[data-settings-panel-slug]") return settingsPresent ? {} : null;
-      if (selector === "div.main-surface") return settingsPresent ? settingsSurface : null;
+      if (selector === "div.main-surface") {
+        return settingsPresent && legacySettingsSurfacePresent ? settingsSurface : null;
+      }
+      if (selector === 'div.main-surface, main.main-surface [class~="p-panel"]') {
+        return settingsPresent && (legacySettingsSurfacePresent || semanticSettingsSurfacePresent)
+          ? settingsSurface : null;
+      }
       if (selector === '[data-pip-obstacle="thread-summary-panel"]') {
         return summaryPanelPresent ? summaryPanel : null;
       }
@@ -499,6 +507,16 @@ assert.equal(settings.shellMainClasses.has("dream-home-shell"), false);
 settings.context.window.__CODEX_DREAM_SKIN_STATE__.cleanup();
 assert.equal(settings.settingsSurfaceClasses.has("dream-settings-surface"), false);
 assert.equal(settings.shellMainClasses.has("dream-settings-shell"), false);
+
+const semanticSettings = createFixture({
+  shellPresent: true,
+  settingsPresent: true,
+  legacySettingsSurfacePresent: false,
+  semanticSettingsSurfacePresent: true,
+});
+vm.runInNewContext(payload, semanticSettings.context);
+assert.equal(semanticSettings.settingsSurfaceClasses.has("dream-settings-surface"), true);
+assert.equal(semanticSettings.shellMainClasses.has("dream-settings-shell"), true);
 
 const summary = createFixture({ shellPresent: true, summaryPanelPresent: true });
 vm.runInNewContext(payload, summary.context);
