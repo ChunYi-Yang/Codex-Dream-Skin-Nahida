@@ -392,6 +392,13 @@ html.codex-dream-skin main.main-surface:is(.dream-home-shell, .dream-settings-sh
   display: none !important;
 }
 
+html.codex-dream-skin main.main-surface.dream-settings-shell > header,
+html.codex-dream-skin main.main-surface.dream-settings-shell
+  :has(> .dream-settings-surface)
+  > [class~="px-panel"][class~="draggable"] {
+  display: none !important;
+}
+
 html.codex-dream-skin main.main-surface:not(.dream-home-shell):not(.dream-settings-shell) > header.app-header-tint {
   display: flex !important;
 }
@@ -427,6 +434,12 @@ html.codex-dream-skin main.main-surface.dream-settings-shell {
 html.codex-dream-skin main.main-surface.dream-settings-shell
   .app-shell-main-content-frame {
   margin-top: 0 !important;
+}
+
+html.codex-dream-skin main.main-surface.dream-settings-shell
+  div:has(> div.relative.flex.min-h-0.flex-1 .dream-settings-surface) {
+  margin-top: 0 !important;
+  height: 100% !important;
 }
 
 html.codex-dream-skin main.main-surface.dream-home-shell {

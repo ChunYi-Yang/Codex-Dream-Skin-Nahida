@@ -22,6 +22,7 @@
 
 ### Runtime recovery
 
+- Replaced same-version renderer CSS when its content changes, so local fixes apply immediately instead of leaving the previous injected style cached in an open Codex window.
 - Restored renderer discovery after Codex replaced the legacy `main.main-surface` class with the stable `data-app-shell-main-surface` marker, while cleaning up the compatibility class whenever Dream Skin is removed.
 - Login startup now uses deferred renderer verification: if Windows opens only Codex's early avatar/loading windows during boot, Dream Skin keeps the watcher and state alive so the theme can apply when the main shell finally mounts instead of rolling back to the official theme.
 - Migrated every launch and browser-recovery path to a clean `Profile-v2` after repeated timeout rollback left the original Chromium profile in a crash-recovery loop; the replacement reached the verified shell in 37.8 seconds instead of roughly 140 seconds, while the old profile remains untouched.
@@ -36,6 +37,7 @@
 
 ### Nahida theme
 
+- Restored the Nahida settings glass on current Codex `p-panel` viewports and removed the blank header, toolbar, and 46 px frame offset above settings content.
 - Reduced the writing-block prompt-card glass opacity from 30% to 15% after live review, keeping the copyable prompt card themed but much more transparent.
 - Reduced the writing-block prompt-card glass opacity from 42% to 30% so copyable prompt cards read lighter while normal assistant output remains transparent.
 - Retinted Codex writing-block prompt cards (`data-oai-writing-block-surface` copy blocks) with the leaf-green glass treatment while leaving normal assistant output, markdown text, user bubbles, and the conversation column transparent.

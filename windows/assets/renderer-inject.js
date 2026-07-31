@@ -172,7 +172,7 @@
       style.id = STYLE_ID;
       (document.head || root).appendChild(style);
     }
-    if (style.dataset.dreamVersion !== version) {
+    if (style.dataset.dreamVersion !== version || style.textContent !== cssText) {
       style.textContent = cssText;
       style.dataset.dreamVersion = version;
     }
