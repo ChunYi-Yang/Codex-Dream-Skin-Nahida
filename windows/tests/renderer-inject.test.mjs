@@ -26,6 +26,7 @@ const payload = template
 
 function createFixture({
   shellPresent,
+  semanticShellPresent = false,
   sidebarPresent = shellPresent,
   homePresent = false,
   homeIconPresent = true,
@@ -91,6 +92,7 @@ function createFixture({
   const shellMainClasses = new Set();
   const shellMain = {
     classList: makeClassList(shellMainClasses),
+    dataset: {},
     querySelector(selector) {
       if (selector === '[data-feature="game-source"]') return null;
       if (selector === ".group\\/home-suggestions") return null;
@@ -244,6 +246,9 @@ function createFixture({
     getElementById(id) { return nodes.get(id) ?? null; },
     querySelector(selector) {
       if (selector === "main.main-surface") return hasShell ? shellMain : null;
+      if (selector === "main.main-surface, main[data-app-shell-main-surface]") {
+        return hasShell || semanticShellPresent ? shellMain : null;
+      }
       if (selector === 'aside.app-shell-left-panel button[aria-label^="切换模式"] span.font-semibold') {
         return hasSidebar ? sidebarBrand : null;
       }
@@ -305,6 +310,8 @@ function createFixture({
       }
       if (selector === ".dream-summary-panel-surface" &&
           summarySurfaceClasses.has("dream-summary-panel-surface")) return [summarySurface];
+      if (selector === "[data-dream-main-surface-compat]" &&
+          "dreamMainSurfaceCompat" in shellMain.dataset) return [shellMain];
       if (!staleSkin) return [];
       if (selector === ".dream-home") return [staleHome];
       if (selector === ".dream-home-shell") return [staleShell];
@@ -389,6 +396,15 @@ vm.runInNewContext(payload, collapsedSidebar.context);
 assert.equal(collapsedSidebar.rootClasses.has("codex-dream-skin"), true);
 assert.equal(collapsedSidebar.nodes.has("codex-dream-skin-style"), true);
 assert.equal(collapsedSidebar.nodes.has("codex-dream-skin-chrome"), true);
+
+const semanticShell = createFixture({ shellPresent: false, semanticShellPresent: true });
+vm.runInNewContext(payload, semanticShell.context);
+assert.equal(semanticShell.rootClasses.has("codex-dream-skin"), true);
+assert.equal(semanticShell.shellMainClasses.has("main-surface"), true);
+assert.equal(semanticShell.shellMain.dataset.dreamMainSurfaceCompat, "true");
+semanticShell.context.window.__CODEX_DREAM_SKIN_STATE__.cleanup();
+assert.equal(semanticShell.shellMainClasses.has("main-surface"), false);
+assert.equal("dreamMainSurfaceCompat" in semanticShell.shellMain.dataset, false);
 
 const home = createFixture({ shellPresent: true, homePresent: true });
 vm.runInNewContext(payload, home.context);

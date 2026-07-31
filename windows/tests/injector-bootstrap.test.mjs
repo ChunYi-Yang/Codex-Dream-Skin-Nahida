@@ -7,6 +7,12 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const injectorPath = path.resolve(here, "../scripts/injector.mjs");
 const source = await fs.readFile(injectorPath, "utf8");
 
+assert.match(
+  source,
+  /const shell = document\.querySelector\('main\.main-surface, main\[data-app-shell-main-surface\]'\)/,
+  "Renderer discovery must accept the semantic main-surface marker used by current Codex builds.",
+);
+
 const watcherStart = source.indexOf("async function runWatch(options)");
 const watcher = source.slice(watcherStart);
 assert.ok(watcherStart >= 0, "The watcher entry point must exist.");
