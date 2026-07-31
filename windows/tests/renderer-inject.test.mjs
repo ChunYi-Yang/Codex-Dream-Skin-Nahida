@@ -351,6 +351,7 @@ function createFixture({
     rootStyles,
     revokedUrls,
     settingsSurfaceClasses,
+    shellMain,
     shellMainClasses,
     sidebarBrand,
     sidebarBrandClasses,

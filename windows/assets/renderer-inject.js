@@ -104,6 +104,10 @@
       node.classList.remove("dream-settings-surface"));
     document.querySelectorAll(".dream-summary-panel-surface").forEach((node) =>
       node.classList.remove("dream-summary-panel-surface"));
+    document.querySelectorAll("[data-dream-main-surface-compat]").forEach((node) => {
+      node.classList.remove("main-surface");
+      delete node.dataset.dreamMainSurfaceCompat;
+    });
     for (const id of LEGACY_SUMMARY_CONTROL_IDS) document.getElementById(id)?.remove();
     document.getElementById(STYLE_ID)?.remove();
     document.getElementById(CHROME_ID)?.remove();
@@ -148,10 +152,14 @@
     const root = document.documentElement;
     if (!root || !document.body) return;
 
-    const shellMain = document.querySelector("main.main-surface");
+    const shellMain = document.querySelector("main.main-surface, main[data-app-shell-main-surface]");
     if (!shellMain) {
       clearSkinDom();
       return;
+    }
+    if (!document.querySelector("main.main-surface")) {
+      shellMain.classList.add("main-surface");
+      shellMain.dataset.dreamMainSurfaceCompat = "true";
     }
 
     root.classList.add("codex-dream-skin");

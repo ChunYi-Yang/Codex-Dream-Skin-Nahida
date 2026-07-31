@@ -22,6 +22,7 @@
 
 ### Runtime recovery
 
+- Restored renderer discovery after Codex replaced the legacy `main.main-surface` class with the stable `data-app-shell-main-surface` marker, while cleaning up the compatibility class whenever Dream Skin is removed.
 - Login startup now uses deferred renderer verification: if Windows opens only Codex's early avatar/loading windows during boot, Dream Skin keeps the watcher and state alive so the theme can apply when the main shell finally mounts instead of rolling back to the official theme.
 - Migrated every launch and browser-recovery path to a clean `Profile-v2` after repeated timeout rollback left the original Chromium profile in a crash-recovery loop; the replacement reached the verified shell in 37.8 seconds instead of roughly 140 seconds, while the old profile remains untouched.
 - Raised first-renderer verification to 120 seconds for slower boot-time Store initialization without relaxing package, loopback, Browser ID, protocol, or DOM marker validation.

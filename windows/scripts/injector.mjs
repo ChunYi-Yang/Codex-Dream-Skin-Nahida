@@ -547,7 +547,7 @@ export async function loadPayload(assetsRoot = path.join(root, "assets")) {
 
 async function probeSession(session) {
   return session.evaluate(`(() => {
-    const shell = document.querySelector('main.main-surface');
+    const shell = document.querySelector('main.main-surface, main[data-app-shell-main-surface]');
     const firstMain = document.querySelector('main');
     const firstAside = document.querySelector('aside');
     const allElements = [...document.querySelectorAll('*')];
@@ -689,6 +689,10 @@ async function removeFromSession(session) {
     document.documentElement?.style.removeProperty('--dream-art');
     document.querySelectorAll('.dream-home').forEach((node) => node.classList.remove('dream-home'));
     document.querySelectorAll('.dream-home-shell').forEach((node) => node.classList.remove('dream-home-shell'));
+    document.querySelectorAll('[data-dream-main-surface-compat]').forEach((node) => {
+      node.classList.remove('main-surface');
+      delete node.dataset.dreamMainSurfaceCompat;
+    });
     document.querySelectorAll('.dream-settings-surface').forEach((node) =>
       node.classList.remove('dream-settings-surface'));
     document.querySelectorAll('.dream-summary-panel-surface').forEach((node) =>
@@ -710,6 +714,7 @@ async function verifyRemovedSession(session) {
     !document.documentElement.style.getPropertyValue('--dream-art') &&
     !document.querySelector('.dream-home') &&
     !document.querySelector('.dream-home-shell') &&
+    !document.querySelector('[data-dream-main-surface-compat]') &&
     !document.querySelector('.dream-settings-surface') &&
     !document.querySelector('.dream-summary-panel-surface') &&
     !document.getElementById('codex-dream-summary-panel-close') &&
