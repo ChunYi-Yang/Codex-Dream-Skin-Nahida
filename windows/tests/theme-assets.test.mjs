@@ -135,13 +135,14 @@ assert.match(css, /header\.app-header-tint[\s\S]*width: clamp\(520px, 40%, 760px
 assert.match(css, /header\.app-header-tint[\s\S]*margin-inline: auto/);
 assert.match(css, /main\.main-surface:is\(\.dream-home-shell, \.dream-settings-shell\) > header\.app-header-tint[\s\S]*display: none/);
 assert.match(css, /main\.main-surface\.dream-settings-shell > header[\s\S]*display: none/);
-assert.match(css, /main\.main-surface\.dream-settings-shell > div\.relative\.isolate\.flex\.min-h-0\.flex-1\.overflow-hidden > div\.flex\.items-center\.px-panel\.draggable[\s\S]*display: none/);
+assert.match(css, /main\.main-surface\.dream-settings-shell[\s\S]*:has\(> \.dream-settings-surface\)[\s\S]*class~="px-panel"[\s\S]*class~="draggable"[\s\S]*display: none/);
 assert.match(css, /main\.main-surface:not\(\.dream-home-shell\):not\(\.dream-settings-shell\) > header\.app-header-tint[\s\S]*display: flex/);
 assert.match(css, /main\.main-surface:is\(\.dream-home-shell, \.dream-settings-shell\)[\s\S]*app-shell-main-content-frame[\s\S]*border-top: 0[\s\S]*background: transparent/);
 assert.match(css, /main\.main-surface\.dream-route-shell[\s\S]*app-shell-main-content-frame[\s\S]*border-top: 0[\s\S]*background: transparent[\s\S]*box-shadow: none/);
 assert.match(css, /main\.main-surface\.dream-route-shell[\s\S]*\[class\*="bg-token-main-surface"\][\s\S]*background-color: rgba\(235, 245, 226, \.05\)[\s\S]*backdrop-filter: none/);
 assert.match(css, /main\.main-surface\.dream-settings-shell[\s\S]*--app-shell-main-content-frame-top-offset: 0px/);
 assert.match(css, /main\.main-surface\.dream-settings-shell[\s\S]*app-shell-main-content-frame[\s\S]*margin-top: 0/);
+assert.match(css, /main\.main-surface\.dream-settings-shell[\s\S]*:has\(> div\.relative\.flex\.min-h-0\.flex-1[\s\S]*dream-settings-surface[\s\S]*margin-top: 0[\s\S]*height: 100%/);
 assert.doesNotMatch(css, /data-pip-obstacle="thread-footer"[\s\S]*40cqw/);
 assert.match(css, /data-above-composer-portal[\s\S]*bg-gradient-to-t[\s\S]*display: none/);
 assert.match(css, /data-above-composer-portal[\s\S]*bg-token-input-background[\s\S]*background: var\(--dream-panel-glass\)/);
