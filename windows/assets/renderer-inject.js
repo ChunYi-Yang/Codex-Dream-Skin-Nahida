@@ -308,7 +308,9 @@
     }
 
     const settingsSurface = settingsPresent
-      ? document.querySelector("div.main-surface")
+      ? document.querySelector(
+        'div.main-surface, main.main-surface [class~="p-panel"]',
+      )
       : null;
     shellMain.classList.toggle("dream-settings-shell", settingsPresent);
     for (const candidate of document.querySelectorAll(".dream-settings-surface")) {
