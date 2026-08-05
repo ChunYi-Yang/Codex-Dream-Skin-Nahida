@@ -178,6 +178,6 @@ assert.match(css, /role="menu"[\s\S]*role="listbox"[\s\S]*background: rgba\(216,
 assert.match(css, /data-composer-overlay-floating-ui[\s\S]*background: rgba\(216, 237, 199, \.68\)[\s\S]*bg-token-dropdown-background[\s\S]*background: rgba\(216, 237, 199, \.42\)/);
 assert.match(css, /data-radix-popper-content-wrapper[\s\S]*data-slot\^="thread-summary-panel-"[\s\S]*background: transparent/);
 assert.match(css, /bg-token-dropdown-background[\s\S]*data-slot\^="thread-summary-panel-"[\s\S]*rgba\(216, 237, 199, \.60\)[\s\S]*backdrop-filter: blur\(16px\)/);
-assert.match(injector, /settings: box\(document\.querySelector\('\.dream-settings-surface'\)\)[\s\S]*pageSearch: box\(document\.querySelector\('#scheduled-page-search, #plugins-page-search'\)\)[\s\S]*navPage: box\(navPage\)[\s\S]*Boolean\(result\.composer \|\| result\.settings \|\| result\.pageSearch \|\| result\.navPage\)/);
+assert.match(injector, /settings: box\(document\.querySelector\('\.dream-settings-surface'\)\)[\s\S]*pageSearch: box\(document\.querySelector\('#scheduled-page-search, #plugins-page-search'\)\)[\s\S]*navPage: box\(navPage\)[\s\S]*const focusReady = Boolean\([\s\S]*result\.composer \|\| result\.settings \|\| result\.pageSearch \|\| result\.navPage[\s\S]*result\.homeVisible && \(result\.hero \|\| result\.homeFallback\)[\s\S]*result\.pass =[\s\S]*focusReady/);
 
 console.log("PASS: Windows Nahida theme assets are complete, bounded, and structurally valid.");
