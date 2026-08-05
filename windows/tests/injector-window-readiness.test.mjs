@@ -105,16 +105,28 @@ test("a visible home route requires its hero or fallback card", async () => {
     bounds: rect(900, 700, 350, 50),
     query: (selector) => selector === ".dream-home-hero-surface" ? hero : null,
   });
-  assert.equal((await verify(fixture({ home: withHero, homeShell: element() }))).pass, true);
+  assert.equal((await verify(fixture({
+    composer: null,
+    home: withHero,
+    homeShell: element(),
+  }))).pass, true);
 
   const withoutHero = element({ bounds: rect(900, 700, 350, 50) });
-  assert.equal((await verify(fixture({ home: withoutHero, homeShell: element() }))).pass, false);
+  assert.equal((await verify(fixture({
+    composer: null,
+    home: withoutHero,
+    homeShell: element(),
+  }))).pass, false);
 
   const fallbackCard = element({ bounds: rect(720, 260, 420, 180) });
   const fallback = element({
     query: (selector) => selector === ".dream-home-fallback-card" ? fallbackCard : null,
   });
-  assert.equal((await verify(fixture({ home: withoutHero, homeFallback: fallback }))).pass, true);
+  assert.equal((await verify(fixture({
+    composer: null,
+    home: withoutHero,
+    homeFallback: fallback,
+  }))).pass, true);
 });
 
 test("startup rolls back before reporting success when verification fails", async () => {
