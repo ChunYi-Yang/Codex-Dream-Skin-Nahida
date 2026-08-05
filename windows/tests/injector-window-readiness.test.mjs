@@ -32,6 +32,7 @@ function fixture({
   version = "1.1.75",
   sidebar = element({ bounds: rect(320, 800) }),
   composer = element({ bounds: rect(820, 140, 380, 620) }),
+  semanticComposer = null,
   settings = null,
   home = null,
   homeShell = null,
@@ -61,6 +62,9 @@ function fixture({
       if (selector === ".dream-home") return home;
       if (selector === "main.main-surface.dream-home-shell") return homeShell;
       if (selector === ".composer-surface-chrome") return composer;
+      if (selector === ".composer-surface-chrome, [data-codex-composer-root] [data-composer-surface-variant]") {
+        return composer ?? semanticComposer;
+      }
       if (selector === ".dream-settings-surface") return settings;
       if (selector === "aside.app-shell-left-panel") return sidebar;
       return null;
@@ -90,6 +94,14 @@ test("a themed task route with native sidebar and composer passes", async () => 
   assert.deepEqual({ ...result.viewport }, { width: 1280, height: 800 });
   assert.equal(result.documentOverflow.x, false);
   assert.equal(result.documentOverflow.y, false);
+});
+
+test("a task route with the semantic composer surface passes", async () => {
+  const result = await verify(fixture({
+    composer: null,
+    semanticComposer: element({ bounds: rect(820, 140, 380, 620) }),
+  }));
+  assert.equal(result.pass, true);
 });
 
 test("missing native anchors or mismatched injected state fail", async () => {

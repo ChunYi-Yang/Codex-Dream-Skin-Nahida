@@ -33,6 +33,7 @@ function createFixture({
   homeGameSourcePresent = true,
   homeSuggestionsPresent = false,
   homeComposerPresent = false,
+  semanticHomeComposerPresent = false,
   homeComposerProjectSelectorPresent = true,
   conversationPresent = false,
   visibleConversationPresent = false,
@@ -179,6 +180,9 @@ function createFixture({
       }
       if (selector === '[data-testid="home-icon"]') return homeIconPresent ? homeIcon : null;
       if (selector === ".composer-surface-chrome") return homeComposerPresent ? homeComposerChrome : null;
+      if (selector === '[data-codex-composer-root][data-composer-placement="home"]') {
+        return semanticHomeComposerPresent ? homeComposerSurface : null;
+      }
       if (selector === ".group\\/home-suggestions") {
         return homeSuggestionsPresent ? homeSuggestions : null;
       }
@@ -271,6 +275,9 @@ function createFixture({
       }
       if (selector === '[role="main"]:has(.composer-surface-chrome)') {
         return homePresent && homeComposerPresent ? home : null;
+      }
+      if (selector === '[role="main"]:has([data-codex-composer-root][data-composer-placement="home"])') {
+        return homePresent && semanticHomeComposerPresent ? home : null;
       }
       if (selector === '[data-thread-find-target="conversation"]') {
         return conversationPresent ? makeHiddenNode("stale conversation") : null;
@@ -467,6 +474,20 @@ vm.runInNewContext(payload, homeComposer.context);
 assert.equal(homeComposer.homeClasses.has("dream-home"), true);
 assert.equal(homeComposer.homeComposerSurfaceClasses.has("dream-home-composer-surface"), true);
 assert.equal(homeComposer.shellMainClasses.has("dream-home-shell"), true);
+
+const semanticHomeComposer = createFixture({
+  shellPresent: true,
+  homePresent: true,
+  homeIconPresent: false,
+  semanticHomeComposerPresent: true,
+});
+vm.runInNewContext(payload, semanticHomeComposer.context);
+assert.equal(semanticHomeComposer.homeClasses.has("dream-home"), true);
+assert.equal(
+  semanticHomeComposer.homeComposerSurfaceClasses.has("dream-home-composer-surface"),
+  true,
+);
+assert.equal(semanticHomeComposer.shellMainClasses.has("dream-home-shell"), true);
 
 const emptyHome = createFixture({ shellPresent: true, homePresent: true, homeGameSourcePresent: false });
 vm.runInNewContext(payload, emptyHome.context);
