@@ -451,6 +451,8 @@ try {
   if ($LASTEXITCODE -ne 0) { throw 'Injector CDP self-test failed.' }
   & $node.Path (Join-Path $Root 'scripts\injector.mjs') --check-payload *> $null
   if ($LASTEXITCODE -ne 0) { throw 'Injector self-test failed.' }
+  & (Join-Path $PSScriptRoot 'injector-state-recovery.tests.ps1') -Root $Root
+  if ($LASTEXITCODE -ne 0) { throw 'Injector stale-state recovery test failed.' }
   $nodeTests = @(Get-ChildItem -LiteralPath $PSScriptRoot -File -Filter '*.test.mjs' |
     Sort-Object Name | Select-Object -ExpandProperty FullName)
   & $node.Path --test $nodeTests

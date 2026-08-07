@@ -56,5 +56,20 @@ assert.match(
   /if \(identityAnchor\.closed \|\| error instanceof CdpIdentityMismatchError\) break;/,
   "Identity changes must stop the current watcher instead of crossing into another browser.",
 );
+assert.match(
+  source,
+  /const BROWSER_RECOVERY_WAIT_MS = 180000;/,
+  "Browser rebuild recovery must allow the updated Codex shell enough time to return.",
+);
+assert.match(
+  source,
+  /async function codexProcessStillRunning\(\)/,
+  "Browser rebuild recovery must distinguish an app update from a normal app close.",
+);
+assert.match(
+  watcher,
+  /if \(!replacementBrowserId\)[\s\S]*const codexStillRunning = await codexProcessStillRunning\(\);[\s\S]*codexStillRunning[\s\S]*launchVerifiedRecovery\(options\.port\)/,
+  "A still-running Codex process must trigger verified recovery when its replacement endpoint is missing.",
+);
 
 console.log("PASS: Windows watcher scopes initial and reload injection to a pinned Codex browser identity.");

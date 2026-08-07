@@ -228,6 +228,9 @@
     const home = blocksHome ? null : (
       document.querySelector('[role="main"]:has([data-testid="home-icon"])') ??
       document.querySelector('[role="main"]:has([data-feature="game-source"])') ??
+      document.querySelector(
+        '[role="main"]:has([data-codex-composer-root][data-composer-placement="home"])',
+      ) ??
       document.querySelector('[role="main"]:has(.composer-surface-chrome)')
     );
     const emptyStartSurface = !home && !blocksHome;
@@ -256,9 +259,14 @@
       if (candidate !== homeHeroSurface) candidate.classList.remove("dream-home-hero-surface");
     }
     if (homeHeroSurface) homeHeroSurface.classList.add("dream-home-hero-surface");
-    const homeComposer = homeSurface?.querySelector?.(".composer-surface-chrome") ?? null;
-    let homeComposerSurface = null;
-    if (homeActive && homeComposer) {
+    const semanticHomeComposerSurface = homeSurface?.querySelector?.(
+      '[data-codex-composer-root][data-composer-placement="home"]',
+    ) ?? null;
+    const homeComposer = homeSurface?.querySelector?.(
+      ".composer-surface-chrome, [data-codex-composer]",
+    ) ?? null;
+    let homeComposerSurface = homeActive ? semanticHomeComposerSurface : null;
+    if (homeActive && !homeComposerSurface && homeComposer) {
       const boundary = home ?? shellMain;
       for (let node = homeComposer.parentElement; node && node !== boundary; node = node.parentElement) {
         if (node.querySelector?.('[class*="group/project-selector"]')) {

@@ -1231,6 +1231,44 @@ html.codex-dream-skin [data-codex-composer-root]
   backdrop-filter: blur(10px) saturate(1.04) !important;
 }
 
+html.codex-dream-skin [data-codex-composer-root]
+  [data-composer-surface-variant] {
+  position: relative;
+  border: 1px solid rgba(103, 157, 69, .34) !important;
+  border-radius: 16px !important;
+  background: var(--dream-panel-glass) !important;
+  background-image: none !important;
+  box-shadow: inset 0 0 0 1px rgba(103, 157, 69, .34) !important;
+  backdrop-filter: blur(10px) saturate(1.04) !important;
+}
+
+html.codex-dream-skin main.main-surface.dream-home-shell
+  [data-codex-composer-root][data-composer-placement="home"]
+  [data-composer-surface-variant] {
+  border-color: rgba(96, 153, 65, .55) !important;
+  background: rgba(200, 229, 177, .82) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(96, 153, 65, .34),
+    0 10px 24px rgba(45, 86, 52, .14) !important;
+  backdrop-filter: blur(12px) saturate(1.08) !important;
+}
+
+html.codex-dream-skin main.main-surface.dream-home-shell
+  [data-codex-composer-root][data-composer-placement="home"]
+  [data-composer-surface-variant] > [data-composer-layout] {
+  background: transparent !important;
+  backdrop-filter: none !important;
+}
+
+html.codex-dream-skin main.main-surface.dream-home-shell
+  [data-composer-home-utility-bar-position][data-composer-placement="home"] {
+  background: rgba(200, 229, 177, .82) !important;
+  border: 1px solid rgba(96, 153, 65, .55) !important;
+  color: var(--dream-text) !important;
+  box-shadow: 0 8px 18px rgba(45, 86, 52, .12) !important;
+  backdrop-filter: blur(12px) saturate(1.08) !important;
+}
+
 html.codex-dream-skin .thread-scroll-container {
   --color-token-main-surface-primary: transparent !important;
   --color-token-main-surface-secondary: transparent !important;

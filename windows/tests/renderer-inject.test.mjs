@@ -180,6 +180,9 @@ function createFixture({
       }
       if (selector === '[data-testid="home-icon"]') return homeIconPresent ? homeIcon : null;
       if (selector === ".composer-surface-chrome") return homeComposerPresent ? homeComposerChrome : null;
+      if (selector === ".composer-surface-chrome, [data-codex-composer]") {
+        return homeComposerPresent ? homeComposerChrome : null;
+      }
       if (selector === '[data-codex-composer-root][data-composer-placement="home"]') {
         return semanticHomeComposerPresent ? homeComposerSurface : null;
       }

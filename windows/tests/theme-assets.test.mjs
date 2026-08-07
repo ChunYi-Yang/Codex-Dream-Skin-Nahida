@@ -148,6 +148,18 @@ assert.match(css, /data-above-composer-portal[\s\S]*bg-gradient-to-t[\s\S]*displ
 assert.match(css, /data-above-composer-portal[\s\S]*bg-token-input-background[\s\S]*background: var\(--dream-panel-glass\)/);
 assert.match(css, /data-codex-composer-root[\s\S]*bg-token-input-background[\s\S]*background: var\(--dream-panel-glass\)/);
 assert.match(css, /data-codex-composer-root[\s\S]*data-composer-surface-variant[\s\S]*background: var\(--dream-panel-glass\)[\s\S]*border-color: rgba\(103, 157, 69, \.34\)/);
+assert.match(
+  css,
+  /dream-home-shell[\s\S]*data-composer-placement="home"[\s\S]*data-composer-surface-variant[\s\S]*border-color: rgba\(96, 153, 65, \.55\)[\s\S]*background: rgba\(200, 229, 177, \.82\)/,
+);
+assert.match(
+  css,
+  /data-composer-placement="home"[\s\S]*data-composer-surface-variant[\s\S]*> \[data-composer-layout\][\s\S]*background: transparent[\s\S]*backdrop-filter: none/,
+);
+assert.match(
+  css,
+  /data-composer-home-utility-bar-position[\s\S]*data-composer-placement="home"[\s\S]*background: rgba\(200, 229, 177, \.82\)[\s\S]*border: 1px solid rgba\(96, 153, 65, \.55\)/,
+);
 assert.match(css, /thread-scroll-container \{[\s\S]*--color-token-main-surface-primary: transparent[\s\S]*--color-token-bg-primary: transparent/);
 assert.match(css, /thread-scroll-container[\s\S]*data-content-search-unit-key\$=":assistant"[\s\S]*\[class\*="bg-white"\][\s\S]*\[class\*="bg-\[\"\][\s\S]*background: transparent/);
 assert.match(css, /thread-scroll-container[\s\S]*data-content-search-unit-key\$=":assistant"[\s\S]*\[class\*="rounded"\]\[class\*="bg-token-main-surface"\][\s\S]*background: transparent[\s\S]*box-shadow: none/);

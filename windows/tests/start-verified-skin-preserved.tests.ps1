@@ -221,4 +221,12 @@ if (-not $startSource.Contains('$skinLooksRendered = $false')) {
   throw 'Unparseable verify output no longer falls back to the restarting rollback.'
 }
 
+$commonSource = [System.IO.File]::ReadAllText((Join-Path $Root 'scripts\common-windows.ps1'))
+if ($commonSource -match '(?s)if \(-not \$processPath -or -not \$commandLine\) \{\s*throw') {
+  throw 'A reused injector PID still aborts startup instead of being treated as stale state.'
+}
+if (-not $commonSource.Contains('Skipped stale injector PID')) {
+  throw 'Startup no longer reports a reused injector PID as stale state.'
+}
+
 Write-Output 'PASS: a rendered-but-unverified skin keeps Codex running.'

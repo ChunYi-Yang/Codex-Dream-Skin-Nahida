@@ -9,7 +9,7 @@ const root = path.resolve(here, "..");
 const SKIN_VERSION = "1.1.75";
 const MAX_ART_BYTES = 16 * 1024 * 1024;
 const MAX_THEME_BYTES = 32 * 1024 * 1024;
-const BROWSER_RECOVERY_WAIT_MS = 45000;
+const BROWSER_RECOVERY_WAIT_MS = 180000;
 const RECOVERY_START_DELAY_MS = 1500;
 const RECOVERY_OPERATION_LOCK_WAIT_MS = 180000;
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]", "::1"]);
@@ -397,6 +397,27 @@ async function waitForReplacementBrowser(port, previousBrowserId, shouldStop) {
   return null;
 }
 
+async function codexProcessStillRunning() {
+  const powershell = path.win32.join(
+    process.env.SystemRoot ?? "C:\\Windows",
+    "System32", "WindowsPowerShell", "v1.0", "powershell.exe",
+  );
+  return new Promise((resolve) => {
+    let output = "";
+    const child = spawn(powershell, [
+      "-NoLogo",
+      "-NoProfile",
+      "-NonInteractive",
+      "-Command",
+      "if (Get-Process -Name ChatGPT -ErrorAction SilentlyContinue) { 'running' }",
+    ], { windowsHide: true, stdio: ["ignore", "pipe", "ignore"] });
+    child.stdout?.setEncoding("utf8");
+    child.stdout?.on("data", (chunk) => { output += chunk; });
+    child.once("error", () => resolve(false));
+    child.once("close", () => resolve(output.trim() === "running"));
+  });
+}
+
 async function launchVerifiedRecovery(port) {
   const recovery = buildRecoveryLaunch(port);
   await fs.mkdir(path.dirname(recovery.logPath), { recursive: true });
@@ -779,7 +800,9 @@ export async function verifySession(session) {
       ),
       cards,
       visibleCards,
-      composer: box(document.querySelector('.composer-surface-chrome')),
+      composer: box(document.querySelector(
+        '.composer-surface-chrome, [data-codex-composer-root] [data-composer-surface-variant]',
+      )),
       settings: box(document.querySelector('.dream-settings-surface')),
       pageSearch: box(document.querySelector('#scheduled-page-search, #plugins-page-search')),
       navPage: box(navPage),
@@ -790,10 +813,14 @@ export async function verifySession(session) {
         y: document.documentElement.scrollHeight > document.documentElement.clientHeight,
       },
     };
+    const focusReady = Boolean(
+      result.composer || result.settings || result.pageSearch || result.navPage ||
+      (result.homeVisible && (result.hero || result.homeFallback)),
+    );
     result.pass = result.installed && result.version === result.expectedVersion &&
       result.stylePresent && result.chromePresent &&
       result.chromePointerEvents === 'none' &&
-      Boolean(result.composer || result.settings || result.pageSearch || result.navPage) &&
+      focusReady &&
       Boolean(result.sidebar) &&
       (!result.homeVisible || Boolean(result.hero) || Boolean(result.homeFallback)) &&
       (!result.homeShellPresent || result.homeVisible || result.homePresent || Boolean(result.homeFallback));
@@ -916,7 +943,18 @@ async function runWatch(options) {
         );
         if (stopping) break;
         if (!replacementBrowserId) {
-          console.error("[dream-skin] no replacement CDP browser appeared; watcher is stopping without relaunching Codex");
+          const codexStillRunning = await codexProcessStillRunning();
+          if (codexStillRunning) {
+            try {
+              const recoveryPid = await launchVerifiedRecovery(options.port);
+              console.error(`[dream-skin] no replacement CDP browser appeared while Codex remained running; delegated verified recovery to PID ${recoveryPid}`);
+            } catch (error) {
+              console.error(`[dream-skin] could not start verified browser recovery: ${error.message}`);
+              process.exitCode = 3;
+            }
+            break;
+          }
+          console.error("[dream-skin] no replacement CDP browser appeared and Codex is closed; watcher is stopping without relaunching Codex");
           process.exitCode = 3;
           break;
         }

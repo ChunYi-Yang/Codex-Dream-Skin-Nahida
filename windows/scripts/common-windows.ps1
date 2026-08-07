@@ -635,7 +635,8 @@ function Stop-DreamSkinRecordedInjector {
   $processPath = Get-DreamSkinProcessExecutablePath -ProcessInfo $process
   $commandLine = "$($process.CommandLine)"
   if (-not $processPath -or -not $commandLine) {
-    throw "The recorded injector PID $processId is running, but its identity cannot be inspected. State was preserved."
+    Write-Warning "Skipped stale injector PID $processId because its process identity cannot be inspected."
+    return $false
   }
   $isNodeExecutable = [System.IO.Path]::GetFileName("$processPath") -ieq 'node.exe'
   $nodeMatches = -not $State.nodePath -or
