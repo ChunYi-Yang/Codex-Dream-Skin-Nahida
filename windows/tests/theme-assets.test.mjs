@@ -161,7 +161,7 @@ const queuedMessageSurface = css.indexOf(
 assert.ok(queuedMessageSurface >= 0, "queued message surface is not themed");
 assert.match(
   css.slice(queuedMessageSurface, queuedMessageSurface + 520),
-  /background: var\(--dream-panel-glass\)[\s\S]*border-color: rgba\(103, 157, 69, \.34\)/,
+  /background-color: var\(--dream-panel-glass\)[\s\S]*border-color: rgba\(103, 157, 69, \.34\)/,
 );
 assert.match(css, /data-codex-composer-root[\s\S]*data-composer-surface-variant[\s\S]*background: var\(--dream-panel-glass\)[\s\S]*border-color: rgba\(103, 157, 69, \.34\)/);
 assert.match(
