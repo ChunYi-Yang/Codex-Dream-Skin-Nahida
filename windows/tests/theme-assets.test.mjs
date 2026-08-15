@@ -199,6 +199,15 @@ assert.match(css, /data-user-message-bubble[\s\S]*background: rgba\(0, 0, 0, \.0
 assert.doesNotMatch(css, /data-user-message-bubble[\s\S]{0,260}rgba\(216, 237, 199, \.42\)/);
 assert.match(css, /group\\\/turn-diff-header[\s\S]*background: var\(--dream-panel-glass\)/);
 assert.match(css, /\.composer-surface-chrome[\s\S]*box-shadow: inset 0 0 0 1px/);
+const semanticComposerAction = css.indexOf(
+  'html.codex-dream-skin [data-codex-composer-root]\n' +
+  '  button[class~="bg-primary-solid"]',
+);
+assert.ok(semanticComposerAction >= 0, "semantic composer action button is not themed");
+assert.match(
+  css.slice(semanticComposerAction, semanticComposerAction + 520),
+  /background: var\(--dream-accent\)[\s\S]*color: #fff/,
+);
 assert.doesNotMatch(css, /dream-summary-panel-(?:close|reopen|hidden)/);
 assert.match(css, /group\/section-toggle[\s\S]*opacity: 1 !important/);
 assert.match(css, /\[role="dialog"\][\s\S]*background: rgba\(216, 237, 199, \.68\)[\s\S]*backdrop-filter: blur\(16px\)/);
