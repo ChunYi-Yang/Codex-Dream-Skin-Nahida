@@ -147,6 +147,22 @@ assert.doesNotMatch(css, /data-pip-obstacle="thread-footer"[\s\S]*40cqw/);
 assert.match(css, /data-above-composer-portal[\s\S]*bg-gradient-to-t[\s\S]*display: none/);
 assert.match(css, /data-above-composer-portal[\s\S]*bg-token-input-background[\s\S]*background: var\(--dream-panel-glass\)/);
 assert.match(css, /data-codex-composer-root[\s\S]*bg-token-input-background[\s\S]*background: var\(--dream-panel-glass\)/);
+const semanticThreadGradient = css.indexOf(
+  'html.codex-dream-skin main.main-surface [class~="sticky"]:has(\n' +
+  '  [data-codex-composer-root][data-composer-placement="thread"]\n' +
+  ') > [class~="bg-gradient-to-t"]',
+);
+assert.ok(semanticThreadGradient >= 0, "semantic thread composer gradient is not themed");
+assert.match(css.slice(semanticThreadGradient, semanticThreadGradient + 420), /display: none !important/);
+const queuedMessageSurface = css.indexOf(
+  'html.codex-dream-skin [data-above-composer-portal]\n' +
+  '  [class~="bg-background-primary-soft/70"]',
+);
+assert.ok(queuedMessageSurface >= 0, "queued message surface is not themed");
+assert.match(
+  css.slice(queuedMessageSurface, queuedMessageSurface + 520),
+  /background: var\(--dream-panel-glass\)[\s\S]*border-color: rgba\(103, 157, 69, \.34\)/,
+);
 assert.match(css, /data-codex-composer-root[\s\S]*data-composer-surface-variant[\s\S]*background: var\(--dream-panel-glass\)[\s\S]*border-color: rgba\(103, 157, 69, \.34\)/);
 assert.match(
   css,
