@@ -39,6 +39,7 @@
 
 ### Nahida theme
 
+- Matched queued follow-up rows by their semantic action structure even when Codex renders them outside the above-composer portal, and raised the surface to a stable 90% leaf green so bright artwork cannot wash it back to white.
 - Removed the current semantic thread composer's white footer gradient, restoring an uninterrupted themed background around the input surface.
 - Retinted queued follow-up rows and the current `bg-primary-solid` composer action to Nahida green glass, including a white stop/send icon instead of the native black button.
 - Matched the current semantic home composer layers, including the project/local/branch utility bar and the inner layout surface, to the visible green glass treatment instead of leaving the native white layers over the input.

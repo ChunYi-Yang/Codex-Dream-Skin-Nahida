@@ -1235,6 +1235,18 @@ html.codex-dream-skin [data-above-composer-portal] [class~="bg-gradient-to-t"] {
   display: none !important;
 }
 
+html.codex-dream-skin [class~="bg-background-primary-soft/70"]:has(
+  [data-markdown-copy="exclude"][class~="cursor-interaction"]
+) {
+  background: rgba(200, 229, 177, .90) !important;
+  background-color: rgba(200, 229, 177, .90) !important;
+  background-image: none !important;
+  border-color: rgba(103, 157, 69, .34) !important;
+  color: var(--dream-text) !important;
+  box-shadow: inset 0 0 0 1px rgba(103, 157, 69, .24) !important;
+  backdrop-filter: blur(10px) saturate(1.04) !important;
+}
+
 html.codex-dream-skin [data-above-composer-portal]
   [class*="bg-token-input-background"] {
   border-color: rgba(103, 157, 69, .34) !important;
