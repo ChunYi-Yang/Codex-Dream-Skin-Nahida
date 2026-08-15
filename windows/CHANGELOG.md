@@ -39,6 +39,8 @@
 
 ### Nahida theme
 
+- Removed the current semantic thread composer's white footer gradient, restoring an uninterrupted themed background around the input surface.
+- Retinted queued follow-up rows and the current `bg-primary-solid` composer action to Nahida green glass, including a white stop/send icon instead of the native black button.
 - Matched the current semantic home composer layers, including the project/local/branch utility bar and the inner layout surface, to the visible green glass treatment instead of leaving the native white layers over the input.
 - Restored the Nahida settings glass on current Codex `p-panel` viewports and removed the blank header, toolbar, and 46 px frame offset above settings content.
 - Reduced the writing-block prompt-card glass opacity from 30% to 15% after live review, keeping the copyable prompt card themed but much more transparent.

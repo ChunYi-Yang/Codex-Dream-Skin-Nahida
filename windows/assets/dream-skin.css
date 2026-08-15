@@ -1171,6 +1171,12 @@ html.codex-dream-skin main.main-surface [class~="sticky"]:has(.composer-surface-
   display: none !important;
 }
 
+html.codex-dream-skin main.main-surface [class~="sticky"]:has(
+  [data-codex-composer-root][data-composer-placement="thread"]
+) > [class~="bg-gradient-to-t"] {
+  display: none !important;
+}
+
 html.codex-dream-skin .composer-surface-chrome::before {
   content: "";
   position: absolute;
@@ -1198,6 +1204,20 @@ html.codex-dream-skin button[class~="bg-token-foreground"] {
   box-shadow: 0 5px 12px rgba(65, 125, 52, .24) !important;
 }
 
+html.codex-dream-skin [data-codex-composer-root]
+  button[class~="bg-primary-solid"] {
+  background: var(--dream-accent) !important;
+  background-color: var(--dream-accent) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+  box-shadow: 0 5px 12px rgba(65, 125, 52, .24) !important;
+}
+
+html.codex-dream-skin [data-codex-composer-root]
+  button[class~="bg-primary-solid"] svg {
+  color: #fff !important;
+}
+
 html.codex-dream-skin button[class~="group/section-toggle"] svg {
   opacity: 1 !important;
   color: #3f7444 !important;
@@ -1220,6 +1240,19 @@ html.codex-dream-skin [data-above-composer-portal]
   border-color: rgba(103, 157, 69, .34) !important;
   background: var(--dream-panel-glass) !important;
   box-shadow: inset 0 0 0 1px rgba(103, 157, 69, .34) !important;
+  backdrop-filter: blur(10px) saturate(1.04) !important;
+}
+
+html.codex-dream-skin [data-above-composer-portal]
+  [class~="bg-background-primary-soft/70"],
+html.codex-dream-skin [data-above-composer-portal]
+  [class~="bg-primary-soft"] {
+  background: var(--dream-panel-glass) !important;
+  background-color: var(--dream-panel-glass) !important;
+  background-image: none !important;
+  border-color: rgba(103, 157, 69, .34) !important;
+  color: var(--dream-text) !important;
+  box-shadow: inset 0 0 0 1px rgba(103, 157, 69, .24) !important;
   backdrop-filter: blur(10px) saturate(1.04) !important;
 }
 
