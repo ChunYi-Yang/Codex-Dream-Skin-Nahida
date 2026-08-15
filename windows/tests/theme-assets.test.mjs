@@ -155,10 +155,11 @@ const semanticThreadGradient = css.indexOf(
 assert.ok(semanticThreadGradient >= 0, "semantic thread composer gradient is not themed");
 assert.match(css.slice(semanticThreadGradient, semanticThreadGradient + 420), /display: none !important/);
 const queuedMessageSurface = css.indexOf(
-  'html.codex-dream-skin [data-above-composer-portal]\n' +
-  '  [class~="bg-background-primary-soft/70"]',
+  'html.codex-dream-skin [class~="bg-background-primary-soft/70"]:has(\n' +
+  '  [data-markdown-copy="exclude"][class~="cursor-interaction"]\n' +
+  ')',
 );
-assert.ok(queuedMessageSurface >= 0, "queued message surface is not themed");
+assert.ok(queuedMessageSurface >= 0, "semantic queued message surface is not themed");
 assert.match(
   css.slice(queuedMessageSurface, queuedMessageSurface + 520),
   /background: rgba\(200, 229, 177, \.90\)[\s\S]*background-color: rgba\(200, 229, 177, \.90\)[\s\S]*border-color: rgba\(103, 157, 69, \.34\)/,
