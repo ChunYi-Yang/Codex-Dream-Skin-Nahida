@@ -1177,6 +1177,12 @@ html.codex-dream-skin main.main-surface [class~="sticky"]:has(
   display: none !important;
 }
 
+/* Newer Codex builds render the footer gradient beside the composer root. */
+html.codex-dream-skin .thread-scroll-container
+  [class~="sticky"] > [class~="bg-gradient-to-t"] {
+  display: none !important;
+}
+
 html.codex-dream-skin .composer-surface-chrome::before {
   content: "";
   position: absolute;
