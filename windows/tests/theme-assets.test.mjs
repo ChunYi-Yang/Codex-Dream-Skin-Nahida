@@ -147,6 +147,11 @@ assert.doesNotMatch(css, /data-pip-obstacle="thread-footer"[\s\S]*40cqw/);
 assert.match(css, /data-above-composer-portal[\s\S]*bg-gradient-to-t[\s\S]*display: none/);
 assert.match(css, /data-above-composer-portal[\s\S]*bg-token-input-background[\s\S]*background: var\(--dream-panel-glass\)/);
 assert.match(css, /data-codex-composer-root[\s\S]*bg-token-input-background[\s\S]*background: var\(--dream-panel-glass\)/);
+assert.match(
+  css,
+  /html\.codex-dream-skin \.thread-scroll-container[\s\S]*\[class~=\"sticky\"] > \[class~=\"bg-gradient-to-t\"][\s\S]*display: none !important/,
+  "thread composer footer must not restore Codex's opaque gradient around the input surface",
+);
 const semanticThreadGradient = css.indexOf(
   'html.codex-dream-skin main.main-surface [class~="sticky"]:has(\n' +
   '  [data-codex-composer-root][data-composer-placement="thread"]\n' +
