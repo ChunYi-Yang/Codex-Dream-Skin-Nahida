@@ -127,7 +127,7 @@ assert.match(css, /data-settings-panel-slug="voice"[\s\S]*input:not[\s\S]*rgba\(
 assert.match(css, /#personal-agents-editor[\s\S]*rgba\(235, 245, 226, \.15\)/);
 assert.match(css, /data-settings-panel-slug="keyboard-shortcuts"[\s\S]*div\.sticky:has\(input\[type="text"\]\)[\s\S]*background: transparent[\s\S]*border: 0[\s\S]*::after[\s\S]*display: none[\s\S]*div:has\(> input\[type="text"\]\)[\s\S]*rgba\(247, 250, 239, \.84\)/);
 assert.match(css, /div\.sticky:has\(#scheduled-page-search\)[\s\S]*div\.sticky:has\(#plugins-page-search\)[\s\S]*background: transparent[\s\S]*border: 0[\s\S]*#scheduled-page-search\)::after[\s\S]*#plugins-page-search\)::after[\s\S]*display: none/);
-assert.match(css, /div:has\(> #scheduled-page-search\)[\s\S]*div:has\(> #plugins-page-search\)[\s\S]*rgba\(247, 250, 239, \.84\)[\s\S]*rgba\(103, 157, 69, \.38\)/);
+assert.match(css, /div:has\(> #scheduled-page-search\)[\s\S]*div:has\(> #plugins-page-search\)[\s\S]*var\(--dream-panel-glass\)[\s\S]*rgba\(103, 157, 69, \.38\)/);
 assert.match(css, /\[class~="sticky"\]:has\(\.composer-surface-chrome\)[\s\S]*padding-bottom: 12px/);
 assert.match(css, /bg-gradient-to-t[\s\S]*display: none/);
 assert.match(css, /header\.app-header-tint[\s\S]*background: var\(--dream-panel-glass\)/);
@@ -152,7 +152,7 @@ assert.match(
 );
 assert.match(
   css,
-  /data-settings-panel-slug="appearance"[\s\S]*data-testid="theme-preview" diffs-container > \*[\s\S]*background: rgba\(235, 245, 226, \.15\)/,
+  /data-settings-panel-slug="appearance"[\s\S]*data-testid="theme-preview"[\s\S]*diffs-container > \*[\s\S]*background: rgba\(235, 245, 226, \.15\)/,
   "appearance previews must not restore an opaque white code surface",
 );
 assert.match(
@@ -243,5 +243,16 @@ assert.match(css, /data-composer-overlay-floating-ui[\s\S]*background: rgba\(216
 assert.match(css, /data-radix-popper-content-wrapper[\s\S]*data-slot\^="thread-summary-panel-"[\s\S]*background: transparent/);
 assert.match(css, /bg-token-dropdown-background[\s\S]*data-slot\^="thread-summary-panel-"[\s\S]*rgba\(216, 237, 199, \.60\)[\s\S]*backdrop-filter: blur\(16px\)/);
 assert.match(injector, /settings: box\(document\.querySelector\('\.dream-settings-surface'\)\)[\s\S]*pageSearch: box\(document\.querySelector\('#scheduled-page-search, #plugins-page-search'\)\)[\s\S]*navPage: box\(navPage\)[\s\S]*const focusReady = Boolean\([\s\S]*result\.composer \|\| result\.settings \|\| result\.pageSearch \|\| result\.navPage[\s\S]*result\.homeVisible && \(result\.hero \|\| result\.homeFallback\)[\s\S]*result\.pass =[\s\S]*focusReady/);
+
+assert.match(
+  css,
+  /bg-surface-elevated-secondary[\s\S]*data-slot\^="thread-summary-panel-"[\s\S]*--color-background-panel: rgba\(216, 237, 199, \.68\)[\s\S]*background: rgba\(216, 237, 199, \.68\)[\s\S]*backdrop-filter: blur\(16px\)/,
+  "inline environment information must not expose Codex's opaque white surface",
+);
+assert.match(
+  css,
+  /aside\[data-app-shell-focus-area="right-panel"\][\s\S]*bg-primary-soft-alpha[\s\S]*--color-background-panel: rgba\(235, 245, 226, \.15\)[\s\S]*bg-surface[\s\S]*background: rgba\(235, 245, 226, \.15\)[\s\S]*bg-primary-soft-alpha[\s\S]*background: rgba\(216, 237, 199, \.42\)/,
+  "secondary action panel must expose the Nahida artwork through its surface and option layers",
+);
 
 console.log("PASS: Windows Nahida theme assets are complete, bounded, and structurally valid.");
