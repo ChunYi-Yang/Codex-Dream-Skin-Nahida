@@ -14,7 +14,7 @@
   "images": {
     "background": "nahida-background.jpg",
     "sidebar": "nahida-sidebar.jpg",
-    "rightPanel": "nahida-right-panel.png",
+    "rightPanel": "nahida-toggle-panel.png",
     "portrait": "nahida-portrait.jpg",
     "decorations": "nahida-decorations.png",
     "scene": "nahida-scene.png"

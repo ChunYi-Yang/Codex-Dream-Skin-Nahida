@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -45,7 +46,7 @@ const expected = {
   hero: [2570, 1280, false],
   background: [1754, 1240, false],
   sidebar: [640, 1120, false],
-  rightPanel: [600, 1000, true],
+  rightPanel: [600, 1000, false],
   portrait: [760, 920, false],
   decorations: [1024, 512, true],
   scene: [1024, 1024, true],
@@ -66,6 +67,14 @@ for (const [slot, filename] of Object.entries(files)) {
   );
 }
 
+assert.equal(theme.images.rightPanel, "nahida-toggle-panel.png");
+const togglePanel = await fs.readFile(path.join(assets, theme.images.rightPanel));
+assert.equal(
+  createHash("sha256").update(togglePanel).digest("hex"),
+  "f1efc3b6b939f05877d6ba60a2b4f30648328698879b23cb6fa7dac68e31b22c",
+  "the Toggle side panel must use the user-supplied Nahida artwork",
+);
+
 assert.match(css, /\.dream-settings-surface[\s\S]*var\(--dream-background-art\)/);
 assert.match(css, /\.composer-surface-chrome[\s\S]*background: var\(--dream-panel-glass\)/);
 assert.match(css, /\.dream-home \.dream-home-hero-surface[\s\S]*width: min\(980px[\s\S]*background: var\(--dream-art\)/);
@@ -85,7 +94,17 @@ assert.match(
 assert.match(css, /main\.main-surface\.dream-home-shell[\s\S]*app-shell-main-content-frame[\s\S]*overflow: hidden/);
 assert.match(css, /main\.main-surface\.dream-home-shell \.dream-home-composer-surface[\s\S]*bottom: 18px/);
 assert.match(css, /dream-home-hero-surface \[data-feature="game-source"\][\s\S]*left: 40px[\s\S]*transform: translateY\(-50%\)/);
-assert.match(css, /dream-home-composer-surface[\s\S]*gap: 10px[\s\S]*width: min\(980px/);
+assert.match(css, /dream-home-composer-surface[\s\S]*gap: 0[\s\S]*width: min\(980px/);
+assert.match(
+  css,
+  /data-composer-rail\]\[data-composer-rail-placement="above"\][\s\S]*margin: 0 !important[\s\S]*rgba\(200, 229, 177, \.82\)/,
+  "the home utility rail must connect directly to the composer without a white gap",
+);
+assert.match(
+  css,
+  /data-composer-rail-item\]\[data-composer-rail-variant="controls"\][\s\S]*background: transparent !important/,
+  "the native grey rail canvas must reveal the joined green surface",
+);
 assert.match(css, /horizontal-scroll-fade-mask \.group\\\/project-selector\)[\s\S]*display: inline-flex[\s\S]*width: fit-content[\s\S]*min-height: 40px[\s\S]*padding: 6px 12px 6px 96px[\s\S]*border-bottom: 0/);
 assert.match(css, /horizontal-scroll-fade-mask \.group\\\/project-selector\)::before[\s\S]*top: 50%[\s\S]*transform: translateY\(-50%\)/);
 assert.match(css, /horizontal-scroll-fade-mask \.group\\\/project-selector\)[\s\S]*> \.horizontal-scroll-fade-mask[\s\S]*width: auto[\s\S]*overflow: visible/);
@@ -102,6 +121,40 @@ assert.match(css, /aside\[data-app-shell-focus-area="right-panel"\][\s\S]*height
 assert.match(css, /aside\[data-app-shell-focus-area="right-panel"\][\s\S]*bg-token-main-surface[\s\S]*background-color: transparent/);
 assert.match(css, /right-panel[\s\S]*ul:has\(> li > button\[class\*="bg-token-bg-fog"\]\)[\s\S]*gap: 8px/);
 assert.match(css, /right-panel[\s\S]*ul:has\(> li > button\[class\*="bg-token-bg-fog"\]\) > li > button[\s\S]*background: var\(--dream-panel-glass\)[\s\S]*border-radius: 16px/);
+assert.match(
+  css,
+  /html\.codex-dream-skin :where\(\*, \*::before, \*::after\)[\s\S]*border-color: transparent !important[\s\S]*outline-color: transparent !important[\s\S]*box-shadow: none !important/,
+  "all injected skin borders and inset rings must be transparent",
+);
+assert.match(
+  css,
+  /html\.codex-dream-skin\[data-codex-window-type\]\[data-window-type\]\[lang\]\[class\][\s\S]*body \*[\s\S]*border-color: transparent !important[\s\S]*box-shadow: none !important/,
+  "high-specificity utility override must remove native border and ring colors",
+);
+assert.doesNotMatch(
+  css,
+  /:is\(div, section, aside\):has\([\s\S]{0,120}\[data-app-shell-tabs="true"\][\s\S]{0,300}var\(--dream-right-panel-art\)/,
+  "opening the Toggle side panel must not paint its artwork on a main-page ancestor",
+);
+assert.match(
+  css,
+  /aside\[data-app-shell-focus-area="right-panel"\][\s\S]*\[class~="bg-token-main-surface-primary"\][\s\S]*background: transparent !important/,
+  "the Toggle side panel must reveal its assigned artwork instead of a white canvas",
+);
+assert.ok(
+  css.includes('[class*="bg-[var(--app-shell-panel-background"]'),
+  "the current app-shell panel canvas selector must be explicitly cleared",
+);
+assert.match(
+  css,
+  /aside\[data-app-shell-focus-area="right-panel"\][\s\S]*border: 0 !important[\s\S]*box-shadow: none !important/,
+  "the Toggle side panel anchor must remain borderless",
+);
+assert.match(
+  css,
+  /aside\[data-app-shell-focus-area="right-panel"\][\s\S]*\[class~="bg-primary-soft-alpha"\][\s\S]*background: rgba\(216, 237, 199, \.38\)/,
+  "the Toggle side panel action rows must remain readable green glass",
+);
 assert.ok(css.includes(
   'aside[data-app-shell-focus-area="right-panel"]:has(\n' +
   '    [data-app-shell-tab-panel-controller="right"][data-tab-id="diff"]\n' +
@@ -127,9 +180,14 @@ assert.match(css, /data-settings-panel-slug="voice"[\s\S]*input:not[\s\S]*rgba\(
 assert.match(css, /#personal-agents-editor[\s\S]*rgba\(235, 245, 226, \.15\)/);
 assert.match(css, /data-settings-panel-slug="keyboard-shortcuts"[\s\S]*div\.sticky:has\(input\[type="text"\]\)[\s\S]*background: transparent[\s\S]*border: 0[\s\S]*::after[\s\S]*display: none[\s\S]*div:has\(> input\[type="text"\]\)[\s\S]*rgba\(247, 250, 239, \.84\)/);
 assert.match(css, /div\.sticky:has\(#scheduled-page-search\)[\s\S]*div\.sticky:has\(#plugins-page-search\)[\s\S]*background: transparent[\s\S]*border: 0[\s\S]*#scheduled-page-search\)::after[\s\S]*#plugins-page-search\)::after[\s\S]*display: none/);
-assert.match(css, /div:has\(> #scheduled-page-search\)[\s\S]*div:has\(> #plugins-page-search\)[\s\S]*var\(--dream-panel-glass\)[\s\S]*rgba\(103, 157, 69, \.38\)/);
+assert.match(css, /div:has\(> #scheduled-page-search\)[\s\S]*div:has\(> #plugins-page-search\)[\s\S]*rgba\(247, 250, 239, \.84\)[\s\S]*rgba\(103, 157, 69, \.38\)/);
 assert.match(css, /\[class~="sticky"\]:has\(\.composer-surface-chrome\)[\s\S]*padding-bottom: 12px/);
 assert.match(css, /bg-gradient-to-t[\s\S]*display: none/);
+assert.match(
+  css,
+  /\.thread-scroll-container[\s\S]*--thread-content-max-width: min\(1200px, calc\(100cqw - 72px\)\)/,
+  "thread content and its composer must use the requested wider layout",
+);
 assert.match(css, /header\.app-header-tint[\s\S]*background: var\(--dream-panel-glass\)/);
 assert.match(css, /header\.app-header-tint[\s\S]*width: clamp\(520px, 40%, 760px\)/);
 assert.match(css, /header\.app-header-tint[\s\S]*margin-inline: auto/);
@@ -140,26 +198,6 @@ assert.match(css, /main\.main-surface:not\(\.dream-home-shell\):not\(\.dream-set
 assert.match(css, /main\.main-surface:is\(\.dream-home-shell, \.dream-settings-shell\)[\s\S]*app-shell-main-content-frame[\s\S]*border-top: 0[\s\S]*background: transparent/);
 assert.match(css, /main\.main-surface\.dream-route-shell[\s\S]*app-shell-main-content-frame[\s\S]*border-top: 0[\s\S]*background: transparent[\s\S]*box-shadow: none/);
 assert.match(css, /main\.main-surface\.dream-route-shell[\s\S]*\[class\*="bg-token-main-surface"\][\s\S]*background-color: rgba\(235, 245, 226, \.05\)[\s\S]*backdrop-filter: none/);
-assert.match(
-  css,
-  /main\.main-surface\.dream-route-shell \{[\s\S]*--color-background-panel: rgba\(235, 245, 226, \.15\)[\s\S]*--color-token-main-surface-primary: rgba\(235, 245, 226, \.15\)/,
-  "route pages must replace native white surface variables with the transparent Nahida glass",
-);
-assert.match(
-  css,
-  /main\.main-surface\.dream-route-shell[\s\S]*\[class\*="bg-\["\][\s\S]*background: rgba\(235, 245, 226, \.15\)/,
-  "route pages must also cover arbitrary utility backgrounds used by archived chats and Pull Requests",
-);
-assert.match(
-  css,
-  /data-settings-panel-slug="appearance"[\s\S]*data-testid="theme-preview"[\s\S]*diffs-container > \*[\s\S]*background: rgba\(235, 245, 226, \.15\)/,
-  "appearance previews must not restore an opaque white code surface",
-);
-assert.match(
-  css,
-  /div:has\(> #scheduled-page-search\)[\s\S]*div:has\(> #plugins-page-search\)[\s\S]*background: var\(--dream-panel-glass\)/,
-  "plugin and scheduled search surfaces must use the same translucent glass as other controls",
-);
 assert.match(css, /main\.main-surface\.dream-settings-shell[\s\S]*--app-shell-main-content-frame-top-offset: 0px/);
 assert.match(css, /main\.main-surface\.dream-settings-shell[\s\S]*app-shell-main-content-frame[\s\S]*margin-top: 0/);
 assert.match(css, /main\.main-surface\.dream-settings-shell[\s\S]*:has\(> div\.relative\.flex\.min-h-0\.flex-1[\s\S]*dream-settings-surface[\s\S]*margin-top: 0[\s\S]*height: 100%/);
@@ -169,8 +207,8 @@ assert.match(css, /data-above-composer-portal[\s\S]*bg-token-input-background[\s
 assert.match(css, /data-codex-composer-root[\s\S]*bg-token-input-background[\s\S]*background: var\(--dream-panel-glass\)/);
 assert.match(
   css,
-  /html\.codex-dream-skin \.thread-scroll-container[\s\S]*\[class~=\"sticky\"] > \[class~=\"bg-gradient-to-t\"][\s\S]*display: none !important/,
-  "thread composer footer must not restore Codex's opaque gradient around the input surface",
+  /html\.codex-dream-skin \.thread-scroll-container[\s\S]*\[class~="sticky"\] > \[class~="bg-gradient-to-t"\][\s\S]*display: none !important/,
+  "the thread composer footer must not restore a white strip above the green composer",
 );
 const semanticThreadGradient = css.indexOf(
   'html.codex-dream-skin main.main-surface [class~="sticky"]:has(\n' +
@@ -198,10 +236,7 @@ assert.match(
   css,
   /data-composer-placement="home"[\s\S]*data-composer-surface-variant[\s\S]*> \[data-composer-layout\][\s\S]*background: transparent[\s\S]*backdrop-filter: none/,
 );
-assert.match(
-  css,
-  /data-composer-home-utility-bar-position[\s\S]*data-composer-placement="home"[\s\S]*background: rgba\(200, 229, 177, \.82\)[\s\S]*border: 1px solid rgba\(96, 153, 65, \.55\)/,
-);
+assert.match(css, /data-composer-rail-item[\s\S]*data-composer-rail-variant="controls"[\s\S]*background: transparent/);
 assert.match(css, /thread-scroll-container \{[\s\S]*--color-token-main-surface-primary: transparent[\s\S]*--color-token-bg-primary: transparent/);
 assert.match(css, /thread-scroll-container[\s\S]*data-content-search-unit-key\$=":assistant"[\s\S]*\[class\*="bg-white"\][\s\S]*\[class\*="bg-\[\"\][\s\S]*background: transparent/);
 assert.match(css, /thread-scroll-container[\s\S]*data-content-search-unit-key\$=":assistant"[\s\S]*\[class\*="rounded"\]\[class\*="bg-token-main-surface"\][\s\S]*background: transparent[\s\S]*box-shadow: none/);
@@ -223,7 +258,36 @@ assert.doesNotMatch(assistantRoleOutputCss, /rgba\(216, 237, 199, \.42\)/);
 assert.match(css, /data-oai-writing-block-surface\]\[data-markdown-copy="code-block"\][\s\S]*--oai-wb-surface-primary: rgba\(216, 237, 199, \.15\)[\s\S]*background: rgba\(216, 237, 199, \.15\)[\s\S]*backdrop-filter: blur\(16px\)/);
 assert.match(css, /data-user-message-bubble[\s\S]*background: rgba\(0, 0, 0, \.04\)/);
 assert.doesNotMatch(css, /data-user-message-bubble[\s\S]{0,260}rgba\(216, 237, 199, \.42\)/);
-assert.match(css, /group\\\/turn-diff-header[\s\S]*background: var\(--dream-panel-glass\)/);
+assert.match(
+  css,
+  /group\\\/turn-diff-header[\s\S]*background: transparent !important[\s\S]*backdrop-filter: none !important/,
+  "changed-file cards must reveal the task wallpaper instead of adding glass",
+);
+assert.match(
+  css,
+  /text-size-chat\.text-secondary > button:has\(\.tabular-nums\)[\s\S]*background: transparent !important/,
+  "duration disclosures at the bottom of turns must remain transparent",
+);
+assert.match(
+  css,
+  /\[class~="group\/activity-header"\][\s\S]*\[class~="group\/activity-header"\] > button[\s\S]*background: transparent !important/,
+  "agent activity labels and their expansion buttons must not paint text backplates",
+);
+assert.match(
+  css,
+  /\[class~="group\/turn-diff-header"\] button[\s\S]*\[class~="group\/turn-diff-file-row"\] > button[\s\S]*background: transparent !important/,
+  "changed-file headers and rows must remain transparent",
+);
+assert.match(
+  css,
+  /\[data-in-progress-fixed-content\] \[class~="bg-background-primary-soft\/70"\][\s\S]*\[data-in-progress-fixed-content\] button[\s\S]*backdrop-filter: none !important/,
+  "the fixed changed-file summary must not add a pill or blur behind its text",
+);
+assert.match(
+  css,
+  /\[data-thread-user-message-navigation-item-id\][\s\S]*background: transparent !important[\s\S]*backdrop-filter: none !important/,
+  "the floating user-message navigation buttons must not merge into a green backplate",
+);
 assert.match(css, /\.composer-surface-chrome[\s\S]*box-shadow: inset 0 0 0 1px/);
 const semanticComposerAction = css.indexOf(
   'html.codex-dream-skin [data-codex-composer-root]\n' +
@@ -242,17 +306,11 @@ assert.match(css, /role="menu"[\s\S]*role="listbox"[\s\S]*background: rgba\(216,
 assert.match(css, /data-composer-overlay-floating-ui[\s\S]*background: rgba\(216, 237, 199, \.68\)[\s\S]*bg-token-dropdown-background[\s\S]*background: rgba\(216, 237, 199, \.42\)/);
 assert.match(css, /data-radix-popper-content-wrapper[\s\S]*data-slot\^="thread-summary-panel-"[\s\S]*background: transparent/);
 assert.match(css, /bg-token-dropdown-background[\s\S]*data-slot\^="thread-summary-panel-"[\s\S]*rgba\(216, 237, 199, \.60\)[\s\S]*backdrop-filter: blur\(16px\)/);
+assert.match(
+  css,
+  /input\[placeholder\*="archived" i\][\s\S]*background: var\(--dream-panel-glass\)[\s\S]*border-color: rgba\(103, 157, 69, \.22\)/,
+  "archived chat filters must not sit on an opaque white toolbar",
+);
 assert.match(injector, /settings: box\(document\.querySelector\('\.dream-settings-surface'\)\)[\s\S]*pageSearch: box\(document\.querySelector\('#scheduled-page-search, #plugins-page-search'\)\)[\s\S]*navPage: box\(navPage\)[\s\S]*const focusReady = Boolean\([\s\S]*result\.composer \|\| result\.settings \|\| result\.pageSearch \|\| result\.navPage[\s\S]*result\.homeVisible && \(result\.hero \|\| result\.homeFallback\)[\s\S]*result\.pass =[\s\S]*focusReady/);
-
-assert.match(
-  css,
-  /bg-surface-elevated-secondary[\s\S]*data-slot\^="thread-summary-panel-"[\s\S]*--color-background-panel: rgba\(216, 237, 199, \.68\)[\s\S]*background: rgba\(216, 237, 199, \.68\)[\s\S]*backdrop-filter: blur\(16px\)/,
-  "inline environment information must not expose Codex's opaque white surface",
-);
-assert.match(
-  css,
-  /aside\[data-app-shell-focus-area="right-panel"\][\s\S]*bg-primary-soft-alpha[\s\S]*--color-background-panel: rgba\(235, 245, 226, \.15\)[\s\S]*bg-surface[\s\S]*background: rgba\(235, 245, 226, \.15\)[\s\S]*bg-primary-soft-alpha[\s\S]*background: rgba\(216, 237, 199, \.42\)/,
-  "secondary action panel must expose the Nahida artwork through its surface and option layers",
-);
 
 console.log("PASS: Windows Nahida theme assets are complete, bounded, and structurally valid.");

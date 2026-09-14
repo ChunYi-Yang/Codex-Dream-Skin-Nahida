@@ -208,8 +208,14 @@ function Assert-DreamSkinDesktopShapeSupported {
   if ([regex]::IsMatch($Content, "(?m)^[\t ]*\[\[[\t ]*$desktopToken[\t ]*\]\]")) {
     throw 'Refusing to rewrite a config that represents desktop as an array of tables.'
   }
-  if ([regex]::IsMatch($Content, "(?m)^[\t ]*\[\[?[\t ]*$desktopToken[\t ]*\.")) {
-    throw 'Refusing to rewrite nested desktop tables; normalize them to a single [desktop] table first.'
+  # Nested desktop tables are valid TOML and are preserved verbatim. A nested
+  # appearanceTheme table is ambiguous with the scalar key we manage, so keep
+  # rejecting that one shape while allowing unrelated desktop sub-tables.
+  if ([regex]::IsMatch($Content, "(?m)^[\t ]*\[\s*$desktopToken[.]appearanceTheme\s*\]")) {
+    throw 'Refusing to rewrite nested desktop appearanceTheme; normalize it to a scalar key first.'
+  }
+  if ([regex]::IsMatch($Content, '(?m)^\s*\[\s*"desktop"\s*[.]')) {
+    throw 'Refusing to rewrite quoted nested desktop table keys.'
   }
 
   $firstTable = [regex]::Match($Content, '(?m)^[\t ]*\[\[?')

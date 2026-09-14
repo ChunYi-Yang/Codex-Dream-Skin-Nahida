@@ -14,6 +14,10 @@
 
 ## Unreleased
 
+### Visual theme
+
+- Bound the user supplied Nahida artwork to the Toggle side panel without replacing the task-page wallpaper, cleared the token canvas that previously covered it with white, joined the home project controls directly to the composer with no visible gap, made agent activity labels, turn duration, changed-file cards, the fixed changed-file summary, and the user-message navigation rail fully transparent, widened the native composer layout, and removed injected border/ring outlines.
+
 ### Repository
 
 - Focused the repository, CI, release workflow, documentation, and installer inputs on the supported Windows product; removed the retired macOS build dependency and moved software licensing to the repository root.
@@ -22,6 +26,8 @@
 
 ### Runtime recovery
 
+- Skipped theme injection in Codex avatar-overlay renderers, recognized the current hashed main-content surface as a shell fallback, and added a loopback-verified hot-reload helper for applying local theme edits without restarting Codex.
+- Preserved unrelated nested desktop TOML tables while continuing to reject ambiguous appearance-theme tables and quoted nested desktop headers during UTF-8 config updates.
 - Treated a reused or non-inspectable injector PID as stale state instead of aborting startup, so Windows updates can atomically record the new Codex package and watcher without touching an unrelated process.
 - Extended browser-rebuild recovery to 180 seconds and delegated verified recovery when the updated Codex process is still running but has not yet exposed a replacement CDP endpoint; normal app closure still stops without relaunching Codex.
 - Replaced same-version renderer CSS when its content changes, so local fixes apply immediately instead of leaving the previous injected style cached in an open Codex window.

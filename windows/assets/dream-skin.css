@@ -119,6 +119,36 @@ html.codex-dream-skin main.main-surface
   box-shadow: inset 1px 0 rgba(103, 157, 69, .30) !important;
 }
 
+/* Toggle side panel uses the supplied portrait as its only art layer. */
+html.codex-dream-skin main.main-surface
+  aside[data-app-shell-focus-area="right-panel"] {
+  --color-background-panel: transparent !important;
+  --color-token-main-surface-primary: transparent !important;
+  background:
+    linear-gradient(rgba(242, 250, 233, .18), rgba(218, 239, 203, .12)),
+    var(--dream-right-panel-art) center / cover no-repeat !important;
+}
+
+html.codex-dream-skin main.main-surface
+  aside[data-app-shell-focus-area="right-panel"]
+  :is(div, section, aside)[class~="bg-token-main-surface-primary"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+html.codex-dream-skin main.main-surface
+  aside[data-app-shell-focus-area="right-panel"]
+  :is([class~="bg-primary-soft-alpha"], [class~="bg-surface"], [class*="bg-token-bg-fog"]) {
+  --color-background-panel: rgba(216, 237, 199, .38) !important;
+  background: rgba(216, 237, 199, .38) !important;
+  background-color: rgba(216, 237, 199, .38) !important;
+  border-color: rgba(103, 157, 69, .22) !important;
+  box-shadow: inset 0 0 0 1px rgba(233, 246, 220, .16) !important;
+  backdrop-filter: blur(12px) saturate(1.08) !important;
+}
+
 html.codex-dream-skin main.main-surface
   aside[data-app-shell-focus-area="right-panel"]:not(:has(
     [data-app-shell-tab-panel-controller="right"][data-tab-id="diff"]
@@ -357,6 +387,10 @@ html.codex-dream-skin main.main-surface {
   border-radius: 8px 0 0 0 !important;
   box-shadow: inset 0 1px rgba(255, 255, 255, .96), -8px 0 26px rgba(42, 82, 57, .08) !important;
   overflow: clip !important;
+}
+
+html.codex-dream-skin .thread-scroll-container {
+  --thread-content-max-width: min(1200px, calc(100cqw - 72px)) !important;
 }
 
 html.codex-dream-skin main.main-surface::after {
@@ -932,12 +966,40 @@ html.codex-dream-skin main.main-surface.dream-home-shell .dream-home-composer-su
   z-index: 25 !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 10px !important;
+  gap: 0 !important;
   width: min(980px, calc(100% - 160px)) !important;
   max-width: none !important;
   min-height: 0 !important;
   overflow: visible !important;
   transform: translateX(-50%) !important;
+}
+
+/* Join the current home utility rail directly to the composer. Codex now
+   renders this rail as a separate grey surface with a negative margin, which
+   left a visible strip between the project controls and the input. */
+html.codex-dream-skin main.main-surface.dream-home-shell
+  [data-codex-composer-root][data-composer-placement="home"]
+  [data-composer-rail][data-composer-rail-placement="above"] {
+  margin: 0 !important;
+  overflow: hidden !important;
+  border-radius: 16px 16px 0 0 !important;
+  background: rgba(200, 229, 177, .82) !important;
+}
+
+html.codex-dream-skin main.main-surface.dream-home-shell
+  [data-codex-composer-root][data-composer-placement="home"]
+  [data-composer-rail-item][data-composer-rail-variant="controls"] {
+  padding-inline: 12px !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+}
+
+html.codex-dream-skin main.main-surface.dream-home-shell
+  [data-codex-composer-root][data-composer-placement="home"]
+  [data-composer-surface-variant] {
+  border-radius: 0 0 16px 16px !important;
 }
 
 .dream-home .dream-home-hero-surface::before {
@@ -1157,6 +1219,11 @@ html.codex-dream-skin .composer-surface-chrome {
   backdrop-filter: blur(10px) saturate(1.04) !important;
 }
 
+html.codex-dream-skin .thread-scroll-container
+  [class~="sticky"] > [class~="bg-gradient-to-t"] {
+  display: none !important;
+}
+
 html.codex-dream-skin main.main-surface [class~="sticky"]:has(.composer-surface-chrome) {
   padding-bottom: 12px !important;
 }
@@ -1174,12 +1241,6 @@ html.codex-dream-skin main.main-surface [class~="sticky"]:has(.composer-surface-
 html.codex-dream-skin main.main-surface [class~="sticky"]:has(
   [data-codex-composer-root][data-composer-placement="thread"]
 ) > [class~="bg-gradient-to-t"] {
-  display: none !important;
-}
-
-/* Newer Codex builds render the footer gradient beside the composer root. */
-html.codex-dream-skin .thread-scroll-container
-  [class~="sticky"] > [class~="bg-gradient-to-t"] {
   display: none !important;
 }
 
@@ -1464,15 +1525,92 @@ html.codex-dream-skin .thread-scroll-container
 }
 
 html.codex-dream-skin .thread-scroll-container div:has(> .group\/turn-diff-header) {
-  border-color: rgba(103, 157, 69, .34) !important;
-  background: var(--dream-panel-glass) !important;
-  box-shadow: inset 0 0 0 1px rgba(103, 157, 69, .34) !important;
-  backdrop-filter: blur(10px) saturate(1.04) !important;
+  border-color: transparent !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+html.codex-dream-skin .thread-scroll-container div:has(> .group\/turn-diff-header) {
+  border-color: transparent !important;
+  background: transparent !important;
 }
 
 html.codex-dream-skin .thread-scroll-container div:has(> .group\/turn-diff-header) >
   [class~="border-t"] {
-  border-color: rgba(103, 157, 69, .28) !important;
+  border-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Duration disclosures belong to the conversation, so keep their bottom
+   surface transparent instead of applying the generic green button glass. */
+html.codex-dream-skin .thread-scroll-container
+  .text-size-chat.text-secondary > button:has(.tabular-nums) {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Agent activity labels use invisible overlay buttons for expansion. Keep the
+   labels and hit targets, but do not let the generic button tint paint a pill
+   behind commands, image views, file edits, compaction, or thinking status. */
+html.codex-dream-skin .thread-scroll-container
+  :is(
+    [class~="group/activity-header"],
+    [class~="group/activity-header"] > button,
+    [class~="group/turn-diff-header"] button,
+    [class~="group/turn-diff-file-row"] > button,
+    button.text-size-chat:has(.tabular-nums),
+    [data-in-progress-fixed-content] [class~="bg-background-primary-soft/70"],
+    [data-in-progress-fixed-content] button
+  ),
+html.codex-dream-skin .thread-scroll-container
+  :is(
+    [class~="group/activity-header"],
+    [class~="group/activity-header"] > button,
+    [class~="group/turn-diff-header"] button,
+    [class~="group/turn-diff-file-row"] > button,
+    button.text-size-chat:has(.tabular-nums),
+    [data-in-progress-fixed-content] [class~="bg-background-primary-soft/70"],
+    [data-in-progress-fixed-content] button
+  )::before,
+html.codex-dream-skin .thread-scroll-container
+  :is(
+    [class~="group/activity-header"],
+    [class~="group/activity-header"] > button,
+    [class~="group/turn-diff-header"] button,
+    [class~="group/turn-diff-file-row"] > button,
+    button.text-size-chat:has(.tabular-nums),
+    [data-in-progress-fixed-content] [class~="bg-background-primary-soft/70"],
+    [data-in-progress-fixed-content] button
+  )::after {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+/* The floating user-message rail is a stack of short navigation buttons.
+   Remove the generic button fill so only its small position markers remain. */
+html.codex-dream-skin main.main-surface
+  button[data-thread-user-message-navigation-item-id],
+html.codex-dream-skin main.main-surface
+  button[data-thread-user-message-navigation-item-id]::before,
+html.codex-dream-skin main.main-surface
+  button[data-thread-user-message-navigation-item-id]::after {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
 }
 
 html.codex-dream-skin .dream-summary-panel-surface header {
@@ -1563,6 +1701,104 @@ html.codex-dream-skin ::selection {
   color: #17352b;
 }
 
+/* Codex 26.901 semantic surfaces: keep controls and auxiliary panes in the
+   Nahida palette while leaving their native hit targets untouched. */
+html.codex-dream-skin
+  :is([data-composer-surface-variant], [class*="_ComposerLayoutRoot_"], .composer-surface-chrome) {
+  background: rgba(216, 237, 199, .38) !important;
+  background-color: rgba(216, 237, 199, .38) !important;
+  border-color: rgba(103, 157, 69, .48) !important;
+  box-shadow: inset 0 0 0 1px rgba(233, 246, 220, .22), 0 12px 32px rgba(42, 82, 57, .12) !important;
+}
+
+html.codex-dream-skin
+  :is([data-composer-surface-variant], [class*="_ComposerLayoutRoot_"], .composer-surface-chrome)
+  :is(input, textarea, [contenteditable="true"]) {
+  background: transparent !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html.codex-dream-skin
+  :is([data-composer-surface-variant], [class*="_ComposerLayoutRoot_"], .composer-surface-chrome)
+  button[type="submit"],
+html.codex-dream-skin
+  :is([data-composer-surface-variant], [class*="_ComposerLayoutRoot_"], .composer-surface-chrome)
+  button[aria-label*="发送"],
+html.codex-dream-skin
+  :is([data-composer-surface-variant], [class*="_ComposerLayoutRoot_"], .composer-surface-chrome)
+  button[aria-label*="Send"] {
+  background: var(--dream-accent) !important;
+  background-color: var(--dream-accent) !important;
+  color: #f7ffef !important;
+  border-color: rgba(62, 159, 148, .42) !important;
+}
+
+html.codex-dream-skin
+  :is([data-app-shell-focus-area="right-panel"], [data-radix-popper-content-wrapper])
+  :is([class*="bg-token-main-surface"], [class*="bg-token-bg"], [class*="bg-white"]) {
+  background: rgba(216, 237, 199, .20) !important;
+  background-color: rgba(216, 237, 199, .20) !important;
+  background-image: none !important;
+}
+
+html.codex-dream-skin
+  :is([data-app-shell-focus-area="right-panel"], [data-radix-popper-content-wrapper])
+  :is(button, [role="button"], input, textarea) {
+  border-color: rgba(103, 157, 69, .34) !important;
+}
+
+/* Settings, plug-ins and archive routes use native cards whose default white
+   surfaces otherwise overpower the wallpaper. */
+html.codex-dream-skin main.main-surface
+  :is(button, [role="button"]):not([aria-label*="关闭"]):not([data-testid="home-icon"]) {
+  border-color: rgba(103, 157, 69, .28) !important;
+}
+
+html.codex-dream-skin main.main-surface
+  :is([data-settings-panel-slug], [data-testid="theme-preview"], #scheduled-page-search, #plugins-page-search)
+  ~ *,
+html.codex-dream-skin main.main-surface
+  :is([data-settings-panel-slug], [data-testid="theme-preview"], #scheduled-page-search, #plugins-page-search) {
+  --color-token-main-surface-primary: rgba(235, 245, 226, .15) !important;
+}
+
+html.codex-dream-skin main.main-surface
+  :is(input, textarea, select, [role="combobox"]),
+html.codex-dream-skin main.main-surface
+  :is([data-radix-select-trigger], [data-state="closed"][role="button"]) {
+  background-color: rgba(247, 250, 239, .72) !important;
+  border-color: rgba(103, 157, 69, .38) !important;
+  color: var(--dream-text) !important;
+}
+
+html.codex-dream-skin main.main-surface
+  :is([data-settings-panel-slug], [id*="plugins"], [id*="archiv"], [class*="plugin"], [class*="archive"])
+  :is(button, [role="button"]) {
+  background-color: rgba(216, 237, 199, .58) !important;
+  color: var(--dream-text) !important;
+}
+
+html.codex-dream-skin main.main-surface
+  :is([id*="plugins"], [id*="archiv"], [class*="plugin"], [class*="archive"])
+  :is([class*="bg-white"], [class*="bg-token-main-surface"], [class*="bg-token-bg"], [class*="shadow"]) {
+  background: rgba(247, 250, 239, .24) !important;
+  background-color: rgba(247, 250, 239, .24) !important;
+  border-color: rgba(103, 157, 69, .28) !important;
+  box-shadow: inset 0 0 0 1px rgba(233, 246, 220, .18) !important;
+}
+
+html.codex-dream-skin
+  :is([data-radix-popper-content-wrapper], [role="menu"], [role="listbox"], [role="dialog"])
+  :is(button, [role="option"], [role="menuitem"]):hover,
+html.codex-dream-skin
+  :is([data-radix-popper-content-wrapper], [role="menu"], [role="listbox"], [role="dialog"])
+  :is([data-highlighted], [aria-selected="true"]) {
+  background: rgba(194, 231, 117, .48) !important;
+  color: var(--dream-text) !important;
+}
+
 @media (max-width: 1120px) {
   .dream-portrait,
   .dream-corner-leaf { display: none !important; }
@@ -1585,4 +1821,207 @@ html.codex-dream-skin ::selection {
 
 @media (prefers-reduced-motion: reduce) {
   .dream-motes i { animation: none !important; }
+}
+
+/* Borderless glass pass requested for the refreshed screenshots. Keep the
+   native geometry, fills, and hit targets while removing every visible outline
+   and inset ring from the injected skin. */
+html.codex-dream-skin :where(*, *::before, *::after) {
+  border-color: transparent !important;
+  outline-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Paint only the semantic side-panel anchor. Applying this image to an
+   ancestor selected via :has() also replaced the task page wallpaper whenever
+   the panel opened. */
+html.codex-dream-skin main.main-surface
+  aside[data-app-shell-focus-area="right-panel"] {
+  --color-background-panel: transparent !important;
+  --color-token-main-surface-primary: transparent !important;
+  background:
+    linear-gradient(rgba(242, 250, 233, .12), rgba(218, 239, 203, .08)),
+    var(--dream-right-panel-art) center / cover no-repeat !important;
+}
+
+/* Raise specificity above Codex utility classes so the request is honored
+   even when a native `border-*` or `ring-*` rule is marked `!important`. */
+html.codex-dream-skin[data-codex-window-type][data-window-type][lang][class]
+  body *,
+html.codex-dream-skin[data-codex-window-type][data-window-type][lang][class]
+  body *::before,
+html.codex-dream-skin[data-codex-window-type][data-window-type][lang][class]
+  body *::after {
+  border-color: transparent !important;
+  outline-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* The current Toggle side panel is a token-surface div rather than an aside.
+   Paint the supplied artwork on the outer controller and clear its nested
+   token canvases so the image cannot be covered by a white surface. */
+html.codex-dream-skin main.main-surface
+  aside[data-app-shell-focus-area="right-panel"]
+  :is(div, section, aside)[class*="bg-token-main-surface"],
+html.codex-dream-skin main.main-surface
+  aside[data-app-shell-focus-area="right-panel"]
+  :is(div, section, aside)[class*="bg-token-bg"],
+html.codex-dream-skin main.main-surface
+  aside[data-app-shell-focus-area="right-panel"]
+  :is(div, section, aside)[class~="bg-surface"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+}
+
+html.codex-dream-skin main.main-surface
+  aside[data-app-shell-focus-area="right-panel"] {
+  --color-background-panel: transparent !important;
+  --color-token-main-surface-primary: transparent !important;
+  background:
+    linear-gradient(rgba(242, 250, 233, .12), rgba(218, 239, 203, .08)),
+    var(--dream-right-panel-art) center / cover no-repeat !important;
+}
+
+html.codex-dream-skin main.main-surface
+  aside[data-app-shell-focus-area="right-panel"] >
+  :is(div, section)[class*="bg-token-main-surface"][class*="border-l"] {
+  --color-background-panel: transparent !important;
+  --color-token-main-surface-primary: transparent !important;
+  background:
+    linear-gradient(rgba(242, 250, 233, .12), rgba(218, 239, 203, .08)),
+    var(--dream-right-panel-art) center / cover no-repeat !important;
+}
+
+html.codex-dream-skin
+  :is([data-codex-composer-root], .composer-surface-chrome, [data-composer-surface-variant]) {
+  border-color: transparent !important;
+  outline-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* The current right panel nests a token canvas whose utility class is based on
+   --app-shell-panel-background. Clear that canvas so the portrait painted on
+   the outer panel remains visible. */
+html.codex-dream-skin main.main-surface
+  aside[data-app-shell-focus-area="right-panel"]
+  :is(
+    [class~="bg-surface"],
+    [class*="bg-[var(--app-shell-panel-background"],
+    [class~="bg-surface-elevated-secondary"],
+    [class~="bg-surface-elevated"]
+  ) {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+}
+
+/* The semantic right-panel anchor carries the remaining native inset line in
+   this build; clear it explicitly because the document-level compatibility
+   selector is intentionally low-specificity. */
+html.codex-dream-skin main.main-surface
+  aside[data-app-shell-focus-area="right-panel"] {
+  border: 0 !important;
+  border-color: transparent !important;
+  outline: 0 !important;
+  outline-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html.codex-dream-skin main.main-surface
+  aside[data-app-shell-focus-area="right-panel"]:not(:has(
+    [data-app-shell-tab-panel-controller="right"][data-tab-id="diff"]
+  )),
+html.codex-dream-skin main.main-surface
+  aside[data-app-shell-focus-area="right-panel"]:has(
+    [data-app-shell-tab-panel-controller="right"][data-tab-id="diff"]
+  ) {
+  border: 0 !important;
+  border-left: 0 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html.codex-dream-skin main.main-surface
+  aside[data-app-shell-focus-area="right-panel"]
+  [aria-hidden="true"].pointer-events-none {
+  border: 0 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Keep the requested borderless treatment above panel-specific shadows and
+   utility rules, including the resizer and focus ring pseudo-elements. */
+html.codex-dream-skin[data-codex-window-type][data-window-type][lang][class]
+  body *,
+html.codex-dream-skin[data-codex-window-type][data-window-type][lang][class]
+  body *::before,
+html.codex-dream-skin[data-codex-window-type][data-window-type][lang][class]
+  body *::after {
+  border: 0 !important;
+  border-color: transparent !important;
+  outline: 0 !important;
+  outline-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* New settings, plugins, archive and thread surfaces (Codex 1.1.75+). */
+html.codex-dream-skin main.main-surface
+  :is(button, [role="button"], select, input, textarea) {
+  border-color: rgba(103, 157, 69, .38) !important;
+}
+
+html.codex-dream-skin main.main-surface
+  :is(button, [role="button"], select) {
+  background: rgba(224, 242, 205, .72) !important;
+  color: var(--dream-text) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 248, .16) !important;
+}
+
+html.codex-dream-skin main.main-surface
+  :is(button, [role="button"], select):hover {
+  background: rgba(194, 231, 117, .72) !important;
+}
+
+html.codex-dream-skin main.main-surface
+  :is(input, textarea) {
+  background: rgba(247, 250, 239, .58) !important;
+  color: var(--dream-text) !important;
+}
+
+html.codex-dream-skin main.main-surface
+  :is([class*="border-white"], [class*="border-gray"], [class*="border-token"]) {
+  border-color: rgba(103, 157, 69, .30) !important;
+}
+
+html.codex-dream-skin main.main-surface
+  :is([class*="bg-white"], [class*="bg-token-main-surface"], [class*="bg-token-bg-fog"]) {
+  background-color: rgba(239, 248, 228, .58) !important;
+}
+
+/* Remove the bright white card shells around messages and archive rows. */
+html.codex-dream-skin main.main-surface
+  :is([class*="rounded-xl"], [class*="rounded-lg"]):has(> :is(textarea, input, [contenteditable="true"])) {
+  background: rgba(224, 242, 205, .68) !important;
+  border-color: rgba(103, 157, 69, .40) !important;
+}
+
+html.codex-dream-skin main.main-surface
+  :is(input[placeholder*="archived" i], input[placeholder*="归档" i]) {
+  background: var(--dream-panel-glass) !important;
+  background-color: var(--dream-panel-glass) !important;
+  border-color: rgba(103, 157, 69, .22) !important;
+  color: var(--dream-text) !important;
+  box-shadow: inset 0 0 0 1px rgba(233, 246, 220, .16) !important;
+  backdrop-filter: blur(12px) saturate(1.08) !important;
+}
+
+/* Keep this override last: later compatibility rules must not bring back
+   colored borders or inset rings. */
+html.codex-dream-skin :where(*, *::before, *::after) {
+  border-color: transparent !important;
+  outline-color: transparent !important;
+  box-shadow: none !important;
 }

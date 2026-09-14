@@ -1,5 +1,13 @@
 ((cssText, artDataUrls, theme, version) => {
   const STATE_KEY = "__CODEX_DREAM_SKIN_STATE__";
+  const initialRoute = typeof location !== "undefined"
+    ? String(location.search || "").match(/[?&]initialRoute=([^&]*)/)?.[1] || ""
+    : "";
+  const excludedPetSurface = typeof location !== "undefined" && location.protocol === "app:" && (
+    location.pathname.endsWith("/avatar-overlay-composition-surface.html") ||
+    initialRoute === "/avatar-overlay" || initialRoute.startsWith("/avatar-overlay/")
+  );
+  if (excludedPetSurface) { window.__CODEX_DREAM_SKIN_DISABLED__ = true; return; }
   const STYLE_ID = "codex-dream-skin-style";
   const CHROME_ID = "codex-dream-skin-chrome";
   const HOME_FALLBACK_ID = "codex-dream-home-fallback";
@@ -152,7 +160,8 @@
     const root = document.documentElement;
     if (!root || !document.body) return;
 
-    const shellMain = document.querySelector("main.main-surface, main[data-app-shell-main-surface]");
+    const shellMain = document.querySelector("main.main-surface, main[data-app-shell-main-surface]")
+      ?? document.querySelector("main[class*='_MainContentSurface_']");
     if (!shellMain) {
       clearSkinDom();
       return;
@@ -212,7 +221,8 @@
       'aside.app-shell-left-panel [aria-current="page"], aside.app-shell-left-panel [class~="bg-token-list-hover-background"]',
     )].find((node) => {
       const text = String(node.textContent ?? "").trim();
-      return isVisibleSurface(node) && /插件|Plugins|已安排|Scheduled|拉取请求|Pull Request/i.test(text);
+      return isVisibleSurface(node) &&
+        /插件|Plugins|已安排|Scheduled|已归档(?:的聊天)?|Archived|拉取请求|Pull Request/i.test(text);
     }) ?? null;
     const routePagePresent = Boolean(routePage);
     const pullRequestRoutePresent = Boolean(routePage &&

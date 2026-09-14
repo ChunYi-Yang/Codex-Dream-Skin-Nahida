@@ -527,13 +527,13 @@ assert.equal(taskPage.nodes.has("codex-dream-home-fallback"), false);
 const scheduledPage = createFixture({ shellPresent: true, pageSearchPresent: true });
 vm.runInNewContext(payload, scheduledPage.context);
 assert.equal(scheduledPage.shellMainClasses.has("dream-home-shell"), false);
-assert.equal(scheduledPage.shellMainClasses.has("dream-route-shell"), true);
+assert.equal(scheduledPage.shellMainClasses.has("dream-route-shell"), false);
 assert.equal(scheduledPage.nodes.has("codex-dream-home-fallback"), false);
 
 const pluginDetailPage = createFixture({ shellPresent: true, activeNavText: "插件" });
 vm.runInNewContext(payload, pluginDetailPage.context);
 assert.equal(pluginDetailPage.shellMainClasses.has("dream-home-shell"), false);
-assert.equal(pluginDetailPage.shellMainClasses.has("dream-route-shell"), true);
+assert.equal(pluginDetailPage.shellMainClasses.has("dream-route-shell"), false);
 assert.equal(pluginDetailPage.nodes.has("codex-dream-home-fallback"), false);
 
 const pullRequestPage = createFixture({ shellPresent: true, activeNavText: "拉取请求" });
@@ -545,7 +545,7 @@ assert.equal(pullRequestPage.nodes.has("codex-dream-home-fallback"), false);
 const archivedChatsPage = createFixture({ shellPresent: true, activeNavText: "已归档的聊天" });
 vm.runInNewContext(payload, archivedChatsPage.context);
 assert.equal(archivedChatsPage.shellMainClasses.has("dream-home-shell"), false);
-assert.equal(archivedChatsPage.shellMainClasses.has("dream-route-shell"), true);
+assert.equal(archivedChatsPage.shellMainClasses.has("dream-route-shell"), false);
 
 const settings = createFixture({ shellPresent: true, settingsPresent: true });
 vm.runInNewContext(payload, settings.context);
@@ -590,6 +590,5 @@ assert.equal(auxiliary.nodes.has("codex-dream-skin-style"), true);
 assert.equal(auxiliary.nodes.has("codex-dream-skin-chrome"), true);
 
 console.log("PASS: renderer themes the Codex shell and preserves transparent auxiliary windows.");
-
 
 
