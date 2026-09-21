@@ -313,4 +313,20 @@ assert.match(
 );
 assert.match(injector, /settings: box\(document\.querySelector\('\.dream-settings-surface'\)\)[\s\S]*pageSearch: box\(document\.querySelector\('#scheduled-page-search, #plugins-page-search'\)\)[\s\S]*navPage: box\(navPage\)[\s\S]*const focusReady = Boolean\([\s\S]*result\.composer \|\| result\.settings \|\| result\.pageSearch \|\| result\.navPage[\s\S]*result\.homeVisible && \(result\.hero \|\| result\.homeFallback\)[\s\S]*result\.pass =[\s\S]*focusReady/);
 
+assert.match(
+  css,
+  /main\.main-surface:has\([\s\S]*input\[placeholder\*="归档" i\][\s\S]*\)[\s\S]*\[class\*="bg-token-main-surface"\][\s\S]*:has\([\s\S]*input\[placeholder\*="归档" i\][\s\S]*\)[\s\S]*background: transparent !important/,
+  "the archived chat filter toolbar must reveal the themed wallpaper",
+);
+assert.match(
+  css,
+  /\[class~="bg-surface-elevated-secondary"\]:has\([\s\S]*data-slot="thread-summary-panel-section-actions"[\s\S]*\)[\s\S]*background: rgba\(216, 237, 199, \.78\) !important/,
+  "the environment information card must use the green theme surface",
+);
+assert.match(
+  css,
+  /main\.main-surface\.dream-route-shell[\s\S]*\[class~="bg-surface"\][\s\S]*background: transparent !important[\s\S]*background-color: transparent !important/,
+  "Pull Request content must reveal the task wallpaper instead of a white canvas",
+);
+
 console.log("PASS: Windows Nahida theme assets are complete, bounded, and structurally valid.");
