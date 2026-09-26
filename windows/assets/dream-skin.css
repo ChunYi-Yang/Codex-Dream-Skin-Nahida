@@ -1345,6 +1345,20 @@ html.codex-dream-skin [class~="bg-background-primary-soft/70"]:has(
   backdrop-filter: blur(10px) saturate(1.04) !important;
 }
 
+/* Current queued messages live in a composer rail item. Scope to its queue
+   scroll container; markdown-copy also occurs in unrelated code toolbars. */
+html.codex-dream-skin [data-composer-rail-item]:has(
+  [class~="vertical-scroll-fade-mask"][class~="max-h-[30dvh]"]
+) {
+  background: rgba(200, 229, 177, .90) !important;
+  background-color: rgba(200, 229, 177, .90) !important;
+  background-image: none !important;
+  border-color: rgba(103, 157, 69, .34) !important;
+  color: var(--dream-text) !important;
+  box-shadow: inset 0 0 0 1px rgba(103, 157, 69, .24) !important;
+  backdrop-filter: blur(10px) saturate(1.04) !important;
+}
+
 html.codex-dream-skin [data-above-composer-portal]
   [class*="bg-token-input-background"] {
   border-color: rgba(103, 157, 69, .34) !important;
