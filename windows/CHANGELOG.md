@@ -42,6 +42,7 @@
 
 ### Nahida theme
 
+- Unified Toggle summary section headers and their sticky filler bands to the same green glass surface, removing the remaining white strips.
 - Restored the archived-chat search/filter strip transparency on the current settings route, including its white fade and filter controls.
 - Removed the thread scroll body's separate white composer fade and made the home project/local/branch rail fit its controls with green glass, preserving the editor surface and other theme regions.
 - Set the Toggle side-panel base glass to 1% without backdrop blur, keep its five actions at 10%, and add darker hover/pressed feedback plus a visible keyboard focus ring.

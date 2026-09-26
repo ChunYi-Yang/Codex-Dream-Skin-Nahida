@@ -1795,6 +1795,21 @@ html.codex-dream-skin [class~="bg-surface-elevated-secondary"]:has(
   backdrop-filter: blur(16px) saturate(1.08) !important;
 }
 
+/* Summary section headers include a native sticky ::before filler. Keep the
+   filler and the header on the same green surface so no white bands appear. */
+html.codex-dream-skin :is(
+  .group\/summary-panel,
+  [class*="group\/summary-panel"]
+) header:is(.bg-surface-elevated-secondary, [class*="bg-surface-elevated-secondary"]),
+html.codex-dream-skin :is(
+  .group\/summary-panel,
+  [class*="group\/summary-panel"]
+) header:is(.bg-surface-elevated-secondary, [class*="bg-surface-elevated-secondary"])::before {
+  background: rgba(216, 237, 199, .78) !important;
+  background-color: rgba(216, 237, 199, .78) !important;
+  background-image: none !important;
+}
+
 /* Toggle side panel: the app-shell pane frame and its semantic surfaces are
    separate from the outer aside. Keep the artwork on the frame and give all
    white native strips one consistent Nahida green glass color. */
