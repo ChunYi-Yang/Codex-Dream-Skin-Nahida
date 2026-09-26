@@ -12,6 +12,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $PortExplicit = $PSBoundParameters.ContainsKey('Port')
 . (Join-Path $PSScriptRoot 'common-windows.ps1')
+. (Join-Path $PSScriptRoot 'theme-windows.ps1')
+. (Join-Path $PSScriptRoot 'localization-windows.ps1')
 
 $operationLock = Enter-DreamSkinOperationLock
 try {
@@ -21,6 +23,9 @@ try {
   Assert-DreamSkinPort -Port $Port
 
   $StateRoot = Join-Path $env:LOCALAPPDATA 'CodexDreamSkin'
+  $language = Resolve-DreamSkinLanguage -StateRoot $StateRoot
+  $themePaths = Get-DreamSkinThemePaths -StateRoot $StateRoot
+  Ensure-DreamSkinManagedDirectory -Path $themePaths.Root -Root $themePaths.Root
   $StatePath = Join-Path $StateRoot 'state.json'
   $state = Read-DreamSkinState -Path $StatePath
   if (-not $PortExplicit -and $null -ne $state -and $state.port) {
@@ -74,13 +79,13 @@ try {
   $forceAuthorized = [bool]$ForceRestart
   if ($shouldCloseCodex -and $PromptRestart) {
     $restartMessage = if ($NoRelaunch) {
-      'Restore will close Codex and remove Dream Skin plus its CDP session. Continue?'
+      Get-DreamSkinText -Key 'RestoreCloseNoRelaunch' -Language $language
     } else {
-      'Restore will close Codex, remove Dream Skin and its CDP session, then reopen the official app. Continue?'
+      Get-DreamSkinText -Key 'RestoreClose' -Language $language
     }
     $forceAuthorized = Confirm-DreamSkinRestart -Message $restartMessage
     if (-not $forceAuthorized) {
-      Write-Host 'Restore was cancelled; no state or configuration was changed.'
+      Write-Host (Get-DreamSkinText -Key 'RestoreCancelled' -Language $language)
       exit 0
     }
   }
@@ -98,6 +103,7 @@ try {
 
   $restoreError = $null
   try {
+    Stop-DreamSkinTrayProcess
     if ($shouldCloseCodex) {
       Stop-DreamSkinCodex -Codex $codex -AllowForce:$forceAuthorized
       if ($portOwnedByCodex -and -not (Wait-DreamSkinPortAvailable -Port $Port -TimeoutSeconds 5)) {
@@ -126,27 +132,17 @@ try {
       Write-Host "Archived the completed pre-install backup at $archivePath"
     }
 
-    if ($RecoverConfigBackup -or $RestoreBaseTheme -or $Uninstall) {
-      $desktop = [Environment]::GetFolderPath('Desktop')
-      $desktopCodex = Join-Path $desktop 'Codex.lnk'
-      $desktopCodexBackup = Join-Path $StateRoot 'desktop-codex.before-dream-skin.lnk'
-      if (Test-Path -LiteralPath $desktopCodexBackup) {
-        Copy-Item -LiteralPath $desktopCodexBackup -Destination $desktopCodex -Force -ErrorAction Stop
-        Write-Host 'Restored the original desktop Codex shortcut.'
-      } else {
-        Write-Warning 'No original desktop Codex shortcut backup was available; the current desktop shortcut was left unchanged.'
-      }
-    }
-
     Remove-Item -LiteralPath $StatePath -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath (Join-Path $StateRoot 'paused') -Force -ErrorAction SilentlyContinue
     if ($Uninstall) {
+      $desktop = [Environment]::GetFolderPath('Desktop')
       $startMenu = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'
-      $startup = Join-Path $startMenu 'Startup'
       @(
         (Join-Path $desktop 'Codex Dream Skin.lnk'),
         (Join-Path $desktop 'Codex Dream Skin - Restore.lnk'),
+        (Join-Path $desktop 'Codex Dream Skin - Tray.lnk'),
         (Join-Path $startMenu 'Codex Dream Skin.lnk'),
-        (Join-Path $startup 'Codex Dream Skin Auto Start.lnk')
+        (Join-Path $startMenu 'Codex Dream Skin - Tray.lnk')
       ) | ForEach-Object { Remove-Item -LiteralPath $_ -Force -ErrorAction SilentlyContinue }
     }
 
@@ -154,13 +150,13 @@ try {
       if ($null -eq $relaunchCodex -or -not (Test-Path -LiteralPath $relaunchCodex.Executable)) {
         throw 'Codex cannot be reopened because its current executable is unavailable.'
       }
-      Start-Process -FilePath $relaunchCodex.Executable | Out-Null
+      $null = Start-DreamSkinCodex -Codex $relaunchCodex
     }
   } catch {
     $restoreError = $_
     if ($shouldCloseCodex -and -not $NoRelaunch -and $null -ne $relaunchCodex -and
       (Get-DreamSkinCodexProcesses -Codex $codex).Count -eq 0 -and (Test-Path -LiteralPath $relaunchCodex.Executable)) {
-      try { Start-Process -FilePath $relaunchCodex.Executable | Out-Null } catch {
+      try { $null = Start-DreamSkinCodex -Codex $relaunchCodex } catch {
         Write-Warning 'Restore failed and Codex could not be reopened automatically.'
       }
     }

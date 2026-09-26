@@ -65,12 +65,10 @@ function buildLaunch(port) {
     "-NoProfile",
     "-NonInteractive",
     "-WindowStyle", "Hidden",
-    "-ExecutionPolicy", "Bypass",
+    "-ExecutionPolicy", "RemoteSigned",
     "-File", startScript,
     "-ProfilePath", profilePath,
-    "-UseLocalTheme",
     "-RestartExisting",
-    "-AllowDeferredVerify",
   ];
   if (port !== null) args.push("-Port", String(port));
   return {
@@ -129,8 +127,9 @@ async function main() {
       initialDelayMs: START_DELAY_MS,
       retryDelaysMs: RETRY_DELAYS_MS,
       restartExisting: launch.args.includes("-RestartExisting"),
-      localTheme: launch.args.includes("-UseLocalTheme"),
-      deferredVerify: launch.args.includes("-AllowDeferredVerify"),
+      explicitProfile: launch.args.includes("-ProfilePath"),
+      legacyFlagsPresent: launch.args.includes("-UseLocalTheme") ||
+        launch.args.includes("-AllowDeferredVerify"),
       logsUseFileHandles: true,
     }));
     return;

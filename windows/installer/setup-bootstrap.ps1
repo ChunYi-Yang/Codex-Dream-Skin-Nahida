@@ -12,7 +12,8 @@ $payloadScripts = Join-Path $payloadRoot 'scripts'
 $commonPath = Join-Path $payloadScripts 'common-windows.ps1'
 $themePath = Join-Path $payloadScripts 'theme-windows.ps1'
 $stateRoot = Join-Path $env:LOCALAPPDATA 'CodexDreamSkin'
-$startupShortcut = Join-Path ([Environment]::GetFolderPath('Startup')) 'Codex Dream Skin.lnk'
+$startupShortcut = Join-Path ([Environment]::GetFolderPath('Startup')) `
+  'Codex Dream Skin Auto Start.lnk'
 
 function Show-DreamSkinBootstrapMessage {
   param(
@@ -128,6 +129,9 @@ try {
     'scripts\image-metadata.mjs',
     'scripts\injector.mjs',
     'scripts\install-dream-skin.ps1',
+    'scripts\launch-dream-skin-at-login.mjs',
+    'scripts\launch-dream-skin.mjs',
+    'scripts\localization-windows.ps1',
     'scripts\restore-dream-skin.ps1',
     'scripts\start-dream-skin.ps1',
     'scripts\theme-windows.ps1',

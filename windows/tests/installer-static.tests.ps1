@@ -98,7 +98,6 @@ if (-not $definition.Contains('#define PersistentPowerShellPath "{win}\System32\
 }
 $persistentCommandEntries = @(
   'Name: "{group}\Codex Dream Skin"',
-  'Name: "{userstartup}\Codex Dream Skin"',
   'Subkey: "Software\Classes\dreamskin\shell\open\command"'
 )
 foreach ($entry in $persistentCommandEntries) {
@@ -112,6 +111,16 @@ foreach ($entry in $persistentCommandEntries) {
   if ($line.Contains('{#PowerShellPath}') -or $line.Contains('{sysnative}')) {
     throw "Persistent command still references sysnative, which 64-bit launchers cannot access: $entry"
   }
+}
+$startupEntry = ([regex]::Match(
+    $definition,
+    '(?m)^.*Name: "\{userstartup\}\\Codex Dream Skin Auto Start".*$'
+  )).Value
+if (-not $startupEntry.Contains('{localappdata}\CodexDreamSkin\engine\runtime\node\node.exe') -or
+  -not $startupEntry.Contains('launch-dream-skin-at-login.mjs') -or
+  $startupEntry.Contains('-LaunchTray') -or
+  $startupEntry.Contains('{#PersistentPowerShellPath}')) {
+  throw 'The installer login shortcut must call the managed Node login launcher directly.'
 }
 
 $uninstallStepIndex = $definition.IndexOf(
@@ -150,9 +159,7 @@ if ($fileSources.Count -ne 6 -or
 }
 
 foreach ($requiredBuilderContract in @(
-  '$licensePath = Join-Path $repositoryRoot ''LICENSE''',
-  '$noticePath = Join-Path $repositoryRoot ''NOTICE.md''',
-  '$publicPresetRoot = Join-Path (Join-Path $windowsRoot ''presets'')',
+  'Release versions differ:',
   'Get-FileHash -LiteralPath $archivePath -Algorithm SHA256',
   'Copy-ZipEntry -Archive $zip -EntryName "$($manifest.nodeEntry)"',
   'Copy-ZipEntry -Archive $zip -EntryName "$($manifest.licenseEntry)"',
@@ -171,6 +178,9 @@ foreach ($requiredBuilderContract in @(
   "'assets\safe-css-validator.mjs'",
   "'scripts\validate-safe-css-file.mjs'",
   "'scripts\apply-community-theme.ps1'",
+  "'scripts\launch-dream-skin-at-login.mjs'",
+  "'scripts\launch-dream-skin.mjs'",
+  "'scripts\localization-windows.ps1'",
   "'LICENSE.txt'",
   "'NOTICE.md'",
   "Write-DreamSkinIcon -Path",
@@ -191,6 +201,9 @@ foreach ($requiredRepairContract in @(
   'assets\safe-css-validator.mjs',
   'scripts\validate-safe-css-file.mjs',
   'scripts\apply-community-theme.ps1',
+  'scripts\launch-dream-skin-at-login.mjs',
+  'scripts\launch-dream-skin.mjs',
+  'scripts\localization-windows.ps1',
   'presets\preset-gothic-void-crusade\theme.json',
   'scripts\start-dream-skin.ps1',
   'scripts\check-update.ps1',
@@ -237,6 +250,16 @@ $securityImportIndex = $common.IndexOf('Import-DreamSkinPowerShellSecurityModule
 $authenticodeIndex = $common.IndexOf('Get-AuthenticodeSignature -LiteralPath $Path -ErrorAction Stop', [System.StringComparison]::Ordinal)
 if ($securityImportIndex -lt 0 -or $authenticodeIndex -le $securityImportIndex) {
   throw 'Node signature validation can call Get-AuthenticodeSignature before the security module is loaded.'
+}
+$unicodeProbeContracts = @(
+  'ConvertFrom-DreamSkinUtf8Base64',
+  'Buffer.from(process.execPath, ''utf8'').toString(''base64'')',
+  'invalid-output', 'path-not-found', 'empty-output', 'probe-exit'
+)
+foreach ($contract in $unicodeProbeContracts) {
+  if (-not $common.Contains($contract)) {
+    throw "Unicode-safe bundled Node path validation contract is missing: $contract"
+  }
 }
 
 $iconGenerator = $builderAst.Find({

@@ -262,6 +262,19 @@ $version = (Read-ReleaseTextFile -Path $versionPath).Trim()
 if ($version -cnotmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') {
   throw "windows/VERSION must contain a three-part semantic version: $version"
 }
+$injectorSource = Read-ReleaseTextFile -Path (Join-Path $windowsRoot 'scripts\injector.mjs')
+$injectorVersionMatch = [regex]::Match(
+  $injectorSource,
+  '(?m)^const SKIN_VERSION = "([^"]+)";$'
+)
+if (-not $injectorVersionMatch.Success -or $injectorVersionMatch.Groups[1].Value -cne $version) {
+  $injectorVersion = if ($injectorVersionMatch.Success) {
+    $injectorVersionMatch.Groups[1].Value
+  } else {
+    '<missing>'
+  }
+  throw "Release versions differ: windows/VERSION=$version; injector.mjs=$injectorVersion"
+}
 $manifest = (Read-ReleaseTextFile -Path $manifestPath) | ConvertFrom-Json
 Assert-NodeRuntimeManifest -Manifest $manifest
 $null = Read-ReleaseTextFile -Path $definitionPath
@@ -399,6 +412,9 @@ try {
     'scripts\image-metadata.mjs',
     'scripts\injector.mjs',
     'scripts\install-dream-skin.ps1',
+    'scripts\launch-dream-skin-at-login.mjs',
+    'scripts\launch-dream-skin.mjs',
+    'scripts\localization-windows.ps1',
     'scripts\restore-dream-skin.ps1',
     'scripts\start-dream-skin.ps1',
     'scripts\theme-windows.ps1',

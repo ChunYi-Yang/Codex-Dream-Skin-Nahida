@@ -13,7 +13,10 @@ if (-not $PSBoundParameters.ContainsKey('Port') -and $state.port) { $Port = [int
 Assert-DreamSkinPort -Port $Port
 
 $node = Get-DreamSkinNodeRuntime
-$injector = [string]$state.injectorPath
+$injector = Join-Path $PSScriptRoot 'injector.mjs'
+if (-not (Test-Path -LiteralPath $injector -PathType Leaf)) {
+  $injector = [string]$state.injectorPath
+}
 if (-not $injector -or -not (Test-Path -LiteralPath $injector -PathType Leaf)) {
   throw 'The active Dream Skin injector path is unavailable.'
 }
