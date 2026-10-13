@@ -1076,20 +1076,20 @@ try {
     throw 'Theme-store migration did not retire the old preset ID while preserving custom themes.'
   }
   $initialTheme = Read-DreamSkinTheme -ThemeDirectory $themePaths.Active
-  if ($initialTheme.Theme.id -cne 'preset-arina-hashimoto' -or
-    $initialTheme.Theme.name -cne '桥本有菜' -or
+  if ($initialTheme.Theme.id -cne 'nahida-dream' -or
+    $initialTheme.Theme.name -cne '纳西妲 · 梦境林庭' -or
     $initialTheme.Theme.appearance -cne 'auto' -or
-    $initialTheme.Theme.art.safeArea -cne 'left' -or
-    $initialTheme.Theme.art.taskMode -cne 'ambient' -or
+    $initialTheme.Theme.art.safeArea -cne 'auto' -or
+    $initialTheme.Theme.art.taskMode -cne 'auto' -or
     [System.IO.Path]::GetExtension($initialTheme.ImagePath) -cne '.jpg') {
-    throw 'Default Windows theme did not seed the Arina Hashimoto wallpaper contract.'
+    throw 'Default Windows theme did not seed the Nahida layered wallpaper contract.'
   }
   $preseededThemes = @(Get-DreamSkinSavedThemes -StateRoot $themeStateRoot)
   $preseededIds = @($preseededThemes | ForEach-Object { $_.Id })
   if ($preseededThemes.Count -lt 2 -or
-    $preseededIds -notcontains 'preset-arina-hashimoto' -or
+    $preseededIds -notcontains 'nahida-dream' -or
     $preseededIds -notcontains 'preset-gothic-void-crusade') {
-    throw 'Windows did not preseed both Arina Hashimoto and Gothic Void Crusade.'
+    throw 'Windows did not preseed both Nahida and Gothic Void Crusade.'
   }
   $gothicSeed = $preseededThemes | Where-Object { $_.Id -ceq 'preset-gothic-void-crusade' } | Select-Object -First 1
   if ($null -eq $gothicSeed -or $gothicSeed.Name -cne 'Gothic Void Crusade') {
@@ -1157,7 +1157,7 @@ try {
   $releaseFixturePresetDirectory = Join-Path $releaseFixturePresets 'preset-gothic-void-crusade'
   $releaseFixtureState = Join-Path $temporaryRoot 'release-theme-state'
   $repositoryRoot = Split-Path -Parent $Root
-  $publicPresetRoot = Join-Path $repositoryRoot 'macos\presets\preset-gothic-void-crusade'
+  $publicPresetRoot = Join-Path $Root 'presets\preset-gothic-void-crusade'
   New-Item -ItemType Directory -Path $releaseFixtureAssets, $releaseFixtureScripts, $releaseFixturePresetDirectory -Force | Out-Null
   Copy-Item -LiteralPath (Join-Path $Root 'VERSION') -Destination $releaseFixtureRoot -Force
   foreach ($releaseAsset in @(
@@ -1636,7 +1636,7 @@ try {
     (Join-Path $Root 'scripts\injector.mjs'), '--check-payload', '--theme-dir', $oversizedTheme)
   if ($oversizedPayloadTest.ExitCode -eq 0) { throw 'Node injector accepted an image over the 10 MB limit.' }
   $safeCssTest = Invoke-DreamSkinNative -FilePath $node.Path -ArgumentList @(
-    (Join-Path $projectRoot 'macos\tests\safe-css-validator.test.mjs'))
+    (Join-Path $PSScriptRoot 'safe-css-validator.test.mjs'))
   if ($safeCssTest.ExitCode -ne 0) { throw 'Safe CSS validator regression test failed.' }
   $rendererTest = Invoke-DreamSkinNative -FilePath $node.Path -ArgumentList @(
     (Join-Path $PSScriptRoot 'renderer-inject.test.mjs'))

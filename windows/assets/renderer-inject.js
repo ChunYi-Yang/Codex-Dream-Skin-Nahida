@@ -1,5 +1,11 @@
 ((cssText, artDataUrls, theme, version) => {
   const STATE_KEY = "__CODEX_DREAM_SKIN_STATE__";
+  const excludedSurface = location.protocol !== "app:" ||
+    /(?:^|\/)avatar-overlay(?:\/|$)|avatar-overlay-composition-surface\.html$/.test(location.pathname);
+  if (excludedSurface) {
+    window[STATE_KEY]?.cleanup?.();
+    return { installed: false, reason: "excluded-surface" };
+  }
   const RUNTIME_MARKER = "data-dream-skin";
   const STYLE_ID = "codex-dream-skin-style";
   const CHROME_ID = "codex-dream-skin-chrome";
@@ -209,7 +215,9 @@
         Number(style.opacity || 1) > 0.01;
     };
     const settingsPresent = Boolean(document.querySelector("[data-settings-panel-slug]"));
-    const pageSearch = document.querySelector("#scheduled-page-search, #plugins-page-search");
+    const pageSearch = document.querySelector(
+      "#scheduled-page-search, #plugins-page-search, #plugins-store-page-search",
+    );
     const pageSearchPresent = isVisibleSurface(pageSearch);
     const routePage = [...document.querySelectorAll(
       'aside.app-shell-left-panel [aria-current="page"], aside.app-shell-left-panel [class~="bg-token-list-hover-background"]',
@@ -230,16 +238,15 @@
     )].some((node) => isVisibleSurface(node) && Boolean(String(node.textContent ?? "").trim()));
     const blocksHome = Boolean(taskHeaderPresent || settingsPresent ||
       pageSearchPresent || routePagePresent || visibleConversationPresent);
-    const home = blocksHome ? null : (
-      document.querySelector('[role="main"]:has([data-testid="home-icon"])') ??
-      document.querySelector('[role="main"]:has([data-feature="game-source"])') ??
-      document.querySelector(
-        '[role="main"]:has([data-codex-composer-root][data-composer-placement="home"])',
-      ) ??
-      document.querySelector('[role="main"]:has(.composer-surface-chrome)')
-    );
-    const emptyStartSurface = !home && !blocksHome;
-    const homeActive = Boolean(home || emptyStartSurface);
+    // Require a visible New chat marker; an empty/loading secondary page is
+    // not a home surface, even when its navigation item is not selected.
+    const homeMarker = blocksHome ? null : [...document.querySelectorAll(
+      '[role="main"] [data-testid="home-icon"], ' +
+      '[role="main"] [data-feature="game-source"], ' +
+      '[role="main"] [data-codex-composer-root][data-composer-placement="home"]',
+    )].find(isVisibleSurface);
+    const home = homeMarker?.closest('[role="main"]') ?? null;
+    const homeActive = Boolean(home);
     for (const candidate of document.querySelectorAll('[role="main"].dream-home')) {
       if (candidate !== home) candidate.classList.remove("dream-home");
     }

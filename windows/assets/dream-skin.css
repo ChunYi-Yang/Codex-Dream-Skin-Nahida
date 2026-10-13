@@ -1,3 +1,5 @@
+@layer dreamskin-accessibility, dreamskin-community;
+
 :root.codex-dream-skin {
   color-scheme: light !important;
   --dream-bg: #f4f7e9;
@@ -592,8 +594,18 @@ html.codex-dream-skin:has(
   backdrop-filter: blur(8px) saturate(1.04) !important;
 }
 
+/* Shortcut section headings and the restore footer share an opaque native surface. */
+html.codex-dream-skin:has(
+    [data-settings-panel-slug="keyboard-shortcuts"][aria-current="page"]
+  ) main.main-surface :is(h3.sticky.bg-surface, div.bg-surface.border-t.justify-end) {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+
 html.codex-dream-skin main.main-surface div.sticky:has(#scheduled-page-search),
-html.codex-dream-skin main.main-surface div.sticky:has(#plugins-page-search) {
+html.codex-dream-skin main.main-surface div.sticky:has(#plugins-page-search),
+html.codex-dream-skin main.main-surface div.sticky:has(#plugins-store-page-search) {
   --color-token-main-surface-primary: transparent !important;
   background: transparent !important;
   border: 0 !important;
@@ -602,9 +614,17 @@ html.codex-dream-skin main.main-surface div.sticky:has(#plugins-page-search) {
 }
 
 html.codex-dream-skin main.main-surface div.sticky:has(#scheduled-page-search)::after,
-html.codex-dream-skin main.main-surface div.sticky:has(#plugins-page-search)::after {
+html.codex-dream-skin main.main-surface div.sticky:has(#plugins-page-search)::after,
+html.codex-dream-skin main.main-surface div.sticky:has(#plugins-store-page-search)::after {
   display: none !important;
   background: none !important;
+}
+
+html.codex-dream-skin main.main-surface div:has(> #plugins-store-page-search) {
+  background: transparent !important;
+  border-color: rgba(103, 157, 69, .38) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
 }
 
 html.codex-dream-skin main.main-surface div:has(> #scheduled-page-search),
