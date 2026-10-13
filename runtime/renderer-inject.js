@@ -1,411 +1,213 @@
 ((cssText, artDataUrls, theme, version) => {
   const STATE_KEY = "__CODEX_DREAM_SKIN_STATE__";
-  const excludedSurface = location.protocol !== "app:" ||
-    /(?:^|\/)avatar-overlay(?:\/|$)|avatar-overlay-composition-surface\.html$/.test(location.pathname);
-  if (excludedSurface) {
-    window[STATE_KEY]?.cleanup?.();
-    return { installed: false, reason: "excluded-surface" };
-  }
-  const RUNTIME_MARKER = "data-dream-skin";
   const STYLE_ID = "codex-dream-skin-style";
   const CHROME_ID = "codex-dream-skin-chrome";
-  const HOME_FALLBACK_ID = "codex-dream-home-fallback";
-  const LEGACY_SUMMARY_CONTROL_IDS = [
-    "codex-dream-summary-panel-close",
-    "codex-dream-summary-panel-reopen",
-  ];
-  const ART_PROPERTIES = {
-    hero: "--dream-art",
-    background: "--dream-background-art",
-    sidebar: "--dream-sidebar-art",
-    rightPanel: "--dream-right-panel-art",
-    portrait: "--dream-portrait-art",
-    decorations: "--dream-decor-art",
-    scene: "--dream-scene-art",
-  };
-  const THEME_PROPERTIES = [
-    "--dream-name",
-    "--dream-subtitle",
-    "--dream-tagline",
-    "--dream-project-prefix",
-    "--dream-project-label",
-    "--dream-status-text",
-    "--dream-quote",
-    "--dream-bg",
-    "--dream-panel",
-    "--dream-panel-alt",
-    "--dream-accent",
-    "--dream-accent-alt",
-    "--dream-secondary",
-    "--dream-highlight",
-    "--dream-text",
-    "--dream-muted",
-    "--dream-line",
-  ];
-
-  window.__CODEX_DREAM_SKIN_DISABLED__ = false;
-
+  const revision = __DREAM_SKIN_PAYLOAD_REVISION_JSON__;
   const previous = window[STATE_KEY];
-  const previousHomePrompt = previous?.homePrompt ?? null;
-  previous?.observer?.disconnect();
-  if (previous?.timer) clearInterval(previous.timer);
-  if (previous?.scheduler?.timeout) clearTimeout(previous.scheduler.timeout);
-  for (const objectUrl of previous?.objectUrls ?? []) URL.revokeObjectURL(objectUrl);
-  document.documentElement?.classList.remove("dream-summary-panel-hidden");
-  for (const id of LEGACY_SUMMARY_CONTROL_IDS) document.getElementById(id)?.remove();
-
-  const dataUrlCache = new Map();
+  previous?.cleanup?.();
+  if (location.protocol !== "app:" ||
+    /(?:^|\/)avatar-overlay(?:\/|$)|avatar-overlay-composition-surface\.html$/.test(location.pathname)) {
+    return { installed: false, reason: "excluded-surface" };
+  }
+  window.__CODEX_DREAM_SKIN_DISABLED__ = false;
+  const root = document.documentElement;
+  if (!root || !document.body) return { installed: false, reason: "document-not-ready" };
+  const adapter = (__DREAM_LAYOUT_FACTORY__)(document, window, __DREAM_SELECTOR_CONTRACT__);
+  const resolveLayout = __DREAM_LAYOUT_POLICY__;
   const objectUrls = new Set();
+  const urlCache = new Map();
   const artUrls = {};
+  const attributes = new Map();
+  const properties = new Map();
+  const scheduler = { timeout: null };
+  let observer;
+  let resizeObserver;
+  let timer;
+  let chrome;
+  let hero;
+  let portrait;
+  let observedMain;
+  let observedComposer;
+  const setAttribute = (name, value) => {
+    if (!attributes.has(name)) attributes.set(name, root.getAttribute(name));
+    if (root.getAttribute(name) !== value) root.setAttribute(name, value);
+  };
+  const setProperty = (name, value) => {
+    if (!properties.has(name)) properties.set(name, {
+      value: root.style.getPropertyValue(name),
+      priority: root.style.getPropertyPriority?.(name) ?? "",
+    });
+    if (root.style.getPropertyValue(name) !== value) root.style.setProperty(name, value);
+  };
   for (const [slot, dataUrl] of Object.entries(artDataUrls)) {
-    let objectUrl = dataUrlCache.get(dataUrl);
-    if (!objectUrl) {
+    if (!urlCache.has(dataUrl)) {
       const comma = dataUrl.indexOf(",");
       const binary = atob(dataUrl.slice(comma + 1));
       const bytes = new Uint8Array(binary.length);
-      for (let index = 0; index < binary.length; index += 1) {
-        bytes[index] = binary.charCodeAt(index);
-      }
+      for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
       const mime = dataUrl.slice(5, dataUrl.indexOf(";")) || "image/png";
-      objectUrl = URL.createObjectURL(new Blob([bytes], { type: mime }));
-      dataUrlCache.set(dataUrl, objectUrl);
-      objectUrls.add(objectUrl);
+      const url = URL.createObjectURL(new Blob([bytes], { type: mime }));
+      urlCache.set(dataUrl, url);
+      objectUrls.add(url);
     }
-    artUrls[slot] = objectUrl;
+    artUrls[slot] = urlCache.get(dataUrl);
   }
-
-  const escapeHtml = (value) => String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-
-  const clearSkinDom = () => {
-    const root = document.documentElement;
-    document.querySelectorAll("[data-dream-sidebar-original-text]").forEach((node) => {
-      node.textContent = node.dataset.dreamSidebarOriginalText ?? "";
-      delete node.dataset.dreamSidebarOriginalText;
-      node.classList.remove("dream-sidebar-brand");
-    });
-    document.querySelectorAll('[data-feature="game-source"][data-dream-original-text]')
-      .forEach((node) => {
-        node.textContent = node.dataset.dreamOriginalText ?? "";
-        delete node.dataset.dreamOriginalText;
-      });
-    root?.classList.remove("codex-dream-skin");
-    root?.removeAttribute(RUNTIME_MARKER);
-    root?.classList.remove("dream-summary-panel-hidden");
-    for (const property of [...Object.values(ART_PROPERTIES), ...THEME_PROPERTIES]) {
-      root?.style.removeProperty(property);
-    }
-    document.querySelectorAll(".dream-home").forEach((node) => node.classList.remove("dream-home"));
-    document.querySelectorAll(".dream-home-hero-surface")
-      .forEach((node) => node.classList.remove("dream-home-hero-surface"));
-    document.querySelectorAll(".dream-home-composer-surface")
-      .forEach((node) => node.classList.remove("dream-home-composer-surface"));
-    document.querySelectorAll(".dream-home-shell").forEach((node) => node.classList.remove("dream-home-shell"));
-    document.querySelectorAll(".dream-route-shell").forEach((node) => node.classList.remove("dream-route-shell"));
-    document.querySelectorAll(".dream-settings-shell").forEach((node) =>
-      node.classList.remove("dream-settings-shell"));
-    document.querySelectorAll(".dream-settings-surface").forEach((node) =>
-      node.classList.remove("dream-settings-surface"));
-    document.querySelectorAll(".dream-summary-panel-surface").forEach((node) =>
-      node.classList.remove("dream-summary-panel-surface"));
-    document.querySelectorAll("[data-dream-main-surface-compat]").forEach((node) => {
-      node.classList.remove("main-surface");
-      delete node.dataset.dreamMainSurfaceCompat;
-    });
-    for (const id of LEGACY_SUMMARY_CONTROL_IDS) document.getElementById(id)?.remove();
-    document.getElementById(STYLE_ID)?.remove();
-    document.getElementById(CHROME_ID)?.remove();
-    document.getElementById(HOME_FALLBACK_ID)?.remove();
+  const artProperties = {
+    hero: "--dream-art", background: "--dream-background-art", sidebar: "--dream-sidebar-art",
+    rightPanel: "--dream-right-panel-art", portrait: "--dream-portrait-art",
+    decorations: "--dream-decor-art", scene: "--dream-scene-art",
   };
-
-  const applyRootProperties = (root) => {
-    for (const [slot, property] of Object.entries(ART_PROPERTIES)) {
-      root.style.setProperty(property, `url("${artUrls[slot]}")`);
-    }
-    const textProperties = {
-      "--dream-name": theme.name,
-      "--dream-subtitle": theme.brandSubtitle,
-      "--dream-tagline": theme.tagline,
-      "--dream-project-prefix": theme.projectPrefix,
-      "--dream-project-label": theme.projectLabel,
-      "--dream-status-text": theme.statusText,
-      "--dream-quote": theme.quote,
-    };
-    for (const [property, value] of Object.entries(textProperties)) {
-      root.style.setProperty(property, JSON.stringify(value));
-    }
-    const colorProperties = {
-      "--dream-bg": theme.colors?.background,
-      "--dream-panel": theme.colors?.panel,
-      "--dream-panel-alt": theme.colors?.panelAlt,
-      "--dream-accent": theme.colors?.accent,
-      "--dream-accent-alt": theme.colors?.accentAlt,
-      "--dream-secondary": theme.colors?.secondary,
-      "--dream-highlight": theme.colors?.highlight,
-      "--dream-text": theme.colors?.text,
-      "--dream-muted": theme.colors?.muted,
-      "--dream-line": theme.colors?.line,
-    };
-    for (const [property, value] of Object.entries(colorProperties)) {
-      if (value) root.style.setProperty(property, value);
-    }
+  for (const [slot, property] of Object.entries(artProperties)) {
+    if (artUrls[slot]) setProperty(property, 'url("' + artUrls[slot] + '")');
+  }
+  if (artUrls.background ?? artUrls.hero) {
+    setProperty("--dream-skin-art", 'url("' + (artUrls.background ?? artUrls.hero) + '")');
+  }
+  const create = (tag, className, parent, text) => {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text) node.textContent = text;
+    parent.appendChild(node);
+    return node;
   };
-
+  let styleNode = document.getElementById(STYLE_ID);
+  if (!styleNode) {
+    styleNode = document.createElement("style");
+    styleNode.id = STYLE_ID;
+    (document.head ?? document.documentElement).appendChild(styleNode);
+  }
+  styleNode.textContent = cssText;
+  const detectShellAppearance = () => {
+    if (theme.appearance === "light" || theme.appearance === "dark") return theme.appearance;
+    const appearance = root.getAttribute("data-theme") ?? root.getAttribute("data-appearance");
+    if (appearance === "dark" || root.classList.contains("electron-dark")) return "dark";
+    if (appearance === "light" || root.classList.contains("electron-light")) return "light";
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  };
   const ensure = () => {
     if (window.__CODEX_DREAM_SKIN_DISABLED__) return;
-    const root = document.documentElement;
-    if (!root || !document.body) return;
-
-    const shellMain = document.querySelector("main.main-surface, main[data-app-shell-main-surface]");
-    if (!shellMain) {
-      clearSkinDom();
+    const layout = adapter.discover();
+    const state = window[STATE_KEY];
+    if (!layout.regions.main && layout.page !== "settings") {
+      if (root.getAttribute("data-dream-skin") === "active") root.removeAttribute("data-dream-skin");
+      chrome?.remove();
+      chrome = hero = portrait = null;
+      if (state) state.scope = { baseState: "unknown", level: "L0", missingL1: ["shell-main"] };
       return;
     }
-    if (!document.querySelector("main.main-surface")) {
-      shellMain.classList.add("main-surface");
-      shellMain.dataset.dreamMainSurfaceCompat = "true";
-    }
-
-    root.classList.add("codex-dream-skin");
-    root.setAttribute(RUNTIME_MARKER, "active");
-    root.classList.remove("dream-summary-panel-hidden");
-    applyRootProperties(root);
-
-    let style = document.getElementById(STYLE_ID);
-    if (!style) {
-      style = document.createElement("style");
-      style.id = STYLE_ID;
-      (document.head || root).appendChild(style);
-    }
-    if (style.dataset.dreamVersion !== version || style.textContent !== cssText) {
-      style.textContent = cssText;
-      style.dataset.dreamVersion = version;
-    }
-
-    const appLabel = String(theme.appLabel ?? "Codex").trim();
-    const sidebarBrand = document.querySelector(
-      'aside.app-shell-left-panel button[aria-label^="切换模式"] span.font-semibold')
-      ?? [...document.querySelectorAll("aside.app-shell-left-panel span.font-semibold")]
-        .find((node) => {
-          const text = String(node.textContent ?? "").trim();
-          return text === "Codex" || text === appLabel || node.classList?.contains("font-openai-sans");
-        })
-      ?? null;
-    if (sidebarBrand && appLabel && sidebarBrand.textContent !== appLabel) {
-      if (!("dreamSidebarOriginalText" in sidebarBrand.dataset)) {
-        sidebarBrand.dataset.dreamSidebarOriginalText = sidebarBrand.textContent ?? "";
-      }
-      sidebarBrand.textContent = appLabel;
-      sidebarBrand.classList.add("dream-sidebar-brand");
-    }
-
-    const isVisibleSurface = (node) => {
-      if (!node) return false;
-      const box = node.getBoundingClientRect();
-      const style = getComputedStyle(node);
-      return box.width > 1 && box.height > 1 &&
-        box.bottom > 0 && box.right > 0 &&
-        box.top < window.innerHeight && box.left < window.innerWidth &&
-        style.display !== "none" &&
-        style.visibility !== "hidden" &&
-        Number(style.opacity || 1) > 0.01;
+    const scheme = detectShellAppearance();
+    setAttribute("data-dream-skin", "active");
+    setAttribute("data-dream-shell", scheme);
+    setAttribute("data-nahida-page", layout.page);
+    const palette = scheme === "dark" && theme.darkColors ? theme.darkColors : theme.colors;
+    const names = {
+      background: "bg", panel: "panel", panelAlt: "panel-alt", accent: "accent",
+      accentAlt: "accent-alt", secondary: "secondary", highlight: "highlight",
+      text: "text", muted: "muted", line: "line",
     };
-    const settingsPresent = Boolean(document.querySelector("[data-settings-panel-slug]"));
-    const pageSearch = document.querySelector(
-      "#scheduled-page-search, #plugins-page-search, #plugins-store-page-search",
-    );
-    const pageSearchPresent = isVisibleSurface(pageSearch);
-    const routePage = [...document.querySelectorAll(
-      'aside.app-shell-left-panel [aria-current="page"], aside.app-shell-left-panel [class~="bg-token-list-hover-background"]',
-    )].find((node) => {
-      const text = String(node.textContent ?? "").trim();
-      return isVisibleSurface(node) && /插件|Plugins|已安排|Scheduled|拉取请求|Pull Request|归档|Archived/i.test(text);
-    }) ?? null;
-    const routePagePresent = Boolean(routePage);
-    const pullRequestRoutePresent = Boolean(routePage &&
-      /拉取请求|Pull Request/i.test(String(routePage.textContent ?? "")));
-    const archivedRoutePresent = Boolean(routePage &&
-      /归档|Archived/i.test(String(routePage.textContent ?? "")));
-    const taskHeader = document.querySelector("main.main-surface > header.app-header-tint");
-    const taskHeaderPresent = Boolean(String(taskHeader?.textContent ?? "").trim()) &&
-      isVisibleSurface(taskHeader);
-    const visibleConversationPresent = [...document.querySelectorAll(
-      '.thread-scroll-container, [data-thread-find-target="conversation"]',
-    )].some((node) => isVisibleSurface(node) && Boolean(String(node.textContent ?? "").trim()));
-    const blocksHome = Boolean(taskHeaderPresent || settingsPresent ||
-      pageSearchPresent || routePagePresent || visibleConversationPresent);
-    // Require a visible New chat marker; an empty/loading secondary page is
-    // not a home surface, even when its navigation item is not selected.
-    const homeMarker = blocksHome ? null : [...document.querySelectorAll(
-      '[role="main"] [data-testid="home-icon"], ' +
-      '[role="main"] [data-feature="game-source"], ' +
-      '[role="main"] [data-codex-composer-root][data-composer-placement="home"]',
-    )].find(isVisibleSurface);
-    const home = homeMarker?.closest('[role="main"]') ?? null;
-    const homeActive = Boolean(home);
-    for (const candidate of document.querySelectorAll('[role="main"].dream-home')) {
-      if (candidate !== home) candidate.classList.remove("dream-home");
-    }
-    if (home) home.classList.add("dream-home");
-    shellMain.classList.toggle("dream-home-shell", homeActive);
-    shellMain.classList.toggle("dream-route-shell", pullRequestRoutePresent || archivedRoutePresent);
-
-    const homeSurface = home ?? (homeActive ? shellMain : null);
-    const gameSource = homeSurface?.querySelector?.('[data-feature="game-source"]') ?? null;
-    const homeSuggestions = homeSurface?.querySelector?.('.group\\/home-suggestions') ?? null;
-    let homeHeroSurface = null;
-    if (homeActive && gameSource) {
-      const boundary = home ?? shellMain;
-      for (let node = gameSource.parentElement; node && node !== boundary; node = node.parentElement) {
-        if (!node.contains(gameSource)) continue;
-        const box = node.getBoundingClientRect();
-        homeHeroSurface = node;
-        if (box.width >= 300 && box.height >= 120) break;
+    for (const [key, name] of Object.entries(names)) {
+      if (palette?.[key]) {
+        setProperty("--dream-" + name, palette[key]);
+        setProperty("--ds-theme-color-" + (key === "background" ? "background" : name), palette[key]);
       }
     }
-    for (const candidate of document.querySelectorAll(".dream-home-hero-surface")) {
-      if (candidate !== homeHeroSurface) candidate.classList.remove("dream-home-hero-surface");
-    }
-    if (homeHeroSurface) homeHeroSurface.classList.add("dream-home-hero-surface");
-    const semanticHomeComposerSurface = homeSurface?.querySelector?.(
-      '[data-codex-composer-root][data-composer-placement="home"]',
-    ) ?? null;
-    const homeComposer = homeSurface?.querySelector?.(
-      ".composer-surface-chrome, [data-codex-composer]",
-    ) ?? null;
-    let homeComposerSurface = homeActive ? semanticHomeComposerSurface : null;
-    if (homeActive && !homeComposerSurface && homeComposer) {
-      const boundary = home ?? shellMain;
-      for (let node = homeComposer.parentElement; node && node !== boundary; node = node.parentElement) {
-        if (node.querySelector?.('[class*="group/project-selector"]')) {
-          homeComposerSurface = node;
-          break;
-        }
-      }
-      homeComposerSurface ??= homeComposer.closest?.('[class~="sticky"]') ??
-        homeComposer.parentElement;
-    }
-    for (const candidate of document.querySelectorAll(".dream-home-composer-surface")) {
-      if (candidate !== homeComposerSurface) candidate.classList.remove("dream-home-composer-surface");
-    }
-    if (homeComposerSurface) homeComposerSurface.classList.add("dream-home-composer-surface");
-    const homePrompt = String(theme.homePrompt ?? "What should we build?").trim();
-    if (gameSource && homePrompt && gameSource.textContent !== homePrompt) {
-      const currentText = gameSource.textContent ?? "";
-      if (!("dreamOriginalText" in gameSource.dataset) || currentText !== previousHomePrompt) {
-        gameSource.dataset.dreamOriginalText = currentText;
-      }
-      gameSource.textContent = homePrompt;
-    }
-    const needsHomeFallback = Boolean(homeActive && !gameSource && !homeSuggestions);
-    let homeFallback = document.getElementById(HOME_FALLBACK_ID);
-    if (needsHomeFallback) {
-      if (!homeFallback) {
-        homeFallback = document.createElement("div");
-        homeFallback.id = HOME_FALLBACK_ID;
-        homeFallback.setAttribute("aria-hidden", "true");
-        homeFallback.innerHTML = `
-          <section class="dream-home-fallback-card">
-            <div class="dream-home-fallback-copy">
-              <b>${escapeHtml(theme.name)}</b>
-              <strong>${escapeHtml(homePrompt)}</strong>
-              <span>${escapeHtml(theme.tagline)}</span>
-            </div>
-          </section>`;
-        document.body.appendChild(homeFallback);
-      }
-      const shellBox = shellMain.getBoundingClientRect();
-      homeFallback.style.left = `${Math.round(shellBox.left)}px`;
-      homeFallback.style.top = `${Math.round(shellBox.top)}px`;
-      homeFallback.style.width = `${Math.round(shellBox.width)}px`;
-      homeFallback.style.height = `${Math.round(shellBox.height)}px`;
-    } else {
-      homeFallback?.remove();
-    }
-
-    const settingsSurface = settingsPresent
-      ? document.querySelector(
-        'div.main-surface, main.main-surface [class~="p-panel"]',
-      )
-      : null;
-    shellMain.classList.toggle("dream-settings-shell", settingsPresent);
-    for (const candidate of document.querySelectorAll(".dream-settings-surface")) {
-      if (candidate !== settingsSurface) candidate.classList.remove("dream-settings-surface");
-    }
-    if (settingsSurface) settingsSurface.classList.add("dream-settings-surface");
-
-    const summaryPanel = document.querySelector('[data-pip-obstacle="thread-summary-panel"]');
-    const summarySurface = summaryPanel?.firstElementChild?.firstElementChild ?? null;
-    for (const candidate of document.querySelectorAll(".dream-summary-panel-surface")) {
-      if (candidate !== summarySurface) candidate.classList.remove("dream-summary-panel-surface");
-    }
-    if (summarySurface) summarySurface.classList.add("dream-summary-panel-surface");
-
-    let chrome = document.getElementById(CHROME_ID);
-    if (!chrome || chrome.parentElement !== document.body) {
+    const mainRect = layout.regions.main?.getBoundingClientRect();
+    const composerRect = layout.regions.composer?.getBoundingClientRect();
+    const policy = resolveLayout({
+      ...layout.viewport, composerHeight: composerRect?.height ?? 140, page: layout.page,
+      reducedMotion: root.getAttribute("data-reduced-motion") === "true" ||
+        Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches),
+    });
+    if (mainRect && (!chrome || chrome.parentElement !== document.body)) {
       chrome?.remove();
-      chrome = document.createElement("div");
+      chrome = create("div", null, document.body);
       chrome.id = CHROME_ID;
       chrome.setAttribute("aria-hidden", "true");
-      chrome.innerHTML = `
-        <div class="dream-brand">
-          <span class="dream-brand-mark"></span>
-          <span><b>${escapeHtml(theme.name)}</b><small>${escapeHtml(theme.brandSubtitle)}</small></span>
-        </div>
-        <div class="dream-status"><i></i>${escapeHtml(theme.statusText)}</div>
-        <div class="dream-scene"></div>
-        <div class="dream-portrait"><span>${escapeHtml(theme.quote)}</span></div>
-        <div class="dream-motes"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-        <div class="dream-corner-leaf"></div>`;
-      document.body.appendChild(chrome);
+      hero = create("section", "nahida-hero", chrome);
+      hero.setAttribute("data-ds-part", "home-hero");
+      const copy = create("div", "nahida-hero-copy", hero);
+      create("small", null, copy, theme.name);
+      create("strong", null, copy, theme.homePrompt ?? "我们应该在虚空中做些什么？");
+      create("p", null, copy, theme.tagline);
+      portrait = create("div", "nahida-portrait", chrome);
+      create("span", null, portrait, theme.quote);
     }
-
-    const shellBox = shellMain.getBoundingClientRect();
-    chrome.style.left = `${Math.round(shellBox.left)}px`;
-    chrome.style.top = `${Math.round(shellBox.top)}px`;
-    chrome.style.width = `${Math.round(shellBox.width)}px`;
-    chrome.style.height = `${Math.round(shellBox.height)}px`;
-    chrome.classList.toggle("dream-home-shell", homeActive);
+    if (chrome && mainRect) {
+      for (const [name, value] of Object.entries({
+        left: mainRect.left + "px", top: mainRect.top + "px",
+        width: mainRect.width + "px", height: mainRect.height + "px",
+      })) if (chrome.style[name] !== value) chrome.style[name] = value;
+      const contentTop = layout.regions.home?.getBoundingClientRect().top ??
+        Math.max(mainRect.top, layout.regions.header?.getBoundingClientRect().bottom ?? mainRect.top);
+      const top = Math.max(12, contentTop - mainRect.top + 16);
+      const safeHeight = (composerRect?.top ?? mainRect.bottom) - mainRect.top - top - 28;
+      const heroHeight = Math.min(policy.heroMode === "full" ? 260 : 180, safeHeight);
+      const showHero = policy.heroMode !== "off" && heroHeight >= 130;
+      hero.style.display = showHero ? "block" : "none";
+      hero.style.top = top + "px";
+      hero.style.height = Math.max(0, heroHeight) + "px";
+      portrait.style.display = policy.showPortrait && showHero ? "block" : "none";
+      chrome.setAttribute("data-hero-mode", showHero ? policy.heroMode : "off");
+      setAttribute("data-nahida-hero-mode", showHero ? policy.heroMode : "off");
+    }
+    if (resizeObserver && (observedMain !== layout.regions.main || observedComposer !== layout.regions.composer)) {
+      resizeObserver.disconnect();
+      observedMain = layout.regions.main;
+      observedComposer = layout.regions.composer;
+      if (observedMain) resizeObserver.observe(observedMain);
+      if (observedComposer) resizeObserver.observe(observedComposer);
+    }
+    if (state) {
+      state.scope = {
+        baseState: layout.page, level: layout.page === "settings" ? "L0" : layout.missingRequired.length ? "L0" : "L1",
+        missingL1: layout.missingRequired, overlay: layout.overlay,
+      };
+      state.layout = { page: layout.page, mode: layout.mode, heroMode: chrome?.getAttribute("data-hero-mode") ?? "off" };
+      state.applicationStatus = layout.missingRequired.length ? "not-applied" :
+        layout.page === "unknown" ? "basic" : "full";
+    }
   };
-
+  const scheduleEnsure = () => {
+    if (scheduler.timeout || window.__CODEX_DREAM_SKIN_DISABLED__) return;
+    scheduler.timeout = setTimeout(() => { scheduler.timeout = null; ensure(); }, 120);
+  };
   const cleanup = () => {
     window.__CODEX_DREAM_SKIN_DISABLED__ = true;
-    clearSkinDom();
-    const state = window[STATE_KEY];
-    state?.observer?.disconnect();
-    if (state?.timer) clearInterval(state.timer);
-    if (state?.scheduler?.timeout) clearTimeout(state.scheduler.timeout);
-    for (const objectUrl of state?.objectUrls ?? []) URL.revokeObjectURL(objectUrl);
-    delete window[STATE_KEY];
+    observer?.disconnect();
+    resizeObserver?.disconnect();
+    if (timer) clearInterval(timer);
+    if (scheduler.timeout) clearTimeout(scheduler.timeout);
+    window.removeEventListener?.("resize", scheduleEnsure);
+    window.navigation?.removeEventListener?.("navigate", scheduleEnsure);
+    adapter.cleanup();
+    chrome?.remove();
+    styleNode.remove();
+    for (const [name, value] of attributes) {
+      if (value === null) root.removeAttribute(name);
+      else root.setAttribute(name, value);
+    }
+    for (const [name, saved] of properties) {
+      if (saved.value) root.style.setProperty(name, saved.value, saved.priority);
+      else root.style.removeProperty(name);
+    }
+    for (const url of objectUrls) URL.revokeObjectURL(url);
+    if (window[STATE_KEY]?.cleanup === cleanup) delete window[STATE_KEY];
     return true;
   };
-
-  const scheduler = { timeout: null };
-  const scheduleEnsure = () => {
-    if (scheduler.timeout) clearTimeout(scheduler.timeout);
-    scheduler.timeout = setTimeout(() => {
-      scheduler.timeout = null;
-      ensure();
-    }, 180);
-  };
-  const observer = new MutationObserver(scheduleEnsure);
-  observer.observe(document.documentElement, { childList: true, subtree: true });
-  const timer = setInterval(ensure, 5000);
+  observer = new MutationObserver(scheduleEnsure);
+  observer.observe(root, {
+    childList: true, subtree: true, attributes: true,
+    attributeFilter: ["class", "data-theme", "data-appearance", "data-app-shell-active-page", "data-composer-placement", "data-reduced-motion"],
+  });
+  if (typeof ResizeObserver === "function") resizeObserver = new ResizeObserver(scheduleEnsure);
+  window.addEventListener?.("resize", scheduleEnsure);
+  window.navigation?.addEventListener?.("navigate", scheduleEnsure);
+  timer = setInterval(ensure, 5000);
   window[STATE_KEY] = {
-    ensure,
-    cleanup,
-    observer,
-    timer,
-    scheduler,
-    objectUrls,
-    homePrompt: String(theme.homePrompt ?? "What should we build?").trim(),
-    version,
-    themeId: theme.id,
+    ensure, cleanup, observer, timer, scheduler, objectUrls, version, themeId: theme.id, revision,
+    styleMode: "style", styleNode, scope: null, artMetadata: theme.artMetadata,
   };
   ensure();
-  return { installed: true, version, themeId: theme.id };
+  return { installed: root.getAttribute("data-dream-skin") === "active", version, themeId: theme.id };
 })(__DREAM_SKIN_CSS_JSON__, __DREAM_SKIN_ART_JSON__, __DREAM_SKIN_THEME_JSON__, __DREAM_SKIN_VERSION_JSON__)
+

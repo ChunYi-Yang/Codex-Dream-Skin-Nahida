@@ -1,0 +1,74 @@
+#codex-dream-skin-chrome {
+  position: fixed;
+  z-index: 20;
+  overflow: hidden;
+  pointer-events: none;
+  contain: layout paint;
+}
+#codex-dream-skin-chrome .nahida-hero {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--dream-line);
+  border-radius: 16px;
+  background: linear-gradient(90deg, rgba(13, 49, 30, .85), rgba(13, 49, 30, .12) 78%),
+    var(--dream-art) center / cover no-repeat;
+  box-shadow: 0 8px 24px rgba(24, 55, 35, .12);
+}
+#codex-dream-skin-chrome .nahida-hero-copy {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 70%;
+  padding: 24px 32px;
+  color: #fffef0;
+}
+#codex-dream-skin-chrome .nahida-hero-copy small {
+  color: #d4ed9c;
+  font-size: 12px;
+  font-weight: 650;
+}
+#codex-dream-skin-chrome .nahida-hero-copy strong {
+  font-size: clamp(18px, 2cqw, 28px);
+  line-height: 1.35;
+  font-weight: 700;
+}
+#codex-dream-skin-chrome .nahida-hero-copy p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #e6efdc;
+}
+#codex-dream-skin-chrome .nahida-portrait {
+  position: absolute;
+  right: 20px;
+  top: 52%;
+  width: 98px;
+  height: 130px;
+  border: 6px solid #fbf9ed;
+  border-bottom-width: 22px;
+  border-radius: 4px;
+  background: var(--dream-portrait-art) center / cover no-repeat;
+  box-shadow: 0 6px 20px rgba(33, 65, 36, .15);
+  transform: rotate(5deg);
+}
+#codex-dream-skin-chrome .nahida-portrait span {
+  position: absolute;
+  bottom: -19px;
+  left: -2px;
+  right: -2px;
+  color: #446040;
+  font-size: 7px;
+  text-align: center;
+}
+#codex-dream-skin-chrome[data-hero-mode="compact"] .nahida-hero-copy {
+  gap: 6px;
+  padding: 18px 24px;
+}
+

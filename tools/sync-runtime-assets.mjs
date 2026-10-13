@@ -1,6 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createLayoutAdapter } from "../runtime/layout-adapter.mjs";
+import { resolveNahidaLayout } from "../runtime/nahida-layout.mjs";
 
 const args = process.argv.slice(2);
 let root = fileURLToPath(new URL("../", import.meta.url));
@@ -20,7 +22,16 @@ if (await fs.stat(path.join(root, "tools/selectors.json")).catch(() => null)) {
 }
 const stale = [];
 for (const [source, target] of jobs) {
-  const expected = await fs.readFile(path.join(root, source), "utf8");
+  let expected = await fs.readFile(path.join(root, source), "utf8");
+  if (source.endsWith("dream-skin.css")) {
+    expected += "\n" + await fs.readFile(path.join(root, "runtime/nahida-theme.css"), "utf8");
+  }
+  if (source.endsWith("renderer-inject.js")) {
+    const contract = await fs.readFile(path.join(root, "tools/selectors.json"), "utf8").catch(() => '{"selectors":[]}');
+    expected = expected.replace("__DREAM_LAYOUT_FACTORY__", () => createLayoutAdapter.toString())
+      .replace("__DREAM_LAYOUT_POLICY__", () => resolveNahidaLayout.toString())
+      .replace("__DREAM_SELECTOR_CONTRACT__", () => contract.trim());
+  }
   const actual = await fs.readFile(path.join(root, target), "utf8").catch(() => null);
   if (actual === expected) continue;
   if (check) stale.push(target);

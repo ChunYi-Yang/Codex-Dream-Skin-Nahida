@@ -4,7 +4,7 @@
   "name": "纳西妲 · 梦境林庭",
   "appLabel": "虚空终端",
   "brandSubtitle": "CODEX VERDANT DREAM",
-  "homePrompt": "\u6211\u4eec\u5e94\u8be5\u5728\u865a\u7a7a\u4e2d\u505a\u4e9b\u4ec0\u4e48\uff1f",
+  "homePrompt": "我们应该在虚空中做些什么？",
   "tagline": "愿智慧如新叶生长，让每一次构建都抵达更明亮的梦。",
   "projectPrefix": "梦境林庭 · ",
   "projectLabel": "✦ 选择项目",
@@ -30,5 +30,18 @@
     "text": "#18372d",
     "muted": "#61786d",
     "line": "rgba(103, 157, 69, .32)"
+  },
+  "appearance": "auto",
+  "darkColors": {
+    "background": "#15251f",
+    "panel": "#20372c",
+    "panelAlt": "#2b4634",
+    "accent": "#a2ce71",
+    "accentAlt": "#c9ed91",
+    "secondary": "#76b9a4",
+    "highlight": "#d6b86d",
+    "text": "#edf4dd",
+    "muted": "#b0c5ac",
+    "line": "rgba(158, 193, 127, .30)"
   }
 }

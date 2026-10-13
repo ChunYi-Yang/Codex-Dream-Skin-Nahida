@@ -616,6 +616,7 @@ export async function loadTheme(themeDir) {
     schemaVersion: 1,
     id: normalizeThemeText(raw.id, "custom", 80, "id", themePath),
     name: normalizeThemeText(raw.name, "Codex Dream Skin", 80, "name", themePath),
+    homePrompt: normalizeThemeText(raw.homePrompt, "我们应该在虚空中做些什么？", 120, "homePrompt", themePath),
     brandSubtitle: normalizeThemeText(raw.brandSubtitle, "CODEX DREAM SKIN", 120, "brandSubtitle", themePath),
     tagline: normalizeThemeText(raw.tagline, "Make something wonderful.", 120, "tagline", themePath),
     projectPrefix: normalizeThemeText(raw.projectPrefix, "选择项目 · ", 120, "projectPrefix", themePath),
@@ -633,6 +634,9 @@ export async function loadTheme(themeDir) {
     colorMode: rawColors ? "explicit" : "auto",
     explicitColorKeys: rawColors ? colorKeys.filter((key) => Object.hasOwn(rawColors, key)) : [],
     colors,
+    darkColors: raw.darkColors && typeof raw.darkColors === "object" && !Array.isArray(raw.darkColors)
+      ? Object.fromEntries(colorKeys.map((key) => [key, normalizeThemeColor(raw.darkColors[key], colors[key])]))
+      : null,
   };
   const [themeStat, imageStat, safeCss] = await Promise.all([
     fs.stat(themePath),

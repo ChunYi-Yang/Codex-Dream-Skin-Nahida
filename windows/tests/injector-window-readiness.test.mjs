@@ -14,7 +14,7 @@ const selectors = {
   sidebar: "aside.app-shell-left-panel",
   composer: ".composer-surface-chrome",
   homeIcon: '[data-testid="home-icon"]',
-  home: '[role="main"]:has([data-testid="home-icon"])',
+  home: '[role="main"]:has([data-codex-composer-root][data-composer-placement="home"]), [role="main"]:has([data-testid="home-icon"])',
   gameSource: '[data-feature="game-source"]',
   suggestions: ".group\\/home-suggestions",
   settings: 'input[name="appearance-theme"]',

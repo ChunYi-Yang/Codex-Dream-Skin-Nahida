@@ -35,7 +35,7 @@ function fixture({ shell = true, pathname = "/index.html", protocol = "app:" } =
     documentElement: root, body, createElement: makeNode,
     getElementById: (id) => [...nodes].find((node) => node.id === id) ?? null,
     querySelector(selector) { return shell && (selector === "main.main-surface" || selector.startsWith("main.main-surface,")) ? main : null; },
-    querySelectorAll: () => [],
+    querySelectorAll: (selector) => shell && selector.startsWith("main:") ? [main] : [],
   };
   const context = {
     window: { innerWidth: 1280, innerHeight: 800 }, location: { protocol, pathname }, document,
@@ -45,12 +45,14 @@ function fixture({ shell = true, pathname = "/index.html", protocol = "app:" } =
     setInterval: () => { const id = ++sequence; timers.add(id); return id; }, clearInterval: (id) => timers.delete(id),
     setTimeout: () => { const id = ++sequence; timers.add(id); return id; }, clearTimeout: (id) => timers.delete(id),
   };
+  context.window.getComputedStyle = context.getComputedStyle;
   vm.createContext(context);
   const run = () => vm.runInContext(template
     .replace("__DREAM_SKIN_CSS_JSON__", () => JSON.stringify("test CSS"))
     .replace("__DREAM_SKIN_ART_JSON__", () => JSON.stringify({}))
     .replace("__DREAM_SKIN_THEME_JSON__", () => JSON.stringify({ id: "nahida-dream", name: "纳西妲", colors: {} }))
-    .replace("__DREAM_SKIN_VERSION_JSON__", () => JSON.stringify("test")), context);
+    .replace("__DREAM_SKIN_VERSION_JSON__", () => JSON.stringify("test"))
+    .replace("__DREAM_SKIN_PAYLOAD_REVISION_JSON__", () => JSON.stringify("test-revision")), context);
   return { context, root, document, nodes, timers, observers, run };
 }
 
@@ -75,6 +77,13 @@ test("cleanup removes all owned runtime resources", () => {
   assert.equal(app.timers.size, 0);
   assert.equal(app.observers.size, 0);
   assert.equal(app.context.window.__CODEX_DREAM_SKIN_STATE__, undefined);
+});
+
+test("native nodes do not receive theme business classes", () => {
+  const app = fixture();
+  app.run();
+  assert.equal(app.root.classList.contains("codex-dream-skin"), false);
+  assert.equal(app.context.window.__CODEX_DREAM_SKIN_STATE__.revision, "test-revision");
 });
 
 for (const [name, options] of [
