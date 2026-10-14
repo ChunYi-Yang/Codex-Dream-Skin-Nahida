@@ -85,7 +85,7 @@ assert.match(
 assert.match(css, /main\.main-surface\.dream-home-shell[\s\S]*app-shell-main-content-frame[\s\S]*overflow: hidden/);
 assert.match(css, /main\.main-surface\.dream-home-shell \.dream-home-composer-surface[\s\S]*bottom: 18px/);
 assert.match(css, /dream-home-hero-surface \[data-feature="game-source"\][\s\S]*left: 40px[\s\S]*transform: translateY\(-50%\)/);
-assert.match(css, /dream-home-composer-surface[\s\S]*gap: 10px[\s\S]*width: min\(980px/);
+assert.match(css, /dream-home-composer-surface[\s\S]*gap: 0[\s\S]*width: min\(980px/);
 assert.match(css, /horizontal-scroll-fade-mask \.group\\\/project-selector\)[\s\S]*display: inline-flex[\s\S]*width: fit-content[\s\S]*min-height: 40px[\s\S]*padding: 6px 12px 6px 96px[\s\S]*border-bottom: 0/);
 assert.match(css, /horizontal-scroll-fade-mask \.group\\\/project-selector\)::before[\s\S]*top: 50%[\s\S]*transform: translateY\(-50%\)/);
 assert.match(css, /horizontal-scroll-fade-mask \.group\\\/project-selector\)[\s\S]*> \.horizontal-scroll-fade-mask[\s\S]*width: auto[\s\S]*overflow: visible/);
@@ -217,7 +217,7 @@ assert.match(css, /role="menu"[\s\S]*role="listbox"[\s\S]*background: rgba\(216,
 assert.match(css, /data-composer-overlay-floating-ui[\s\S]*background: rgba\(216, 237, 199, \.68\)[\s\S]*bg-token-dropdown-background[\s\S]*background: rgba\(216, 237, 199, \.42\)/);
 assert.match(css, /data-radix-popper-content-wrapper[\s\S]*data-slot\^="thread-summary-panel-"[\s\S]*background: transparent/);
 assert.match(css, /bg-token-dropdown-background[\s\S]*data-slot\^="thread-summary-panel-"[\s\S]*rgba\(216, 237, 199, \.60\)[\s\S]*backdrop-filter: blur\(16px\)/);
-assert.match(injector, /settings: box\(document\.querySelector\('\.dream-settings-surface'\)\)[\s\S]*pageSearch: box\(document\.querySelector\('#scheduled-page-search, #plugins-page-search'\)\)[\s\S]*navPage: box\(navPage\)[\s\S]*const focusReady = Boolean\([\s\S]*result\.composer \|\| result\.settings \|\| result\.pageSearch \|\| result\.navPage[\s\S]*result\.homeVisible && \(result\.hero \|\| result\.homeFallback\)[\s\S]*result\.pass =[\s\S]*focusReady/);
+assert.match(injector, /const structurePass =[\s\S]*const documentPass =[\s\S]*const viewportPass =[\s\S]*const payloadPass =[\s\S]*result\.pass =[\s\S]*windowPass && documentPass && viewportPass && structurePass/);
 
 assert.match(css, /main\.main-surface\.dream-route-shell[\s\S]*\[class~="bg-surface"\][\s\S]*background: transparent !important[\s\S]*background-color: transparent !important/);
 assert.match(css, /main\.main-surface:has\([\s\S]*input\[placeholder\*="归档" i\][\s\S]*\)[\s\S]*background: transparent !important/);

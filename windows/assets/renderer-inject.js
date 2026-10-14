@@ -1,4 +1,4 @@
-((cssText, artDataUrls, theme, version) => {
+((cssText, artDataUrls, theme, version, revision) => {
   const STATE_KEY = "__CODEX_DREAM_SKIN_STATE__";
   const RUNTIME_MARKER = "data-dream-skin";
   const STYLE_ID = "codex-dream-skin-style";
@@ -159,6 +159,20 @@
       clearSkinDom();
       return;
     }
+    const sidebar = document.querySelector("aside.app-shell-left-panel");
+    const composer = document.querySelector(
+      '.composer-surface-chrome, [data-codex-composer-root], [data-codex-composer]',
+    );
+    const settings = document.querySelector("[data-settings-panel-slug]");
+    const missingL1 = [];
+    if (!sidebar) missingL1.push("sidebar");
+    if (!composer && !settings) missingL1.push("composer");
+    const runtime = window[STATE_KEY];
+    runtime.scope = {
+      level: missingL1.length === 0 ? "L1" : "L0",
+      baseState: settings ? "settings" : "thread",
+      missingL1,
+    };
     if (!document.querySelector("main.main-surface")) {
       shellMain.classList.add("main-surface");
       shellMain.dataset.dreamMainSurfaceCompat = "true";
@@ -179,6 +193,7 @@
       style.textContent = cssText;
       style.dataset.dreamVersion = version;
     }
+    runtime.styleNode = style;
 
     const appLabel = String(theme.appLabel ?? "Codex").trim();
     const sidebarBrand = document.querySelector(
@@ -209,7 +224,9 @@
         Number(style.opacity || 1) > 0.01;
     };
     const settingsPresent = Boolean(document.querySelector("[data-settings-panel-slug]"));
-    const pageSearch = document.querySelector("#scheduled-page-search, #plugins-page-search");
+    const pageSearch = document.querySelector(
+      "#scheduled-page-search, #plugins-page-search, #plugins-store-page-search",
+    );
     const pageSearchPresent = isVisibleSurface(pageSearch);
     const routePage = [...document.querySelectorAll(
       'aside.app-shell-left-panel [aria-current="page"], aside.app-shell-left-panel [class~="bg-token-list-hover-background"]',
@@ -230,16 +247,16 @@
     )].some((node) => isVisibleSurface(node) && Boolean(String(node.textContent ?? "").trim()));
     const blocksHome = Boolean(taskHeaderPresent || settingsPresent ||
       pageSearchPresent || routePagePresent || visibleConversationPresent);
-    const home = blocksHome ? null : (
-      document.querySelector('[role="main"]:has([data-testid="home-icon"])') ??
-      document.querySelector('[role="main"]:has([data-feature="game-source"])') ??
-      document.querySelector(
-        '[role="main"]:has([data-codex-composer-root][data-composer-placement="home"])',
-      ) ??
-      document.querySelector('[role="main"]:has(.composer-surface-chrome)')
-    );
-    const emptyStartSurface = !home && !blocksHome;
-    const homeActive = Boolean(home || emptyStartSurface);
+    // Require a visible New chat marker; an empty/loading secondary page is
+    // not a home surface, even when its navigation item is not selected.
+    const homeMarker = blocksHome ? null : [...document.querySelectorAll(
+      '[role="main"] [data-testid="home-icon"], ' +
+      '[role="main"] [data-feature="game-source"], ' +
+      '[role="main"] [data-codex-composer-root][data-composer-placement="home"]',
+    )].find(isVisibleSurface);
+    const home = homeMarker?.closest('[role="main"]') ?? null;
+    const homeActive = Boolean(home);
+    if (homeActive) runtime.scope.baseState = "home";
     for (const candidate of document.querySelectorAll('[role="main"].dream-home')) {
       if (candidate !== home) candidate.classList.remove("dream-home");
     }
@@ -398,7 +415,10 @@
     homePrompt: String(theme.homePrompt ?? "What should we build?").trim(),
     version,
     themeId: theme.id,
+    revision,
+    runtimeContract: "nahida-layered/1",
+    styleMode: "style",
   };
   ensure();
   return { installed: true, version, themeId: theme.id };
-})(__DREAM_SKIN_CSS_JSON__, __DREAM_SKIN_ART_JSON__, __DREAM_SKIN_THEME_JSON__, __DREAM_SKIN_VERSION_JSON__)
+})(__DREAM_SKIN_CSS_JSON__, __DREAM_SKIN_ART_JSON__, __DREAM_SKIN_THEME_JSON__, __DREAM_SKIN_VERSION_JSON__, __DREAM_SKIN_PAYLOAD_REVISION_JSON__)

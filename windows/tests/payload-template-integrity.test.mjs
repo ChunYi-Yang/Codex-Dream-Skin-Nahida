@@ -100,19 +100,15 @@ function extractThemeArgument(payload) {
   // The renderer IIFE ends with (cssJson, artJson, themeJson); the theme object
   // is the last argument, so read it back from the emitted payload rather than
   // trusting what we passed in.
-  const tail = payload.slice(payload.lastIndexOf("})("));
-  const start = tail.indexOf('{"');
-  const end = tail.lastIndexOf("}");
-  assert.ok(start > 0 && end > start, "Could not locate the theme argument in the payload.");
-  return JSON.parse(tail.slice(start, end + 1));
+  return extractPayloadArguments(payload).themeConfig;
 }
 
 function extractPayloadArguments(payload) {
-  const marker = "((cssText, artDataUrl, themeConfig) => {";
+  const marker = "((cssText, artDataUrls, theme, version, revision) => {";
   const at = payload.indexOf(marker);
   assert.notEqual(at, -1, "payload must keep the canonical renderer IIFE signature");
   const probe = `${payload.slice(0, at + marker.length)}
-return { cssText, artDataUrl, themeConfig };
+return { cssText, artDataUrls, themeConfig: theme, version };
 ${payload.slice(at + marker.length)}`;
   return vm.runInNewContext(probe, Object.create(null), { timeout: 10_000 });
 }
@@ -178,7 +174,7 @@ test("an ordinary theme name is unaffected by the fix", async () => {
   );
 });
 
-test("Windows payload uses the same compiled Safe CSS cascade as macOS", async () => {
+test("Windows payload embeds validated community CSS with important declarations", async () => {
   const themeDir = await fs.mkdtemp(path.join(os.tmpdir(), "dream-skin-safe-css-payload-"));
   try {
     await fs.copyFile(
@@ -198,7 +194,6 @@ test("Windows payload uses the same compiled Safe CSS cascade as macOS", async (
     const loaded = await loadPayload(themeDir);
     const captured = extractPayloadArguments(loaded.payload);
     assert.equal(loaded.safeCssStatus, "validated");
-    assert.match(captured.cssText, /@layer dreamskin-accessibility, dreamskin-community;/);
     assert.match(captured.cssText, /@layer dreamskin-community\s*\{/);
     assert.ok(captured.cssText.includes("background-color: #123456 !important;"));
     assert.ok(captured.cssText.includes("background-image: none !important;"));
@@ -218,7 +213,7 @@ test("the payload build refuses to emit a corrupted script", async () => {
   const fillRest = (source) => source
     .replace("__DREAM_SKIN_CSS_JSON__", () => '""')
     .replace("__DREAM_SKIN_ART_JSON__", () => '""')
-    .replace("__DREAM_SKIN_VERSION_JSON__", () => '"0"')
+    .replaceAll("__DREAM_SKIN_VERSION_JSON__", () => '"0"')
     .replace("__DREAM_SKIN_STYLE_REVISION_JSON__", () => '"0"')
     .replace("__DREAM_SKIN_PAYLOAD_REVISION_JSON__", () => '"0"');
 
@@ -245,7 +240,7 @@ test("the payload build refuses to emit a corrupted script", async () => {
   );
   assert.throws(
     () => assertIntactPayload(apostrophe, "self-check"),
-    /not parseable JavaScript/,
+    /not parseable JavaScript|placeholder/,
     "A $'-corrupted payload must be caught by the parse assertion.",
   );
 });

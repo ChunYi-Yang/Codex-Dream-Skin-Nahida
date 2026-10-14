@@ -64,7 +64,7 @@ try {
   const args = [
     "-NoProfile",
     "-WindowStyle", "Hidden",
-    "-ExecutionPolicy", "Bypass",
+    "-ExecutionPolicy", "RemoteSigned",
     "-File", startScript,
     "-ProfilePath", profilePath,
     "-PromptRestart",

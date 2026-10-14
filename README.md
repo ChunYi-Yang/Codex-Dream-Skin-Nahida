@@ -50,6 +50,16 @@ Codex 的侧栏、项目选择、任务菜单、设置项和输入框仍是原�
 
 ## 安装
 
+### 让 Codex 帮你安装（新电脑推荐）
+
+下载或克隆本仓库，在 Codex 中打开项目目录，然后说：
+
+> 帮我安装这个项目的纳西妲主题，按 docs/install-with-codex.md 检查环境并准备安装，等我正常退出 Codex 后再执行。
+
+Codex 会检查环境、准备经过校验的 Node 依赖，并启动等待任务。你只需保存输入、退出 Codex，
+后台安装完成后会重新打开应用。无需复制其他电脑的账号或 SSH 密钥。
+详细步骤、状态检查与恢复方法见 [通过 Codex 安装](./docs/install-with-codex.md)。
+
 ### 安装包
 
 从本仓库的 [Releases](https://github.com/447662/Codex-Dream-Skin-Nahida/releases)
@@ -71,7 +81,7 @@ powershell.exe -NoProfile -ExecutionPolicy RemoteSigned `
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy RemoteSigned `
-  -File .\windows\scripts\start-dream-skin.ps1 -UseLocalTheme -PromptRestart
+  -File .\windows\scripts\start-dream-skin.ps1 -PromptRestart
 ```
 
 首次启动或切换主题可能需要重启已打开的 Codex，请先保存尚未发送的输入。

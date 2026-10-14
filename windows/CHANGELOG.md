@@ -14,6 +14,11 @@
 
 ## Unreleased
 
+### Installation
+
+- Added a conversation installation guide and a preflight/setup entry point that prepares a signed, hash-checked Node runtime when needed, waits for the user to close Codex, then installs and verifies the managed engine.
+- Aligned layered Nahida renderer state with startup verification, restored Windows-only regression coverage, and removed the normal launcher's execution-policy bypass.
+
 ### Repository
 
 - Focused the repository, CI, release workflow, documentation, and installer inputs on the supported Windows product; removed the retired macOS build dependency and moved software licensing to the repository root.
@@ -42,6 +47,7 @@
 
 ### Nahida theme
 
+- Made keyboard-shortcut group headings, the restore footer, and the current Plugins search strip transparent, including its fade overlay. Limited the home hero to visible New chat surfaces so loading secondary pages no longer receive it.
 - Retinted the current queued-message composer rail surface to leaf green, scoped to its queue scroll container instead of the shared markdown-copy marker so code toolbars remain unchanged.
 - Unified Toggle summary section headers and their sticky filler bands to the same green glass surface, removing the remaining white strips.
 - Restored the archived-chat search/filter strip transparency on the current settings route, including its white fade and filter controls.

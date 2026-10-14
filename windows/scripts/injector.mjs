@@ -1303,10 +1303,18 @@ export async function verifySession(
       themeId: runtime?.themeId ?? null,
       revision: runtime?.revision ?? null,
       styleMode: runtime?.styleMode ?? null,
+      layeredRuntime: runtime?.runtimeContract === 'nahida-layered/1',
       stylePresent: Boolean(adopted || fallback),
       scope: runtime?.scope ?? null,
       businessClassPollution: [...document.querySelectorAll('[class]')].filter((node) =>
-        [...node.classList].some((name) => /^(?:dream-|codex-dream-skin(?:-|$))/.test(name))
+        [...node.classList].some((name) => /^(?:dream-|codex-dream-skin(?:-|$))/.test(name) &&
+          !(runtime?.runtimeContract === 'nahida-layered/1' && [
+            'codex-dream-skin', 'dream-home', 'dream-home-shell', 'dream-route-shell',
+            'dream-settings-shell', 'dream-settings-surface', 'dream-home-hero-surface',
+            'dream-home-composer-surface', 'dream-summary-panel-surface', 'dream-sidebar-brand',
+            'dream-brand', 'dream-brand-mark', 'dream-status', 'dream-scene', 'dream-portrait',
+            'dream-motes', 'dream-corner-leaf', 'dream-home-fallback-card', 'dream-home-fallback-copy',
+          ].includes(name)))
       ).length,
       homePresent: Boolean(home),
       suggestionsPresent: Boolean(suggestions),
@@ -1338,8 +1346,10 @@ export async function verifySession(
       Boolean(result.genericInput?.visible || (homeScope && result.homeSurface?.visible));
     const l0StructurePass = result.scope?.level === 'L0' &&
       result.scope?.baseState === 'settings' && Boolean(result.settingsAnchor?.visible);
-    const structurePass = l0StructurePass || (l1ScopePass &&
-      (Boolean(result.shell?.visible && result.sidebar?.visible) || genericStructurePass));
+    const layeredStructurePass = result.layeredRuntime && l1ScopePass &&
+      Boolean(result.shell?.visible && result.sidebar?.visible && result.composer?.visible);
+    const structurePass = l0StructurePass || (result.layeredRuntime ? layeredStructurePass :
+      (l1ScopePass && (Boolean(result.shell?.visible && result.sidebar?.visible) || genericStructurePass)));
     const documentPass = result.documentVisibility === 'visible' && !result.documentHidden;
     const viewportPass = result.viewport.width >= ${MIN_RENDERER_VIEWPORT_WIDTH} &&
       result.viewport.height >= ${MIN_RENDERER_VIEWPORT_HEIGHT};

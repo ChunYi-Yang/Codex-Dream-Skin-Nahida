@@ -15,3 +15,8 @@ theme/
 NXD光标4.0/
 Codex-Dream-Skin-main.zip
 云端上传清单.md
+
+# Local cleanup staging and historical backups
+/待删除文件/
+/codextheme-backup-*.zip
+/windows/runtime/
