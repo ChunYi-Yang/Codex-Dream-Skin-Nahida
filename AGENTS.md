@@ -68,8 +68,8 @@ user-visible changes and `windows/VERSION` only for a deliberate release.
 
 ## Repository Access
 
-- Canonical GitHub repository: `https://github.com/447662/Codex-Dream-Skin-Nahida`.
-- The `origin` SSH URL is `git@github.com:447662/Codex-Dream-Skin-Nahida.git`.
+- Canonical GitHub repository: `https://github.com/ChunYi-Yang/Codex-Dream-Skin-Nahida`.
+- The `origin` SSH URL is `git@github.com:ChunYi-Yang/Codex-Dream-Skin-Nahida.git`.
 - Use the repository's configured `origin` and its locally configured SSH key.
   On another computer, configure that computer's own authorized key only when
   pushing is needed; public source downloads do not require this machine's key.

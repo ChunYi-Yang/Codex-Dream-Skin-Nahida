@@ -3,11 +3,11 @@ blank_issues_enabled: false
 
 contact_links:
   - name: 中文 README / Chinese README
-    url: https://github.com/447662/Codex-Dream-Skin-Nahida/blob/main/README.md
+    url: https://github.com/ChunYi-Yang/Codex-Dream-Skin-Nahida/blob/main/README.md
     about: 安装说明、安全边界与纳西妲实机预览
   - name: Windows 使用说明 / Windows guide
-    url: https://github.com/447662/Codex-Dream-Skin-Nahida/blob/main/windows/README.md
+    url: https://github.com/ChunYi-Yang/Codex-Dream-Skin-Nahida/blob/main/windows/README.md
     about: 安装、启动、主题管理、验证与恢复
   - name: Windows Changelog
-    url: https://github.com/447662/Codex-Dream-Skin-Nahida/blob/main/windows/CHANGELOG.md
+    url: https://github.com/ChunYi-Yang/Codex-Dream-Skin-Nahida/blob/main/windows/CHANGELOG.md
     about: 已知修复与版本记录 · Known fixes and release notes

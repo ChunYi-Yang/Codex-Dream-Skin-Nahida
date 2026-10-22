@@ -62,7 +62,7 @@ Codex 会检查环境、准备经过校验的 Node 依赖，并启动等待任�
 
 ### 安装包
 
-从本仓库的 [Releases](https://github.com/447662/Codex-Dream-Skin-Nahida/releases)
+从本仓库的 [Releases](https://github.com/ChunYi-Yang/Codex-Dream-Skin-Nahida/releases)
 下载 `CodexDreamSkin-Setup-vX.Y.Z.exe`。关闭 Codex 后运行安装器，按向导完成即可。
 
 安装器按当前用户安装，不需要接管 WindowsApps 权限。未签名的新下载可能触发 SmartScreen；

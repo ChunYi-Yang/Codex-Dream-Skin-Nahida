@@ -7,8 +7,8 @@ CDP 为官方 Codex 桌面端加载外部主题。
 
 1. 阅读[项目 README](../README.md)、[Windows 使用说明](../windows/README.md)
    和[实现约束](../windows/SKILL.md)。
-2. 搜索[现有 Issue](https://github.com/447662/Codex-Dream-Skin-Nahida/issues)
-   与[开放 PR](https://github.com/447662/Codex-Dream-Skin-Nahida/pulls)。
+2. 搜索[现有 Issue](https://github.com/ChunYi-Yang/Codex-Dream-Skin-Nahida/issues)
+   与[开放 PR](https://github.com/ChunYi-Yang/Codex-Dream-Skin-Nahida/pulls)。
 3. 从最新 `main` 创建分支，一个 PR 只解决一个明确问题。
 
 ## 开发与验证

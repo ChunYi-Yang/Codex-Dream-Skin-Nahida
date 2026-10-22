@@ -75,7 +75,7 @@ launching. It preserves authentication and chats. See the
 ### Installer
 
 Download `CodexDreamSkin-Setup-vX.Y.Z.exe` from this repository's
-[Releases](https://github.com/447662/Codex-Dream-Skin-Nahida/releases).
+[Releases](https://github.com/ChunYi-Yang/Codex-Dream-Skin-Nahida/releases).
 Close Codex, then follow the installer.
 
 The installer is per-user and does not take ownership of WindowsApps. An
