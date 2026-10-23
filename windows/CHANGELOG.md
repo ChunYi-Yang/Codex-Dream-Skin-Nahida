@@ -23,6 +23,8 @@
 - Fixed the desktop theme shortcut waiting on a stock background Codex instance: open the retained independent theme profile before resource checks and record in-progress launcher state.
 ### Installation
 
+- Normalized canonical renderer source and generated assets to LF so Windows Git checkouts with automatic CRLF conversion match the same deployment payload.
+
 - Unified fresh source and default installer builds on the complete layered Nahida theme. Newly created theme shortcuts use the managed Node launcher, preserving the independent native Codex entry.
 - Documented main-branch installation on another computer, signed dependency preparation, first sign-in, status checks, verification and recovery. Updated the reviewed preset checksum after the repository URL changed.
 

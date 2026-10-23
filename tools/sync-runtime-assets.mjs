@@ -32,6 +32,7 @@ for (const [source, target] of jobs) {
       .replace("__DREAM_LAYOUT_POLICY__", () => resolveNahidaLayout.toString())
       .replace("__DREAM_SELECTOR_CONTRACT__", () => contract.trim());
   }
+  expected = expected.replace(/\r\n/g, "\n");
   const actual = await fs.readFile(path.join(root, target), "utf8").catch(() => null);
   if (actual === expected) continue;
   if (check) stale.push(target);

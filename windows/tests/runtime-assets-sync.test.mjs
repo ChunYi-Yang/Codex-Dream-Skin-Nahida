@@ -27,3 +27,24 @@ test("check mode rejects drift without rewriting deployment files", async () => 
     await fs.rm(fixture, { recursive: true, force: true });
   }
 });
+
+test("CRLF source checkouts generate the same LF deployment assets", async () => {
+  const fixture = await fs.mkdtemp(path.join(os.tmpdir(), "nahida-sync-crlf-"));
+  try {
+    for (const directory of ["runtime", "tools", "windows/assets"]) {
+      await fs.cp(path.join(root, directory), path.join(fixture, directory), { recursive: true });
+    }
+    for (const directory of ["runtime", "tools"]) {
+      for (const name of await fs.readdir(path.join(fixture, directory))) {
+        const file = path.join(fixture, directory, name);
+        if (!(await fs.stat(file)).isFile()) continue;
+        const source = await fs.readFile(file, "utf8");
+        await fs.writeFile(file, source.replace(/\r?\n/g, "\r\n"));
+      }
+    }
+    const result = spawnSync(process.execPath, [path.join(fixture, "tools/sync-runtime-assets.mjs"), "--check"], { encoding: "utf8" });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+  } finally {
+    await fs.rm(fixture, { recursive: true, force: true });
+  }
+});
