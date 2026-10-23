@@ -14,6 +14,8 @@
 
 ## Unreleased
 
+- Removed personal profile paths and private session identifiers from public documentation. Replaced two legacy captures containing private conversations and project names with reviewed public illustrations, clearly marked as illustrations rather than legacy test evidence.
+
 - Restored the dedicated secondary-tab background on the actual right-panel canvas while preserving the existing background wash and glass controls.
 
 - Show and hide the responsive home portrait together with the hero banner, including compact banners, and move it clear of the composer when necessary.

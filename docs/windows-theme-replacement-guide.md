@@ -98,7 +98,7 @@ ffmpeg -i .\input.mp4 -frames:v 1 .\first-frame.png
 
 ## 7. 启动链规则
 
-- 正常入口：`<local-private-reference>`。
+- 正常入口：当前用户桌面的 `Codex.lnk`；桌面目录使用 PowerShell 的 `[Environment]::GetFolderPath('Desktop')` 解析。
 - 目标应为签名 Node：`C:\devtools\nodejs\node-v22.13.1-win-x64\node.exe`。
 - 参数应为：`D:\codex_theme\windows\scripts\launch-dream-skin.mjs`。
 - 启动状态文件：`%LOCALAPPDATA%\CodexDreamSkin\state.json`。
