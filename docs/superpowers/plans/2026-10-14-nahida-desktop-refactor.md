@@ -8,13 +8,13 @@
 
 **Tech Stack:** Windows PowerShell、Node.js ESM、CSS、Store 包激活、CDP、Inno Setup 6；运行时 Node 使用仓库已审阅的固定版本。
 
-**Spec:** `docs/nahida-desktop-refactor-proposal-2026-10-14.md`；概念图：`<local-private-reference>`。
+**Spec:** `docs/nahida-desktop-refactor-proposal-2026-10-14.md`；概念图保存在实施者本机，公开文档不记录用户目录或私人会话标识。
 
 ## Global Constraints
 
 - 产品只支持 Windows，不恢复 macOS 安装器和发布依赖。
 - 原始工作区 `D:/codextheme` 的既有未提交改动不覆盖、不丢弃。
-- 实施工作区：`<local-private-reference>`，基线 HEAD：`6d46655ebadb9c462b00efd65ecb8d32203e0139`。
+- 实施工作区：独立的本地 Git worktree，基线 HEAD：`6d46655ebadb9c462b00efd65ecb8d32203e0139`。
 - 上游参考固定为 v1.5.20 / `1c2e8fea9e44e2ce8384bbd1c8759b99397c5d7d`，不整仓替换。
 - 本机已知应用版本 `26.1007.2314.0`；当前运行实例没有发现 CDP 监听端口，实机验证尚未完成。
 - 保留 hero、background、sidebar、rightPanel、portrait、decorations、scene 七个素材槽位。

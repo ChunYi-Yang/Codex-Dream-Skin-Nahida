@@ -1,5 +1,16 @@
 # Runtime notes
 
+## Public screenshot references
+
+The legacy filenames `runtime-1.1.43.png` and `runtime-1.1.44.png` now contain
+copies of the reviewed public task and settings illustrations from `docs/images/`.
+The original captures exposed private conversations and project names. These
+replacement illustrations are not evidence of a test run on either legacy version.
+Do not add screenshots containing private chats, project lists, account details,
+credentials, or personal filesystem paths.
+
+## Runtime behavior
+
 - The skin discovers the current `OpenAI.Codex` package on every run, requires a non-development `Store` signature kind, and launches its `ChatGPT.exe` with an explicit `--remote-debugging-address=127.0.0.1` and selected port.
 - Node.js 22 or newer is required for the built-in WebSocket client. The runtime's real `process.execPath` and version are recorded in state, even when PATH points at a shim.
 - The preferred port is `9335`; the default launcher scans up to 100 ports when it is occupied. An explicit occupied port is rejected.

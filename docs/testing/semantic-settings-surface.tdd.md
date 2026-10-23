@@ -68,7 +68,8 @@ Codex `26.727.4816.0` settings regression:
   targets `C:\devtools\nodejs\node-v22.13.1-win-x64\node.exe` with
   `D:\codex_theme\windows\scripts\launch-dream-skin-at-login.mjs`.
 - Final screenshot:
-  `<local-private-reference>`.
+  stored locally as `settings-header-final-after-watcher-restart.png`; the
+  personal profile path and private session identifier are omitted.
 - Live viewport overflow was false on both axes.
 
 ## Coverage And Known Gaps
