@@ -275,6 +275,14 @@
       "notes": "Windows 26.1007.2314.0: loopback CDP structural inspection 2026-10-14; secondary-page retains earlier verified search IDs."
     },
     {
+      "key": "project-list",
+      "selector": "aside.app-shell-left-panel nav[class*=\"_Navigation_\"]",
+      "tier": "L2",
+      "scope": "all",
+      "required": false,
+      "notes": "Windows 26.1007.2314.0: observed project navigation container; excludes the separate rail."
+    },
+    {
       "key": "secondary-page",
       "selector": "#scheduled-page-search, #plugins-page-search, #plugins-store-page-search",
       "tier": "L2",

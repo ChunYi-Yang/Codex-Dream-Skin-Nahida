@@ -8,6 +8,8 @@ Codex Dream Skin 通过本机回环 CDP 给官方 Codex Windows 桌面应用加�
 
 ## 运行要求
 
+纳西妲 1.6.0 本地候选包的安装与恢复步骤见[本地安装说明](../docs/install-nahida-local.md)，验证范围见[检查记录](../docs/testing/nahida-desktop-refactor-validation.md)。
+
 - Windows 10 或更高版本（x64；安装器声明 Windows 10 为最低版本）。
 - 从 Microsoft Store 安装且已注册到当前用户的官方 `OpenAI.Codex` 应用。
 - Release Setup.exe 已内置 Node.js；只有从源码运行时才需要 `PATH` 中有 Node.js 22 或更高版本。

@@ -17,15 +17,38 @@ function fixture({ home = false, thread = false, settings = false, secondary = f
   if (settings) nodes.set("settings", [make()]);
   if (secondary) nodes.set("secondary", [make()]);
   if (overlay) nodes.set("overlay", [make()]);
-  const document = { documentElement: { getAttribute: () => null }, querySelectorAll(selector) { return nodes.get(selector) ?? []; } };
+  const root = make();
+  const document = { documentElement: root, querySelectorAll(selector) { return nodes.get(selector) ?? []; } };
   const window = { innerWidth: 1280, innerHeight: 800, getComputedStyle: (node) => ({ display: node.hidden ? "none" : "block", visibility: "visible", opacity: "1" }) };
   const contract = { selectors: [
     { key: "shell-main", selector: "main" }, { key: "home-composer", selector: "home" },
     { key: "thread-surface", selector: "thread" }, { key: "settings-panel", selector: "settings" },
     { key: "secondary-page", selector: "secondary" }, { key: "overlay-dialog", selector: "overlay" },
   ] };
-  return { adapter: createLayoutAdapter(document, window, contract), main };
+  return { adapter: createLayoutAdapter(document, window, contract), main, root, nodes, make, contract };
 }
+
+test("all public community regions receive owned and recoverable attributes", () => {
+  const app = fixture();
+  const marked = new Map();
+  const regions = [[app.root, "root"], [app.make(), "project-list"], [app.make(), "message"], [app.make(), "dialog"]];
+  for (const [node, part] of regions) {
+    node.getAttribute = () => marked.get(node) ?? null;
+    node.setAttribute = (_, value) => marked.set(node, value);
+    node.removeAttribute = () => marked.delete(node);
+    if (part !== "root") {
+      app.nodes.set(part, [node]);
+      app.contract.selectors.push({key: part === "dialog" ? "overlay-dialog" : part, selector: part});
+    }
+  }
+  // Recreate after registering selectors.
+  const adapter = createLayoutAdapter({ documentElement: app.root, querySelectorAll: selector => app.nodes.get(selector) ?? [] },
+    { innerWidth: 1280, innerHeight: 800, getComputedStyle: () => ({display:"block",visibility:"visible",opacity:"1"}) }, app.contract);
+  adapter.discover();
+  for (const [node, part] of regions) assert.equal(marked.get(node), part);
+  adapter.cleanup();
+  assert.equal(marked.size, 0);
+});
 
 test("visible native home placement identifies the new home without home-icon", () => {
   assert.equal(fixture({ home: true }).adapter.discover().page, "home");

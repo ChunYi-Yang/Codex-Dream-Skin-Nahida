@@ -39,7 +39,10 @@ export function createLayoutAdapter(document, window, contract) {
       rightPanel: first("right-panel"), home: page === "home" ? home : null,
       thread, settings, toolbar: first("composer-toolbar"),
     };
-    const desired = new Map();
+    const desired = new Map([[document.documentElement, "root"]]);
+    for (const [key, part] of [["project-list", "project-list"], ["message", "message"], ["overlay-dialog", "dialog"]]) {
+      for (const node of nodes(key)) desired.set(node, part);
+    }
     for (const [key, part] of [
       ["main", "main"], ["sidebar", "sidebar"], ["navigation", "navigation"],
       ["header", "header"], ["composer", "composer"], ["rightPanel", "right-panel"],

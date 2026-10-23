@@ -17,6 +17,7 @@ $Injector = Join-Path $PSScriptRoot 'injector.mjs'
 . (Join-Path $PSScriptRoot 'common-windows.ps1')
 . (Join-Path $PSScriptRoot 'theme-windows.ps1')
 . (Join-Path $PSScriptRoot 'localization-windows.ps1')
+. (Join-Path $PSScriptRoot 'runtime-settings.ps1')
 
 function Invoke-DreamSkinStartupAppearanceRecovery {
   param(
@@ -73,24 +74,47 @@ try {
     -TimeoutMilliseconds $OperationLockTimeoutMilliseconds
   Assert-DreamSkinPort -Port $Port
   if ($ProfilePath) { $ProfilePath = [System.IO.Path]::GetFullPath($ProfilePath) }
+  Write-Host 'Validating the signed theme runtime.'
   $node = Get-DreamSkinNodeRuntime
+  Write-Host 'Resolving the registered Codex package.'
   $currentCodex = Get-DreamSkinCodexInstall
   $codex = $currentCodex
+  # Bring the app forward before the slower theme-store image checks.
+  try { [void](Invoke-DreamSkinCodexWindowActivation -Codex $codex) } catch {}
+  Write-Host 'Preparing the retained theme profile.'
   $language = Resolve-DreamSkinLanguage -StateRoot $StateRoot
   $themePaths = Get-DreamSkinThemePaths -StateRoot $StateRoot
   Ensure-DreamSkinManagedDirectory -Path $themePaths.Root -Root $themePaths.Root
+  $StatePath = Join-Path $StateRoot 'state.json'
+  Write-Host 'Reading theme state.'
+  $previousState = Read-DreamSkinState -Path $StatePath
+  $settingsArguments=@{StateRoot=$StateRoot;SavedState=$previousState}
+  if ($ProfilePathExplicit) { $settingsArguments.ExplicitProfile=$ProfilePath }
+  if ($PortExplicit) { $settingsArguments.ExplicitPort=$Port }
+  $runtimeSettings=Resolve-DreamSkinRuntimeSettings @settingsArguments
+  $ProfilePath=$runtimeSettings.profilePath
+  $Port=$runtimeSettings.port
   if (-not $ProfilePathExplicit) {
-    # Chromium 136+ ignores remote-debugging switches for its default data
-    # directory. Keep Dream Skin on a separate persistent profile so current
-    # Codex builds can expose CDP without weakening or modifying the official
-    # profile. A caller-provided path remains an explicit advanced override.
-    $ProfilePath = [System.IO.Path]::GetFullPath((Join-Path $StateRoot 'cdp-profile'))
     Ensure-DreamSkinManagedDirectory -Path $ProfilePath -Root $StateRoot
   }
-  $StatePath = Join-Path $StateRoot 'state.json'
   $StdoutPath = Join-Path $StateRoot 'injector.log'
   $StderrPath = Join-Path $StateRoot 'injector-error.log'
   $VerifyPath = Join-Path $StateRoot 'verify.log'
+  Write-Host 'Checking existing theme endpoint.'
+  if (-not $ResultToken -and (Get-Command Resume-DreamSkinCodexWindow -ErrorAction SilentlyContinue)) {
+    $existingProfilePort = Find-DreamSkinRunningProfilePort -Codex $codex -ProfilePath $ProfilePath
+    if ($null -ne $existingProfilePort -and (-not $PortExplicit -or $existingProfilePort -eq $Port)) {
+      if (-not $PortExplicit) { $Port = [int]$existingProfilePort }
+      Resume-DreamSkinCodexWindow -Codex $codex -Port $Port -ProfilePath $ProfilePath
+    }
+  }
+  if (-not $ResultToken -and
+    (Get-Command Open-DreamSkinIndependentProfile -ErrorAction SilentlyContinue) -and
+    -not (Test-DreamSkinPendingAppearanceTransaction -BackupPath $BackupPath)) {
+    Write-Host 'Opening independent profile.'
+    Open-DreamSkinIndependentProfile -Codex $codex -Port $Port -ProfilePath $ProfilePath
+  }
+  Write-Host 'Validating theme resources.'
   $themePaths = Initialize-DreamSkinThemeStore -SkillRoot (Split-Path -Parent $PSScriptRoot) -StateRoot $StateRoot
   $pauseWasSet = Test-DreamSkinPaused -StateRoot $StateRoot
   if ($RequireUnpaused -and $pauseWasSet) {
@@ -98,7 +122,6 @@ try {
     throw 'A newer pause request superseded this theme apply before renderer verification.'
   }
 
-  $previousState = Read-DreamSkinState -Path $StatePath
   if (-not $PortExplicit -and $null -ne $previousState -and $previousState.port) {
     $savedPort = [int]$previousState.port
     Assert-DreamSkinPort -Port $savedPort
@@ -118,6 +141,10 @@ try {
   }
 
   $currentProcesses = Get-DreamSkinCodexProcesses -Codex $currentCodex
+  if (-not $PortExplicit -and $null -eq $previousState -and $currentProcesses.Count -gt 0) {
+    $runningProfilePort = Find-DreamSkinRunningProfilePort -Codex $currentCodex -ProfilePath $ProfilePath
+    if ($null -ne $runningProfilePort) { $Port = [int]$runningProfilePort }
+  }
   $codexToStop = $currentCodex
   $cdpIdentity = Get-DreamSkinVerifiedCdpIdentity -Port $Port -Codex $currentCodex
   if ($null -eq $cdpIdentity) {
@@ -482,6 +509,9 @@ try {
       createdAt = (Get-Date).ToUniversalTime().ToString('o')
     }
     Write-DreamSkinState -Path $StatePath -State $state
+
+    # Show an existing/minimized window before checking visible renderer readiness.
+    try { [void](Invoke-DreamSkinCodexWindowActivation -Codex $codex) } catch {}
 
     $startFailureCategory = 'renderer-verification-failed'
     # The one-shot verify races Codex's first paint: on a slow machine the

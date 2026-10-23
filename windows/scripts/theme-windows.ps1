@@ -531,11 +531,6 @@ function Initialize-DreamSkinThemeStore {
       Assert-DreamSkinImageFile -Path $imageArchive
     }
   }
-  $retiredPresetDirectory = Join-Path $paths.Saved 'preset-romantic-rose'
-  Assert-DreamSkinNoReparseComponents -Path $retiredPresetDirectory
-  if (Test-Path -LiteralPath $retiredPresetDirectory) {
-    Remove-Item -LiteralPath $retiredPresetDirectory -Recurse -Force
-  }
   $presetDirectory = Join-Path $paths.Saved $bundledPresetId
   $presetTheme = Join-Path $presetDirectory 'theme.json'
   Assert-DreamSkinNoReparseComponents -Path $presetDirectory
@@ -548,6 +543,12 @@ function Initialize-DreamSkinThemeStore {
   Copy-Item -LiteralPath $assetImage -Destination $presetImage -Force
   Assert-DreamSkinNoReparseComponents -Path $presetImage
   Assert-DreamSkinImageFile -Path $presetImage
+  foreach ($imageName in $assetImageNames) {
+    $presetLayer = Join-Path $presetDirectory $imageName
+    Assert-DreamSkinNoReparseComponents -Path $presetLayer
+    Copy-Item -LiteralPath (Join-Path $assetRoot $imageName) -Destination $presetLayer -Force
+    Assert-DreamSkinImageFile -Path $presetLayer
+  }
   Assert-DreamSkinNoReparseComponents -Path $presetTheme
   Copy-Item -LiteralPath (Join-Path $assetRoot 'theme.json') -Destination $presetTheme -Force
   # Bundled Gothic Void Crusade (same pack as macOS presets/).
@@ -634,6 +635,20 @@ function Set-DreamSkinActiveTheme {
     }
   }
   $imageName = New-DreamSkinThemeImageName -Extension $extension
+  $Theme = $Theme | ConvertTo-Json -Depth 8 | ConvertFrom-Json
+  $layerCopies = @()
+  if ($Theme.PSObject.Properties['images'] -and $null -ne $Theme.images) {
+    foreach ($property in $Theme.images.PSObject.Properties) {
+      $layerName = "$($property.Value)"
+      if (-not $layerName -or [System.IO.Path]::GetFileName($layerName) -cne $layerName) { throw 'Unsafe auxiliary image path.' }
+      $layerSource = Join-Path (Split-Path -Parent $source) $layerName
+      Assert-DreamSkinNoReparseComponents -Path $layerSource
+      Assert-DreamSkinImageFile -Path $layerSource
+      $newLayerName = New-DreamSkinThemeImageName -Extension ([System.IO.Path]::GetExtension($layerName))
+      $layerCopies += [pscustomobject]@{ Source = $layerSource; Name = $newLayerName }
+      $property.Value = $newLayerName
+    }
+  }
   $target = Join-Path $paths.Active $imageName
   $temporary = Join-Path $paths.Active ('.dream-tmp-' + [guid]::NewGuid().ToString('N') + $extension)
   $temporaryCss = $null
@@ -654,6 +669,12 @@ function Set-DreamSkinActiveTheme {
     Move-Item -LiteralPath $temporary -Destination $target -Force
     Assert-DreamSkinNoReparseComponents -Path $target
     Assert-DreamSkinImageFile -Path $target
+    foreach ($layer in $layerCopies) {
+      $layerTarget = Join-Path $paths.Active $layer.Name
+      Assert-DreamSkinNoReparseComponents -Path $layerTarget
+      Copy-Item -LiteralPath $layer.Source -Destination $layerTarget -Force
+      Assert-DreamSkinImageFile -Path $layerTarget
+    }
     $Theme | Add-Member -NotePropertyName image -NotePropertyValue $imageName -Force
     if ($Name) { $Theme | Add-Member -NotePropertyName name -NotePropertyValue $Name -Force }
     $Theme = Normalize-DreamSkinThemeContract -Theme $Theme
@@ -733,6 +754,21 @@ function Save-DreamSkinCurrentTheme {
   $theme.id = $id
   $theme.name = $trimmed
   $theme.image = $imageName
+  if ($theme.PSObject.Properties['images'] -and $null -ne $theme.images) {
+    foreach ($imageProperty in $theme.images.PSObject.Properties) {
+      $layerName = "$($imageProperty.Value)"
+      if (-not $layerName -or [System.IO.Path]::GetFileName($layerName) -cne $layerName) {
+        throw "Theme image path is not a safe file name: $layerName"
+      }
+      $sourceLayer = Join-Path $paths.Active $layerName
+      $savedLayer = Join-Path $destination $layerName
+      Assert-DreamSkinNoReparseComponents -Path $sourceLayer
+      Assert-DreamSkinImageFile -Path $sourceLayer
+      Assert-DreamSkinNoReparseComponents -Path $savedLayer
+      Copy-Item -LiteralPath $sourceLayer -Destination $savedLayer -Force
+      Assert-DreamSkinImageFile -Path $savedLayer
+    }
+  }
   Write-DreamSkinTheme -ThemeDirectory $destination -Theme $theme
   $activeCss = Join-Path $paths.Active 'theme.css'
   if (Test-Path -LiteralPath $activeCss -PathType Leaf) {

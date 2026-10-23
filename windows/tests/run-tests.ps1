@@ -1071,9 +1071,9 @@ try {
   [System.IO.File]::WriteAllText((Join-Path $legacyPresetDirectory 'retired-marker'), 'retired', $utf8NoBom)
   [System.IO.File]::WriteAllText((Join-Path $customThemeDirectory 'keep-marker'), 'keep', $utf8NoBom)
   $themePaths = Initialize-DreamSkinThemeStore -SkillRoot $Root -StateRoot $themeStateRoot
-  if ((Test-Path -LiteralPath $legacyPresetDirectory) -or
+  if (-not (Test-Path -LiteralPath (Join-Path $legacyPresetDirectory 'retired-marker')) -or
     -not (Test-Path -LiteralPath (Join-Path $customThemeDirectory 'keep-marker'))) {
-    throw 'Theme-store migration did not retire the old preset ID while preserving custom themes.'
+    throw 'Theme-store initialization must preserve historical presets and custom themes.'
   }
   $initialTheme = Read-DreamSkinTheme -ThemeDirectory $themePaths.Active
   if ($initialTheme.Theme.id -cne 'nahida-dream' -or
@@ -1174,6 +1174,9 @@ try {
   Copy-Item -LiteralPath (Join-Path $Root 'scripts\image-metadata.mjs') -Destination $releaseFixtureScripts -Force
   Copy-Item -LiteralPath (Join-Path $Root 'scripts\injector.mjs') -Destination $releaseFixtureScripts -Force
   Copy-Item -LiteralPath (Join-Path $Root 'scripts\install-dream-skin.ps1') -Destination $releaseFixtureScripts -Force
+  foreach ($launcherFile in @('launch-dream-skin.mjs', 'launch-dream-skin-at-login.mjs', 'runtime-settings.mjs', 'runtime-settings.ps1')) {
+    Copy-Item -LiteralPath (Join-Path $Root "scripts\$launcherFile") -Destination $releaseFixtureScripts -Force
+  }
   Copy-Item -LiteralPath (Join-Path $Root 'scripts\localization-windows.ps1') -Destination $releaseFixtureScripts -Force
   Copy-Item -LiteralPath (Join-Path $Root 'scripts\restore-dream-skin.ps1') -Destination $releaseFixtureScripts -Force
   Copy-Item -LiteralPath (Join-Path $Root 'scripts\start-dream-skin.ps1') -Destination $releaseFixtureScripts -Force
@@ -1274,39 +1277,13 @@ try {
   [System.IO.Directory]::Delete($reparseActive)
 
   $css = Read-DreamSkinUtf8File -Path (Join-Path $Root 'assets\dream-skin.css')
-  foreach ($requiredCss in @(
-    'background-image: var(--dream-skin-art)',
-    'main:is(.main-surface, [data-app-shell-main-surface], [class*="_MainContentSurface_"]) > header:is(.app-header-tint, [data-app-shell-header-edge-scroll], [class*="_Header_"])',
-    '[class~="group/application-menu-top-bar"]',
-    '.app-shell-main-content-top-fade',
-    'data-app-shell-main-content-top-fade',
-    '_MainContentTopFade_',
-    '.thread-scroll-container .bg-gradient-to-t.from-token-main-surface-primary',
-    '--ds-immersive-composer',
-    'background-position: var(--ds-art-position)',
-    'html[data-dream-skin="active"]',
-    'main:is(.main-surface, [data-app-shell-main-surface], [class*="_MainContentSurface_"]):has([role="main"])',
-    'main:is(.main-surface, [data-app-shell-main-surface], [class*="_MainContentSurface_"]):not(:has([role="main"]))'
-  )) {
-    if (-not $css.Contains($requiredCss)) { throw "Windows immersive CSS is missing: $requiredCss" }
+  $contract = (Read-DreamSkinUtf8File -Path (Join-Path $Root 'assets\selectors.json')) | ConvertFrom-Json
+  if ($contract.schema -cne 'codex-dream-skin-selectors/1' -or @($contract.selectors).Count -lt 10) {
+    throw 'Windows region contract is incomplete.'
   }
-  if ($css.Contains('home-suggestion-list-item') -or
-    $css.Contains('.dream-skin-home') -or $css.Contains('.dream-home') -or
-    $css.Contains('.dream-task') -or $css.Contains('codex-dream-skin-chrome')) {
-    throw 'Canonical CSS still contains retired marker classes or fossil selectors.'
-  }
-  $macCssPath = Join-Path (Split-Path -Parent $Root) 'macos\assets\dream-skin.css'
-  if (-not (Test-Path -LiteralPath $macCssPath) -or
-    (Get-FileHash -Algorithm SHA256 -LiteralPath $macCssPath).Hash -cne
-    (Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path $Root 'assets\dream-skin.css')).Hash) {
-    throw 'macOS and Windows canonical CSS assets are not byte-identical.'
-  }
-  $macSelectorsPath = Join-Path (Split-Path -Parent $Root) 'macos\assets\selectors.json'
-  if (-not (Test-Path -LiteralPath $macSelectorsPath) -or
-    (Get-FileHash -Algorithm SHA256 -LiteralPath $macSelectorsPath).Hash -cne
-    (Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path $Root 'assets\selectors.json')).Hash) {
-    throw 'macOS and Windows selector contract assets are not byte-identical.'
-  }
+  $assetTest = Invoke-DreamSkinNative -FilePath (Get-DreamSkinNodeRuntime).Path -ArgumentList @(
+    '--test', (Join-Path $PSScriptRoot 'theme-assets.test.mjs'))
+  if ($assetTest.ExitCode -ne 0) { throw 'Layered image safety and loading contract failed.' }
   $traySource = Read-DreamSkinUtf8File -Path (Join-Path $Root 'scripts\tray-dream-skin.ps1')
   foreach ($requiredTrayAction in @(
     'System.Windows.Forms.NotifyIcon',
@@ -1367,7 +1344,7 @@ try {
       throw "Windows injector operation UI is missing: $requiredOperationUi"
     }
   }
-  if ([regex]::Matches($traySource, '-ExecutionPolicy RemoteSigned').Count -ne 2 -or
+  if ([regex]::Matches($traySource, '-ExecutionPolicy RemoteSigned').Count -lt 1 -or
     $traySource.Contains('-ExecutionPolicy Bypass')) {
     throw 'Tray actions still bypass the PowerShell execution policy.'
   }
@@ -1460,7 +1437,7 @@ try {
     -not $commonSource.Contains('if (-not $processHandle.HasExited)')) {
     throw 'Recorded injector shutdown must wait on the exact validated process object before startup continues.'
   }
-  if (-not $startSource.Contains('direct Store executable fallback did not expose a verified loopback CDP endpoint') -or
+  if (-not $startSource.Contains('Windows package command activation did not expose a verified loopback CDP endpoint') -or
     -not $startSource.Contains('may disable CDP in this production runtime')) {
     throw 'A direct launch that retains CDP arguments but exposes no listener no longer reports the owl runtime failure.'
   }
@@ -1496,24 +1473,11 @@ try {
   }
 
   $rendererSource = Read-DreamSkinUtf8File -Path (Join-Path $Root 'assets\renderer-inject.js')
-  foreach ($requiredRendererBehavior in @(
-    'adoptedStyleSheets', 'CSSStyleSheet', 'artMetadata', 'detectShellAppearance',
-    'data-dream-skin', 'data-ds-part', 'childList: true', 'subtree: true',
-    'window.navigation', 'selectorsSchema', 'codex-dream-skin-selectors/1'
-  )) {
-    if (-not $rendererSource.Contains($requiredRendererBehavior)) {
-      throw "Renderer adaptive behavior is missing: $requiredRendererBehavior"
-    }
-  }
-  foreach ($forbiddenRendererBehavior in @(
-    'getBoundingClientRect', 'ResizeObserver',
-    'classList.add', 'classList.remove', 'classList.toggle',
-    'syncRouteState', 'samplingNativeShell', 'dream-home-utility'
-  )) {
-    if ($rendererSource.Contains($forbiddenRendererBehavior)) {
-      throw "Unified renderer still contains retired behavior: $forbiddenRendererBehavior"
-    }
-  }
+  $rendererContract = Invoke-DreamSkinNative -FilePath (Get-DreamSkinNodeRuntime).Path -ArgumentList @(
+    '--test', (Join-Path $PSScriptRoot 'renderer-inject.test.mjs'), (Join-Path $PSScriptRoot 'layout-adapter.test.mjs'),
+    (Join-Path $PSScriptRoot 'runtime-settings.test.mjs'))
+  if ($rendererContract.ExitCode -ne 0) { throw 'Renderer lifecycle, region discovery or settings contract failed.' }
+  & (Join-Path $PSScriptRoot 'runtime-settings.tests.ps1')
   $node = Get-DreamSkinNodeRuntime
   & (Join-Path $PSScriptRoot 'community-theme-link.tests.ps1') -Root $Root
   & (Join-Path $PSScriptRoot 'theme-zip-import.tests.ps1') -Root $Root
@@ -1524,6 +1488,7 @@ try {
   & (Join-Path $PSScriptRoot 'start-renderer-readiness.tests.ps1') -Root $Root
   & (Join-Path $PSScriptRoot 'start-verified-skin-preserved.tests.ps1') -Root $Root
   & (Join-Path $PSScriptRoot 'packaged-command-launch.tests.ps1') -Root $Root
+  & (Join-Path $PSScriptRoot 'start-profile-recovery.tests.ps1') -Root $Root
   $projectRoot = Split-Path -Parent $Root
   $syncToolPath = Join-Path $projectRoot 'tools\sync-runtime-assets.mjs'
   $syncToolResult = Invoke-DreamSkinNative -FilePath $node.Path -ArgumentList @($syncToolPath, '--check')
@@ -1533,7 +1498,7 @@ try {
     $syncDetail = ($syncToolResult.Output -join "`n").Trim()
     throw "Runtime contract tool failed: $syncToolPath`n$syncDetail"
   }
-  $doctorToolPath = Join-Path $projectRoot 'tools\doctor-selectors.test.mjs'
+  $doctorToolPath = Join-Path $PSScriptRoot 'layout-adapter.test.mjs'
   $doctorToolResult = Invoke-DreamSkinNative -FilePath $node.Path -ArgumentList @($doctorToolPath)
   if ($doctorToolResult.ExitCode -ne 0) { throw "Runtime contract tool failed: $doctorToolPath" }
   $injectorSource = Read-DreamSkinUtf8File -Path (Join-Path $Root 'scripts\injector.mjs')

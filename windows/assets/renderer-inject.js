@@ -53,7 +53,10 @@
       rightPanel: first("right-panel"), home: page === "home" ? home : null,
       thread, settings, toolbar: first("composer-toolbar"),
     };
-    const desired = new Map();
+    const desired = new Map([[document.documentElement, "root"]]);
+    for (const [key, part] of [["project-list", "project-list"], ["message", "message"], ["overlay-dialog", "dialog"]]) {
+      for (const node of nodes(key)) desired.set(node, part);
+    }
     for (const [key, part] of [
       ["main", "main"], ["sidebar", "sidebar"], ["navigation", "navigation"],
       ["header", "header"], ["composer", "composer"], ["rightPanel", "right-panel"],
@@ -354,6 +357,14 @@
       "notes": "Windows 26.1007.2314.0: loopback CDP structural inspection 2026-10-14; secondary-page retains earlier verified search IDs."
     },
     {
+      "key": "project-list",
+      "selector": "aside.app-shell-left-panel nav[class*=\"_Navigation_\"]",
+      "tier": "L2",
+      "scope": "all",
+      "required": false,
+      "notes": "Windows 26.1007.2314.0: observed project navigation container; excludes the separate rail."
+    },
+    {
       "key": "secondary-page",
       "selector": "#scheduled-page-search, #plugins-page-search, #plugins-store-page-search",
       "tier": "L2",
@@ -387,7 +398,8 @@
     if (width >= 900 && height >= 760 && available >= 260) heroMode = "full";
     else if (width >= 640 && height >= 600 && available >= 200) heroMode = "compact";
   }
-  return { heroMode, showPortrait: heroMode === "full" && width >= 1120, showParticles: heroMode === "full" && !reducedMotion };
+  const showPortrait = heroMode !== "off";
+  return { heroMode, showPortrait, showParticles: heroMode === "full" && !reducedMotion };
 };
   const objectUrls = new Set();
   const urlCache = new Map();
@@ -401,6 +413,8 @@
   let chrome;
   let hero;
   let portrait;
+  let scene;
+  let decorations;
   let observedMain;
   let observedComposer;
   const setAttribute = (name, value) => {
@@ -506,6 +520,8 @@
       create("p", null, copy, theme.tagline);
       portrait = create("div", "nahida-portrait", chrome);
       create("span", null, portrait, theme.quote);
+      scene = create("div", "nahida-scene", chrome);
+      decorations = create("div", "nahida-decorations", chrome);
     }
     if (chrome && mainRect) {
       for (const [name, value] of Object.entries({
@@ -522,6 +538,20 @@
       hero.style.top = top + "px";
       hero.style.height = Math.max(0, heroHeight) + "px";
       portrait.style.display = policy.showPortrait && showHero ? "block" : "none";
+      portrait.style.top = "52%";
+      if (policy.showPortrait && showHero && composerRect) {
+        const card = portrait.getBoundingClientRect();
+        if (card.left < composerRect.right && card.right > composerRect.left &&
+          card.top < composerRect.bottom && card.bottom > composerRect.top) {
+          const below = composerRect.bottom - mainRect.top + 24;
+          const above = composerRect.top - mainRect.top - card.height - 24;
+          portrait.style.top = Math.max(12, below + card.height <= mainRect.height - 12 ? below : above) + "px";
+        }
+      }
+      scene.style.display = showHero ? "block" : "none";
+      decorations.style.display = showHero && policy.showParticles ? "block" : "none";
+      scene.style.top = decorations.style.top = top + "px";
+      scene.style.height = decorations.style.height = Math.max(0, heroHeight) + "px";
       chrome.setAttribute("data-hero-mode", showHero ? policy.heroMode : "off");
       setAttribute("data-nahida-hero-mode", showHero ? policy.heroMode : "off");
     }

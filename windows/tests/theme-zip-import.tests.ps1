@@ -83,8 +83,7 @@ function Write-TestFallbackIdThemePack {
     [Parameter(Mandatory = $true)][ValidateSet('Missing', 'NonString')][string]$IdKind
   )
   New-Item -ItemType Directory -Path $Directory -Force | Out-Null
-  $projectRoot = Split-Path -Parent $Root
-  Copy-Item -LiteralPath (Join-Path $projectRoot 'docs\images\gallery\skin-01.jpg') `
+  Copy-Item -LiteralPath (Join-Path $Root 'assets\dream-reference.jpg') `
     -Destination (Join-Path $Directory 'background.jpg') -Force
   $theme = [ordered]@{
     schemaVersion = 1
@@ -428,7 +427,7 @@ try {
   New-TestZipFromDirectory -Source $missingIdSource -Archive $missingIdArchive
   $missingId = Import-DreamSkinThemeZip -ArchivePath $missingIdArchive -StateRoot $stateRoot
   if ($missingId.Status -cne 'Imported' -or
-    $missingId.Id -cne 'import-b009c788e6a9307c35ed281e' -or -not $missingId.Renamed) {
+    $missingId.Id -cne 'import-bc74a504c516c4b5df4043a8' -or -not $missingId.Renamed) {
     throw 'A missing source theme id did not use the stable cross-platform semantic fallback id.'
   }
 

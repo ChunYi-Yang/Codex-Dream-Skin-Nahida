@@ -39,7 +39,7 @@ const stableTestidLiteral = (testid) => {
   }
   return JSON.stringify(`[data-testid="${testid}"]`);
 };
-const SKIN_VERSION = "1.5.18";
+const SKIN_VERSION = "1.6.0";
 // .github/workflows/ci.yml's version-consistency check greps this file for a
 // literal `const SKIN_VERSION = "...";` line, so the export stays a separate
 // statement rather than an inline `export const`.
@@ -1335,7 +1335,9 @@ export async function verifySession(
         y: document.documentElement.scrollHeight > document.documentElement.clientHeight,
       },
     };
-    const homeScope = result.scope?.baseState === 'home' || result.homePresent;
+    // Cached Home stays in the DOM after navigation; its presence alone must
+    // not impose Home geometry on an otherwise healthy task route.
+    const homeScope = result.scope?.baseState === 'home' || Boolean(result.homeSurface?.visible);
     const l1ScopePass = result.scope?.level === 'L1' &&
       Array.isArray(result.scope?.missingL1) && result.scope.missingL1.length === 0;
     const genericStructurePass = l1ScopePass && Boolean(result.genericMain?.visible) &&

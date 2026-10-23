@@ -184,6 +184,22 @@ async function verify(overrides = {}) {
   return { result, session };
 }
 
+test("a task with a cached hidden home remains a verified visible task", async () => {
+  const { result } = await verify({
+    dom: makeDomFixture({
+      scope: { level: "L1", baseState: "thread", missingL1: [] },
+      home: makeHome({ rect: makeRect(0, 0), visible: false }),
+      shell: makeElement({ rect: makeRect(0, 0), visible: false }),
+      genericMain: makeElement(),
+      genericInput: makeElement({ rect: makeRect(640, 100, 100, 600) }),
+    }),
+  });
+  assert.equal(result.homePresent, true);
+  assert.equal(result.homeSurface.visible, false);
+  assert.equal(result.readiness.structurePass, true);
+  assert.equal(result.pass, true);
+});
+
 test("normal L1 renderer requires and records the exact target window binding", async () => {
   const { result, session } = await verify();
   assert.equal(result.pass, true);

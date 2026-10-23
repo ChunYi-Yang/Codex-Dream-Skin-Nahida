@@ -1,5 +1,7 @@
 # Codex Dream Skin for Windows
 
+The local Nahida 1.6.0 candidate has separate [installation notes](../docs/install-nahida-local.md) and a [validation record](../docs/testing/nahida-desktop-refactor-validation.md).
+
 <p align="center">
   <a href="./README.md">中文</a> · <strong>English</strong>
 </p>

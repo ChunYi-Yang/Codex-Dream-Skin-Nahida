@@ -15,6 +15,11 @@ html[data-dream-skin="active"] {
   --nahida-floating: rgba(247, 250, 239, .94);
   --nahida-wash: rgba(247, 250, 239, .82);
   --nahida-thread-wash: rgba(247, 250, 239, .91);
+  --nahida-heading: #376a45;
+  --color-background-panel: var(--nahida-glass);
+  --color-surface-primary: var(--nahida-glass);
+  --color-text-primary-surface: var(--dream-text);
+  --color-text-secondary-surface: var(--dream-muted);
   --color-text-primary: var(--dream-text);
   --color-text-secondary: var(--dream-muted);
   --color-token-text-primary: var(--dream-text);
@@ -42,6 +47,7 @@ html[data-dream-skin="active"][data-dream-shell="dark"] {
   --nahida-floating: rgba(28, 46, 36, .97);
   --nahida-wash: rgba(17, 34, 25, .83);
   --nahida-thread-wash: rgba(17, 34, 25, .93);
+  --nahida-heading: #c9ed91;
 }
 html[data-dream-skin="active"][data-dream-shell="light"] { color-scheme: light; }
 
@@ -149,8 +155,41 @@ html[data-dream-skin="active"] [data-ds-part="right-panel"] {
   border-color: var(--dream-line) !important;
   --color-codex-terminal-background: transparent;
 }
+/* The right-panel focus marker also appears on its separate title bar. */
+html[data-dream-skin="active"] aside[data-app-shell-focus-area="right-panel"] {
+  --nahida-secondary-wash: var(--nahida-thread-wash);
+  background: linear-gradient(var(--nahida-secondary-wash), var(--nahida-secondary-wash)),
+    var(--dream-right-panel-art) center / cover no-repeat !important;
+}
+html[data-dream-skin="active"][data-nahida-page="home"] aside[data-app-shell-focus-area="right-panel"] {
+  --nahida-secondary-wash: var(--nahida-wash);
+}
 html[data-dream-skin="active"] [data-ds-part="right-panel"] [data-app-shell-tabs="true"] {
   background-color: var(--nahida-glass) !important;
+}
+html[data-dream-skin="active"][data-nahida-page="settings"] [class~="group/settings"]
+  [class~="rounded-2xl"][class~="border-default"],
+html[data-dream-skin="active"] :is([data-ds-part="right-panel"], [data-new-tab-scroll-root="true"])
+  :is(button[class~="rounded-xl"], button[class~="rounded-2xl"], [class~="bg-white"],
+    [class~="rounded-md"][class~="bg-primary-soft-alpha"]) {
+  background-color: var(--nahida-glass) !important;
+  border-color: var(--dream-line) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dream-panel) 40%, transparent);
+  backdrop-filter: blur(12px);
+  color: var(--dream-text);
+}
+html[data-dream-skin="active"][data-nahida-page="settings"]
+  :is([data-ds-part="main"], [data-ds-part="sidebar"]) :is(h1, h2, h3),
+html[data-dream-skin="active"] [data-ds-part="right-panel"] :is(h1, h2, h3) {
+  color: var(--nahida-heading) !important;
+}
+html[data-dream-skin="active"][data-nahida-page="settings"] [data-settings-panel-slug] {
+  color: var(--nahida-heading) !important;
+}
+html[data-dream-skin="active"] :is([data-ds-part="right-panel"], [data-new-tab-scroll-root="true"])
+  :is(button[class~="rounded-xl"], button[class~="rounded-2xl"],
+    [class~="rounded-md"][class~="bg-primary-soft-alpha"]):hover {
+  background-color: color-mix(in srgb, var(--dream-accent) 18%, var(--nahida-glass)) !important;
 }
 html[data-dream-skin="active"] :is(
   [role="dialog"], [role="menu"], [role="listbox"], [data-radix-popper-content-wrapper],

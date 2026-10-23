@@ -14,6 +14,14 @@
 
 ## Unreleased
 
+- Restored the dedicated secondary-tab background on the actual right-panel canvas while preserving the existing background wash and glass controls.
+
+- Show and hide the responsive home portrait together with the hero banner, including compact banners, and move it clear of the composer when necessary.
+
+- Made the home portrait card scale proportionally with the content area's width and height, including its frame and caption.
+
+- Fixed the desktop theme shortcut waiting on a stock background Codex instance: open the retained independent theme profile before resource checks and record in-progress launcher state.
+
 ### Repository
 
 - Focused the repository, CI, release workflow, documentation, and installer inputs on the supported Windows product; removed the retired macOS build dependency and moved software licensing to the repository root.
@@ -21,6 +29,11 @@
 - Restored the explicit signed-Node validation required by the installer safety suite.
 
 ### Runtime recovery
+
+- Reopen the exact verified theme profile through Windows package activation when Electron remains in the background after its last window closes, instead of activating an unrelated stock window and timing out renderer verification.
+
+- Recover the verified loopback port from the exact running theme profile when startup state is missing, and activate the themed window before renderer verification so a hidden or minimized session does not appear to ignore desktop launches.
+- Verify the active task route instead of a cached hidden Home node, preventing a working desktop launch from reporting a false theme failure after navigation.
 
 - Preserve Windows package identity when forwarding CDP arguments through the Store executable fallback, fixing the "process has no package identity" startup error on current Codex versions.
 - Fixed Windows sign-in startup so enabled shortcuts launch Codex through the Node login launcher, apply the active theme with the current start-script parameter contract, restart an existing unthemed instance, and retain bounded retry diagnostics instead of opening only the tray.
@@ -42,6 +55,9 @@
 
 ### Nahida theme
 
+- Style the new-tab tool card containers as green glass, including rounded-md cards and hover states even when the sidebar outer frame has zero-width layout bounds.
+
+- Made keyboard-shortcut group headings, the restore footer, and the current Plugins search strip transparent, including its fade overlay. Limited the home hero to visible New chat surfaces so loading secondary pages no longer receive it.
 - Retinted the current queued-message composer rail surface to leaf green, scoped to its queue scroll container instead of the shared markdown-copy marker so code toolbars remain unchanged.
 - Unified Toggle summary section headers and their sticky filler bands to the same green glass surface, removing the remaining white strips.
 - Restored the archived-chat search/filter strip transparency on the current settings route, including its white fade and filter controls.
@@ -176,3 +192,10 @@
 
 - 增加渲染层辅助窗口回归测试，覆盖主窗口正常注入、透明辅助窗口清理残余样式，以及辅助目标随后成为完整主界面时可重新启用皮肤。
 - 增加中文项目路径、CRLF/LF、UTF-16 与歧义 TOML 拒绝、并发写检测、section 隔离、精确恢复、Appx/state 身份、状态归档、payload 构造、Browser ID 和不安全 CDP URL 的回归检查。
+## 1.6.0 — Local Nahida candidate (2026-10-14)
+
+- Adapt the layered Nahida theme to the current Codex/Work shell with native layout preserved and an adaptive home hero.
+- Use green glass and leaf-green headings for settings and browser tools, including native surface tokens and dark mode.
+- Share saved profile and port resolution across desktop and login launchers; keep login profiles and historical themes.
+- Preserve all artwork when seeding and saving themes; add an explicit local Nahida installer flavor with SHA-256 output.
+

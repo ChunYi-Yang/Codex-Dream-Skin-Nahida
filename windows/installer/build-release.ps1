@@ -4,6 +4,7 @@ param(
   [string]$IsccPath,
   [string]$NodeArchivePath,
   [string]$WorkingDirectory,
+  [ValidateSet('Public', 'NahidaLocal')][string]$ThemeFlavor = 'Public',
   [switch]$KeepWorkingDirectory
 )
 
@@ -30,6 +31,25 @@ $publicPresetImagePath = Join-Path $publicPresetRoot 'background.jpg'
 $publicPresetThemePath = Join-Path $publicPresetRoot 'theme.json'
 $publicPresetImageSha256 = 'b76a7cbe2ff9d923846e931984d243a7ba1f25de8d190b5c6412c809c41aee42'
 $publicPresetThemeSha256 = '7ae4cc2a9d80a21e1100d9c773d84b84dab2cd486b01704ade377fcc3d8ec867'
+
+function Assert-NahidaReleaseAssets {
+  param([Parameter(Mandatory = $true)][string]$AssetRoot)
+  $theme = [System.IO.File]::ReadAllText((Join-Path $AssetRoot 'theme.json')) | ConvertFrom-Json
+  if ($theme.id -cne 'nahida-dream' -or $null -eq $theme.images) { throw 'Local package must contain the Nahida layered theme.' }
+  $slots = @('background', 'sidebar', 'rightPanel', 'portrait', 'decorations', 'scene')
+  if (@($theme.images.PSObject.Properties).Count -ne $slots.Count) { throw 'Nahida artwork must contain six auxiliary slots.' }
+  $names = @("$($theme.image)")
+  foreach ($slot in $slots) {
+    $property = $theme.images.PSObject.Properties[$slot]
+    if ($null -eq $property) { throw "Missing Nahida artwork slot: $slot" }
+    $names += "$($property.Value)"
+  }
+  foreach ($fileName in $names) {
+    if (-not $fileName -or [System.IO.Path]::GetFileName($fileName) -cne $fileName) { throw "Unsafe Nahida artwork path: $fileName" }
+    $file = Get-Item -LiteralPath (Join-Path $AssetRoot $fileName) -ErrorAction Stop
+    if ($file.PSIsContainer -or $file.Length -le 0 -or ($file.Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw "Invalid Nahida artwork file: $fileName" }
+  }
+}
 
 function Read-ReleaseTextFile {
   param([Parameter(Mandatory = $true)][string]$Path)
@@ -360,14 +380,18 @@ try {
   Copy-ReleaseDirectory -Source (Join-Path $windowsRoot 'scripts') -Destination (Join-Path $payloadRoot 'scripts')
   Copy-ReleaseDirectory -Source $publicPresetRoot `
     -Destination (Join-Path $payloadRoot 'presets\preset-gothic-void-crusade')
-  Copy-Item -LiteralPath $publicPresetImagePath `
-    -Destination (Join-Path (Join-Path $payloadRoot 'assets') 'dream-reference.jpg') -Force
-  $publicPresetTheme.image = 'dream-reference.jpg'
-  [System.IO.File]::WriteAllText(
-    (Join-Path (Join-Path $payloadRoot 'assets') 'theme.json'),
-    (($publicPresetTheme | ConvertTo-Json -Depth 8) + "`r`n"),
-    [System.Text.UTF8Encoding]::new($false)
-  )
+  if ($ThemeFlavor -eq 'Public') {
+    Copy-Item -LiteralPath $publicPresetImagePath `
+      -Destination (Join-Path (Join-Path $payloadRoot 'assets') 'dream-reference.jpg') -Force
+    $publicPresetTheme.image = 'dream-reference.jpg'
+    [System.IO.File]::WriteAllText(
+      (Join-Path (Join-Path $payloadRoot 'assets') 'theme.json'),
+      (($publicPresetTheme | ConvertTo-Json -Depth 8) + "`r`n"),
+      [System.Text.UTF8Encoding]::new($false)
+    )
+  } else {
+    Assert-NahidaReleaseAssets -AssetRoot (Join-Path $payloadRoot 'assets')
+  }
   [System.IO.File]::WriteAllText(
     (Join-Path $payloadRoot 'VERSION'),
     "$version`r`n",
@@ -416,6 +440,8 @@ try {
     'scripts\launch-dream-skin.mjs',
     'scripts\localization-windows.ps1',
     'scripts\restore-dream-skin.ps1',
+    'scripts\runtime-settings.mjs',
+    'scripts\runtime-settings.ps1',
     'scripts\start-dream-skin.ps1',
     'scripts\theme-windows.ps1',
     'scripts\tray-dream-skin.ps1',
@@ -436,28 +462,32 @@ try {
   $stagedPublicThemeHash = (Get-FileHash -LiteralPath $stagedPublicThemePath -Algorithm SHA256).Hash.ToLowerInvariant()
   $stagedPublicTheme = (Read-ReleaseTextFile `
     -Path (Join-Path (Join-Path $payloadRoot 'assets') 'theme.json')) | ConvertFrom-Json
-  if ($stagedPublicImageHash -cne $publicPresetImageSha256 -or
-    $stagedPublicThemeHash -cne $publicPresetThemeSha256 -or
+  if ($stagedPublicThemeHash -cne $publicPresetThemeSha256 -or
+    ($ThemeFlavor -eq 'Public' -and ($stagedPublicImageHash -cne $publicPresetImageSha256 -or
     "$($stagedPublicTheme.id)" -cne 'preset-gothic-void-crusade' -or
-    "$($stagedPublicTheme.image)" -cne 'dream-reference.jpg') {
+    "$($stagedPublicTheme.image)" -cne 'dream-reference.jpg'))) {
     throw 'Staged installer payload did not retain the reviewed public release theme.'
   }
 
+  $outputBaseName = if ($ThemeFlavor -eq 'NahidaLocal') { "CodexDreamSkin-Nahida-Setup-v$version" } else { "CodexDreamSkin-Setup-v$version" }
   $arguments = @(
+    "/DOutputBaseName=$outputBaseName",
     "/DAppVersion=$version",
     "/DStageRoot=$stageRoot",
     "/DOutputDir=$OutputDirectory",
     $definitionPath
   )
-  Write-Host "Building CodexDreamSkin-Setup-v$version.exe..."
+  Write-Host "Building $outputBaseName.exe..."
   & $compiler @arguments
   if ($LASTEXITCODE -ne 0) { throw "ISCC.exe failed with exit code $LASTEXITCODE." }
 
-  $artifactPath = Join-Path $OutputDirectory "CodexDreamSkin-Setup-v$version.exe"
+  $artifactPath = Join-Path $OutputDirectory "$outputBaseName.exe"
   if (-not (Test-Path -LiteralPath $artifactPath -PathType Leaf)) {
     throw "Inno Setup did not create the expected artifact: $artifactPath"
   }
   Write-Host "Windows release created: $artifactPath"
+  $artifactHash = (Get-FileHash -LiteralPath $artifactPath -Algorithm SHA256).Hash.ToLowerInvariant()
+  [System.IO.File]::WriteAllText("$artifactPath.sha256", "$artifactHash  $outputBaseName.exe`r`n", [System.Text.UTF8Encoding]::new($false))
 } finally {
   if (-not $KeepWorkingDirectory -and (Test-Path -LiteralPath $WorkingDirectory)) {
     Remove-Item -LiteralPath $WorkingDirectory -Recurse -Force -ErrorAction SilentlyContinue

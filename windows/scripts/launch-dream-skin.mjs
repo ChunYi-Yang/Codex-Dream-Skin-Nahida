@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { readSavedRuntimeState, resolveRuntimeSettings } from "./runtime-settings.mjs";
 
 function parsePort(args) {
   if (args.length === 0) return null;
@@ -52,8 +53,9 @@ try {
   const port = parsePort(process.argv.slice(2));
   const windowsRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const startScript = path.join(windowsRoot, "scripts", "start-dream-skin.ps1");
-  const profilePath = path.join(process.env.LOCALAPPDATA, "CodexDreamSkin", "Profile-v3");
-  const stateRoot = path.dirname(profilePath);
+  const stateRoot = path.win32.join(process.env.LOCALAPPDATA, "CodexDreamSkin");
+  const settings = resolveRuntimeSettings({ stateRoot, savedState: readSavedRuntimeState(stateRoot), explicitPort: port });
+  const profilePath = settings.profilePath;
   fs.mkdirSync(stateRoot, { recursive: true });
   const startStdoutPath = path.join(stateRoot, "launcher-start.out.log");
   const startStderrPath = path.join(stateRoot, "launcher-start.err.log");
@@ -64,13 +66,18 @@ try {
   const args = [
     "-NoProfile",
     "-WindowStyle", "Hidden",
-    "-ExecutionPolicy", "Bypass",
+    "-ExecutionPolicy", "RemoteSigned",
     "-File", startScript,
     "-ProfilePath", profilePath,
     "-PromptRestart",
   ];
   if (port !== null) args.push("-Port", String(port));
 
+  writeLauncherLog(stateRoot, {
+    startedAt: new Date().toISOString(), phase: "starting",
+    node: process.execPath, script: startScript, profile: profilePath, port,
+    status: null,
+  });
   const stdoutHandle = fs.openSync(startStdoutPath, "w");
   const stderrHandle = fs.openSync(startStderrPath, "w");
   let result;

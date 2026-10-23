@@ -32,7 +32,10 @@ WizardStyle=modern
 Compression=lzma2/ultra64
 SolidCompression=yes
 OutputDir={#OutputDir}
-OutputBaseFilename=CodexDreamSkin-Setup-v{#AppVersion}
+#ifndef OutputBaseName
+  #define OutputBaseName "CodexDreamSkin-Setup-v" + AppVersion
+#endif
+OutputBaseFilename={#OutputBaseName}
 SetupIconFile={#StageRoot}\payload\assets\codex-dream-skin.ico
 UninstallDisplayIcon={app}\payload\assets\codex-dream-skin.ico
 UninstallDisplayName={#AppName}

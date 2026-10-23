@@ -15,3 +15,12 @@ for (const [name, input, expected] of [
 test("reduced motion disables decorative particles", () => {
   assert.equal(resolveNahidaLayout({ width: 1080, height: 900, page: "home", reducedMotion: true }).showParticles, false);
 });
+for (const [width, height, visible] of [[1080, 720, true], [820, 650, true], [560, 700, false], [1000, 500, false]]) {
+  test(`home portrait follows the banner at ${width}x${height}`, () => {
+    assert.equal(resolveNahidaLayout({ width, height, page: 'home' }).showPortrait, visible);
+  });
+}
+test('portrait stays disabled outside home and with invalid dimensions', () => {
+  assert.equal(resolveNahidaLayout({ width: 1200, height: 900, page: 'thread' }).showPortrait, false);
+  assert.equal(resolveNahidaLayout({ width: NaN, height: 900, page: 'home' }).showPortrait, false);
+});

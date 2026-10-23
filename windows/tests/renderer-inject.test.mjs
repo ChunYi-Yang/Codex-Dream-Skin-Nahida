@@ -5,7 +5,7 @@ import test from "node:test";
 
 const template = await fs.readFile(new URL("../assets/renderer-inject.js", import.meta.url), "utf8");
 
-function fixture({ shell = true, pathname = "/index.html", protocol = "app:" } = {}) {
+function fixture({ shell = true, pathname = "/index.html", protocol = "app:", home = false, width = 1200, reducedMotion = false } = {}) {
   const nodes = new Set();
   const timers = new Set();
   const observers = new Set();
@@ -35,7 +35,7 @@ function fixture({ shell = true, pathname = "/index.html", protocol = "app:" } =
     documentElement: root, body, createElement: makeNode,
     getElementById: (id) => [...nodes].find((node) => node.id === id) ?? null,
     querySelector(selector) { return shell && (selector === "main.main-surface" || selector.startsWith("main.main-surface,")) ? main : null; },
-    querySelectorAll: (selector) => shell && selector.startsWith("main:") ? [main] : [],
+    querySelectorAll: (selector) => shell && (selector.startsWith("main:") || (home && selector.includes('data-composer-placement="home"'))) ? [main] : [],
   };
   const context = {
     window: { innerWidth: 1280, innerHeight: 800 }, location: { protocol, pathname }, document,
@@ -46,6 +46,10 @@ function fixture({ shell = true, pathname = "/index.html", protocol = "app:" } =
     setTimeout: () => { const id = ++sequence; timers.add(id); return id; }, clearTimeout: (id) => timers.delete(id),
   };
   context.window.getComputedStyle = context.getComputedStyle;
+  if (home) main.getBoundingClientRect = () => ({ left: 200, top: 40, right: 200 + width, bottom: 940, width, height: 900 });
+  context.window.innerWidth = 200 + width;
+  context.window.innerHeight = 1000;
+  context.window.matchMedia = () => ({ matches: reducedMotion });
   vm.createContext(context);
   const run = () => vm.runInContext(template
     .replace("__DREAM_SKIN_CSS_JSON__", () => JSON.stringify("test CSS"))
@@ -55,6 +59,21 @@ function fixture({ shell = true, pathname = "/index.html", protocol = "app:" } =
     .replace("__DREAM_SKIN_PAYLOAD_REVISION_JSON__", () => JSON.stringify("test-revision")), context);
   return { context, root, document, nodes, timers, observers, run };
 }
+
+test("owned scene and decoration layers follow full, compact and reduced-motion policy", () => {
+  for (const [width, reducedMotion, sceneVisible, decorationsVisible] of [[1200, false, true, true], [800, false, true, false], [1200, true, true, false]]) {
+    const app = fixture({ home: true, width, reducedMotion });
+    app.run();
+    const scene = [...app.nodes].find(node => node.className === "nahida-scene");
+    const decorations = [...app.nodes].find(node => node.className === "nahida-decorations");
+    assert.ok(scene);
+    assert.ok(decorations);
+    assert.equal(scene.style.display !== "none", sceneVisible);
+    assert.equal(decorations.style.display !== "none", decorationsVisible);
+    app.context.window.__CODEX_DREAM_SKIN_STATE__.cleanup();
+    assert.equal(app.document.getElementById("codex-dream-skin-chrome"), null);
+  }
+});
 
 test("repeated injection replaces the previous observer and decorations", () => {
   const app = fixture();

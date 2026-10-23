@@ -1,5 +1,7 @@
 # Windows 安装与更新
 
+纳西妲 1.6.0 本地候选包使用独立文件名；本次交付请按[本地安装说明](install-nahida-local.md)操作。
+
 本页面向只想使用主题的普通用户。Release 安装器包含所需运行时，不需要 clone 仓库、安装全局
 Node.js 或执行 PowerShell 脚本。
 

@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { readSavedRuntimeState, resolveRuntimeSettings } from "./runtime-settings.mjs";
 
 const START_DELAY_MS = 5_000;
 const RETRY_DELAYS_MS = [0, 5_000, 10_000, 20_000];
@@ -59,7 +60,7 @@ function buildLaunch(port) {
     "SystemRoot",
   );
   const stateRoot = path.win32.join(localAppData, "CodexDreamSkin");
-  const profilePath = path.win32.join(stateRoot, "Profile-v3");
+  const profilePath = resolveRuntimeSettings({ stateRoot, savedState: readSavedRuntimeState(stateRoot), explicitPort: port }).profilePath;
   const args = [
     "-NoLogo",
     "-NoProfile",

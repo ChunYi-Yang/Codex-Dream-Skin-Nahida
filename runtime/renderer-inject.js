@@ -26,6 +26,8 @@
   let chrome;
   let hero;
   let portrait;
+  let scene;
+  let decorations;
   let observedMain;
   let observedComposer;
   const setAttribute = (name, value) => {
@@ -131,6 +133,8 @@
       create("p", null, copy, theme.tagline);
       portrait = create("div", "nahida-portrait", chrome);
       create("span", null, portrait, theme.quote);
+      scene = create("div", "nahida-scene", chrome);
+      decorations = create("div", "nahida-decorations", chrome);
     }
     if (chrome && mainRect) {
       for (const [name, value] of Object.entries({
@@ -147,6 +151,20 @@
       hero.style.top = top + "px";
       hero.style.height = Math.max(0, heroHeight) + "px";
       portrait.style.display = policy.showPortrait && showHero ? "block" : "none";
+      portrait.style.top = "52%";
+      if (policy.showPortrait && showHero && composerRect) {
+        const card = portrait.getBoundingClientRect();
+        if (card.left < composerRect.right && card.right > composerRect.left &&
+          card.top < composerRect.bottom && card.bottom > composerRect.top) {
+          const below = composerRect.bottom - mainRect.top + 24;
+          const above = composerRect.top - mainRect.top - card.height - 24;
+          portrait.style.top = Math.max(12, below + card.height <= mainRect.height - 12 ? below : above) + "px";
+        }
+      }
+      scene.style.display = showHero ? "block" : "none";
+      decorations.style.display = showHero && policy.showParticles ? "block" : "none";
+      scene.style.top = decorations.style.top = top + "px";
+      scene.style.height = decorations.style.height = Math.max(0, heroHeight) + "px";
       chrome.setAttribute("data-hero-mode", showHero ? policy.heroMode : "off");
       setAttribute("data-nahida-hero-mode", showHero ? policy.heroMode : "off");
     }

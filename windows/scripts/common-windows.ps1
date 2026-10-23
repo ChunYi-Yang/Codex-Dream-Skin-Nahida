@@ -382,6 +382,8 @@ function Install-DreamSkinRuntimeEngine {
     'scripts\launch-dream-skin.mjs',
     'scripts\localization-windows.ps1',
     'scripts\restore-dream-skin.ps1',
+    'scripts\runtime-settings.mjs',
+    'scripts\runtime-settings.ps1',
     'scripts\start-dream-skin.ps1',
     'scripts\theme-windows.ps1',
     'scripts\tray-dream-skin.ps1',
@@ -513,6 +515,35 @@ function Test-DreamSkinCommandLineToken {
   if (-not $CommandLine -or -not $Token) { return $false }
   $pattern = '(?i)(?:^|[\s"])' + [regex]::Escape($Token) + '(?=$|[\s"])'
   return [regex]::IsMatch($CommandLine, $pattern)
+}
+
+function Find-DreamSkinRunningProfilePort {
+  param(
+    [Parameter(Mandatory = $true)][object]$Codex,
+    [Parameter(Mandatory = $true)][string]$ProfilePath
+  )
+  $ports = @()
+  foreach ($process in @(Get-DreamSkinCodexProcesses -Codex $Codex)) {
+    $commandLine = "$($process.CommandLine)"
+    if ($commandLine -match '(?:^|\s)--type(?:=|\s)') { continue }
+    $profileMatch = [regex]::Match($commandLine,
+      '(?i)(?:^|\s)(?:"--user-data-dir=(?<profile>[^"]+)"|--user-data-dir="(?<profile>[^"]+)"|--user-data-dir=(?<profile>[^\s"]+))(?=$|\s)')
+    if (-not $profileMatch.Success -or -not (Test-DreamSkinPathEqual `
+      -Left $profileMatch.Groups['profile'].Value -Right $ProfilePath)) { continue }
+    $portMatch = [regex]::Match($commandLine,
+      '(?i)(?:^|\s)--remote-debugging-port=(?<port>\d+)(?=$|\s)')
+    if (-not $portMatch.Success) { continue }
+    $candidate = 0
+    if (-not [int]::TryParse($portMatch.Groups['port'].Value, [ref]$candidate) -or
+      $candidate -lt 1024 -or $candidate -gt 65535) { continue }
+    if ((Test-DreamSkinCodexPortOwner -Port $candidate -Codex $Codex) -and
+      $null -ne (Get-DreamSkinCdpBrowserIdentity -Port $candidate)) {
+      if ($ports -notcontains $candidate) { $ports += $candidate }
+    }
+  }
+  if ($ports.Count -gt 1) { throw 'Multiple verified Codex endpoints use this profile; close the extra instance manually.' }
+  if ($ports.Count -eq 1) { return $ports[0] }
+  return $null
 }
 
 function Get-DreamSkinCodexDebugArgumentStatus {
@@ -1410,6 +1441,27 @@ function Stop-DreamSkinCodex {
   }
 }
 
+function Resume-DreamSkinCodexWindow {
+  param(
+    [Parameter(Mandatory = $true)][object]$Codex,
+    [Parameter(Mandatory = $true)][int]$Port,
+    [Parameter(Mandatory = $true)][string]$ProfilePath
+  )
+  if (-not (Test-DreamSkinCodexPortOwner -Port $Port -Codex $Codex) -or
+    $null -eq (Get-DreamSkinCdpBrowserIdentity -Port $Port)) {
+    throw 'Cannot reopen a theme window without its verified Codex endpoint.'
+  }
+  # Electron can retain a background instance after its last window closes.
+  # Forward a second-instance launch to that exact profile instead of merely
+  # activating a PID (which may otherwise activate the stock window).
+  $argumentLine = ConvertTo-DreamSkinArgumentLine -Arguments @(
+    '--remote-debugging-address=127.0.0.1', "--remote-debugging-port=$Port",
+    "--user-data-dir=$ProfilePath")
+  Invoke-CommandInDesktopPackage -PackageFamilyName "$($Codex.PackageFamilyName)" `
+    -AppId "$($Codex.ApplicationId)" -Command "$($Codex.Executable)" `
+    -Args $argumentLine -PreventBreakaway -ErrorAction Stop | Out-Null
+}
+
 function Confirm-DreamSkinRestart {
   param([string]$Message)
   $shell = New-Object -ComObject WScript.Shell
@@ -1418,7 +1470,10 @@ function Confirm-DreamSkinRestart {
 
 function Invoke-DreamSkinCodexWindowActivation {
   param([Parameter(Mandatory = $true)][object]$Codex)
-  $processes = @(Get-DreamSkinCodexProcesses -Codex $Codex)
+  $processes = @(Get-DreamSkinCodexProcesses -Codex $Codex | Sort-Object {
+    if ($_.CommandLine -match '--remote-debugging-port=' -and
+      $_.CommandLine -notmatch '(?:^|\s)--type(?:=|\s)') { 0 } else { 1 }
+  })
   if ($processes.Count -eq 0) { return $false }
   $shell = New-Object -ComObject WScript.Shell
   foreach ($process in $processes) {
@@ -1427,4 +1482,27 @@ function Invoke-DreamSkinCodexWindowActivation {
     } catch {}
   }
   return $false
+}
+
+function Open-DreamSkinIndependentProfile {
+  param(
+    [Parameter(Mandatory = $true)][object]$Codex,
+    [Parameter(Mandatory = $true)][int]$Port,
+    [Parameter(Mandatory = $true)][string]$ProfilePath
+  )
+  if ($null -ne (Find-DreamSkinRunningProfilePort -Codex $Codex -ProfilePath $ProfilePath) -or
+    (Get-DreamSkinCodexProcesses -Codex $Codex).Count -eq 0 -or
+    -not (Test-DreamSkinPortAvailable -Port $Port)) { return }
+  # Open the independent profile without restarting the stock application.
+  $arguments = @('--remote-debugging-address=127.0.0.1',
+    "--remote-debugging-port=$Port", "--user-data-dir=$ProfilePath")
+  $null = Start-DreamSkinCodexDirect -Codex $Codex -Arguments $arguments
+  $deadline = (Get-Date).AddSeconds(45)
+  while ($null -eq (Find-DreamSkinRunningProfilePort -Codex $Codex -ProfilePath $ProfilePath)) {
+    if ((Get-Date) -ge $deadline) {
+      throw 'The independent theme window did not expose its verified endpoint; the stock Codex instance was preserved.'
+    }
+    Start-Sleep -Milliseconds 400
+  }
+  Write-Host 'Opened the independent theme window; loading theme resources.'
 }
