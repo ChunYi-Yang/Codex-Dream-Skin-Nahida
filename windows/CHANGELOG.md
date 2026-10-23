@@ -21,6 +21,10 @@
 - Made the home portrait card scale proportionally with the content area's width and height, including its frame and caption.
 
 - Fixed the desktop theme shortcut waiting on a stock background Codex instance: open the retained independent theme profile before resource checks and record in-progress launcher state.
+### Installation
+
+- Added a conversation installation guide and a preflight/setup entry point that prepares a signed, hash-checked Node runtime when needed, waits for the user to close Codex, then installs and verifies the managed engine.
+- Aligned layered Nahida renderer state with startup verification, restored Windows-only regression coverage, and removed the normal launcher's execution-policy bypass.
 
 ### Repository
 
@@ -198,4 +202,3 @@
 - Use green glass and leaf-green headings for settings and browser tools, including native surface tokens and dark mode.
 - Share saved profile and port resolution across desktop and login launchers; keep login profiles and historical themes.
 - Preserve all artwork when seeding and saving themes; add an explicit local Nahida installer flavor with SHA-256 output.
-

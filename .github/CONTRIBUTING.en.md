@@ -9,8 +9,8 @@ loopback CDP.
 1. Read the [project README](../README.en.md), the
    [Windows guide](../windows/README.en.md), and the
    [implementation constraints](../windows/SKILL.md).
-2. Search [existing issues](https://github.com/447662/Codex-Dream-Skin-Nahida/issues)
-   and [open pull requests](https://github.com/447662/Codex-Dream-Skin-Nahida/pulls).
+2. Search [existing issues](https://github.com/ChunYi-Yang/Codex-Dream-Skin-Nahida/issues)
+   and [open pull requests](https://github.com/ChunYi-Yang/Codex-Dream-Skin-Nahida/pulls).
 3. Branch from current `main` and keep each pull request focused on one problem.
 
 ## Development and verification

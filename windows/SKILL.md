@@ -9,6 +9,12 @@ Apply a reversible renderer skin through Chromium DevTools Protocol while launch
 
 ## Workflow
 
+For installation requested inside an active Codex conversation, first read
+`../docs/install-with-codex.md`. Run `../windows/setup.ps1 -CheckOnly`, prepare
+dependencies with `-PrepareOnly`, then run the default setup mode. It waits for
+the user to close Codex normally before installation; never terminate this
+conversation and never report a waiting worker as a successful installation.
+
 1. Install Node.js 22 or newer, close Codex, then run `scripts/install-dream-skin.ps1` once to set the matching official base colors and create launch, login-autostart, and restore shortcuts.
 2. Run `scripts/start-dream-skin.ps1`. The shortcut asks before restarting an already-open Codex app; CLI callers must explicitly add `-RestartExisting`.
 3. Run `scripts/verify-dream-skin.ps1 -ScreenshotPath <absolute-path>` after launch. Treat a missing hero, native composer, sidebar skin, or injection marker as failure. The native suggestion count is responsive and may be two to four.

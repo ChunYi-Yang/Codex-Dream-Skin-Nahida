@@ -61,10 +61,21 @@ composer remain native and interactive.
 
 ## Installation
 
+### Install with a Codex conversation
+
+Download or clone this repository, open its folder as a Codex project, and ask:
+
+> Install this project's Nahida theme. Follow docs/install-with-codex.md, prepare the dependencies, and wait for me to exit Codex normally before installing.
+
+The setup entry point checks the official Store app, validates Node (or downloads
+the pinned signed runtime), then waits for normal app exit before installing and
+launching. It preserves authentication and chats. See the
+[conversation installation guide](./docs/install-with-codex.md) for status and recovery.
+
 ### Installer
 
 Download `CodexDreamSkin-Setup-vX.Y.Z.exe` from this repository's
-[Releases](https://github.com/447662/Codex-Dream-Skin-Nahida/releases).
+[Releases](https://github.com/ChunYi-Yang/Codex-Dream-Skin-Nahida/releases).
 Close Codex, then follow the installer.
 
 The installer is per-user and does not take ownership of WindowsApps. An
@@ -85,7 +96,7 @@ local Nahida theme directly:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy RemoteSigned `
-  -File .\windows\scripts\start-dream-skin.ps1 -UseLocalTheme -PromptRestart
+  -File .\windows\scripts\start-dream-skin.ps1 -PromptRestart
 ```
 
 Applying a theme may need to restart an existing Codex process. Save any

@@ -1,5 +1,19 @@
 # Repository Guidelines
 
+## Installing through a Codex conversation
+
+When the user asks to install this theme on this computer, read
+`docs/install-with-codex.md` and `windows/SKILL.md`, then follow the installation
+workflow. Use `windows/setup.ps1 -CheckOnly` for read-only preflight,
+`-PrepareOnly` to prepare a validated Node runtime, and the default setup mode
+to launch a hidden worker that waits for the user to exit Codex normally.
+Never close the current conversation to finish installation. Report the worker
+as waiting, not installed; after reopening, inspect
+`%LOCALAPPDATA%\CodexDreamSkin\conversation-install.json`, run verification,
+and check both home and task routes. Do not infer success from a shortcut or
+process existing. Use paths resolved from this checkout; never copy a previous
+machine's paths, profiles, credentials, or SSH keys.
+
 ## Project Structure
 
 - `windows/` is the product: PowerShell launch/install/restore logic, Node CDP
@@ -54,9 +68,10 @@ user-visible changes and `windows/VERSION` only for a deliberate release.
 
 ## Repository Access
 
-- Canonical GitHub repository: `https://github.com/447662/Codex-Dream-Skin-Nahida`.
-- The `origin` SSH URL is `git@github.com:447662/Codex-Dream-Skin-Nahida.git`.
-- The registered SSH public key is `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPXwgZF7snJCUH1aJqEKvKwC3WH2R9L3LQp2ap+mDySt 447662@github-codex-dream-skin`.
-- Use the repository's configured `origin` and the matching private key already
-  available through the local SSH configuration. Never request, print, or
+- Canonical GitHub repository: `https://github.com/ChunYi-Yang/Codex-Dream-Skin-Nahida`.
+- The `origin` SSH URL is `git@github.com:ChunYi-Yang/Codex-Dream-Skin-Nahida.git`.
+- Use the repository's configured `origin` and its locally configured SSH key.
+  On another computer, configure that computer's own authorized key only when
+  pushing is needed; public source downloads do not require this machine's key.
+  Never request, print, or
   commit the private key.
