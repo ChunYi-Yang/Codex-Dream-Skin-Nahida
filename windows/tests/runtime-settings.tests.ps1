@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param()
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\scripts\runtime-settings.ps1')

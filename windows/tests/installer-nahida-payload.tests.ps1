@@ -5,6 +5,16 @@ $windowsRoot = Split-Path -Parent $PSScriptRoot
 $tokens = $null
 $errors = $null
 $ast = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $windowsRoot 'installer\build-release.ps1'), [ref]$tokens, [ref]$errors)
+$flavor = $ast.ParamBlock.Parameters | Where-Object { $_.Name.VariablePath.UserPath -eq 'ThemeFlavor' }
+if ($null -eq $flavor -or $flavor.DefaultValue.Value -cne 'Nahida') {
+  throw 'Default releases must ship the same layered Nahida theme as source installations.'
+}
+$builder = [IO.File]::ReadAllText((Join-Path $windowsRoot 'installer\build-release.ps1'))
+$pin = [regex]::Match($builder, '\$publicPresetThemeSha256 = ''(?<hash>[a-f0-9]{64})''')
+$metadata = Join-Path $windowsRoot 'presets\preset-gothic-void-crusade\theme.json'
+if (-not $pin.Success -or (Get-FileHash -LiteralPath $metadata -Algorithm SHA256).Hash -ine $pin.Groups['hash'].Value) {
+  throw 'Bundled preset metadata must match the reviewed build checksum after repository-link changes.'
+}
 $function = $ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Assert-NahidaReleaseAssets' }, $true)
 if ($null -eq $function) { throw 'Local Nahida staging validator is missing.' }
 Invoke-Expression $function.Extent.Text

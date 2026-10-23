@@ -4,7 +4,7 @@ param(
   [string]$IsccPath,
   [string]$NodeArchivePath,
   [string]$WorkingDirectory,
-  [ValidateSet('Public', 'NahidaLocal')][string]$ThemeFlavor = 'Public',
+  [ValidateSet('Nahida', 'Public', 'NahidaLocal')][string]$ThemeFlavor = 'Nahida',
   [switch]$KeepWorkingDirectory
 )
 
@@ -30,7 +30,7 @@ $publicPresetRoot = Join-Path (Join-Path $windowsRoot 'presets') `
 $publicPresetImagePath = Join-Path $publicPresetRoot 'background.jpg'
 $publicPresetThemePath = Join-Path $publicPresetRoot 'theme.json'
 $publicPresetImageSha256 = 'b76a7cbe2ff9d923846e931984d243a7ba1f25de8d190b5c6412c809c41aee42'
-$publicPresetThemeSha256 = '7ae4cc2a9d80a21e1100d9c773d84b84dab2cd486b01704ade377fcc3d8ec867'
+$publicPresetThemeSha256 = '73c410c0bcf6ccd76a09c0a1dbf2dee2b725fc3153c45e25ab67b91c8a9e435d'
 
 function Assert-NahidaReleaseAssets {
   param([Parameter(Mandatory = $true)][string]$AssetRoot)

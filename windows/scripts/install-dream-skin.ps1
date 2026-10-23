@@ -56,15 +56,16 @@ try {
     $startMenu = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'
     $startup = [Environment]::GetFolderPath('Startup')
     $powershell = (Get-Command powershell.exe -ErrorAction Stop).Source
-    $startScript = $engine.Start
     $restoreScript = $engine.Restore
     $trayScript = $engine.Tray
     $portArgument = if ($PortExplicit) { " -Port $Port" } else { '' }
 
     foreach ($folder in @($desktop, $startMenu)) {
       $shortcut = $shell.CreateShortcut((Join-Path $folder 'Codex Dream Skin.lnk'))
-      $shortcut.TargetPath = $powershell
-      $shortcut.Arguments = "-NoProfile -ExecutionPolicy RemoteSigned -File `"$startScript`"$portArgument -PromptRestart"
+      $shortcut.TargetPath = $launcherNode
+      $shortcut.Arguments = '"' + $engine.Launcher + '"' + $(
+        if ($PortExplicit) { " --port $Port" } else { '' }
+      )
       $shortcut.WorkingDirectory = $engine.Root
       $shortcut.Description = 'Launch the official Codex app with Codex Dream Skin'
       $shortcut.Save()

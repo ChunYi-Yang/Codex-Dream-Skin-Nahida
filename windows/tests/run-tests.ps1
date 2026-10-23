@@ -293,7 +293,7 @@ try {
     throw 'Installer does not reject an active source-bound tray before replacing the runtime engine.'
   }
   foreach ($requiredShortcutBinding in @(
-    '$startScript = $engine.Start',
+    '$engine.Launcher',
     '$restoreScript = $engine.Restore',
     '$trayScript = $engine.Tray',
     '$shortcut.WorkingDirectory = $engine.Root',
@@ -304,7 +304,7 @@ try {
       throw "Installer shortcut still depends on its source checkout: $requiredShortcutBinding"
     }
   }
-  if ([regex]::Matches($installSource, '-ExecutionPolicy RemoteSigned').Count -ne 4 -or
+  if ([regex]::Matches($installSource, '-ExecutionPolicy RemoteSigned').Count -ne 3 -or
     $installSource.Contains('-ExecutionPolicy Bypass')) {
     throw 'Installer shortcuts or tray launch still bypass the PowerShell execution policy.'
   }
@@ -1481,6 +1481,7 @@ try {
   $node = Get-DreamSkinNodeRuntime
   & (Join-Path $PSScriptRoot 'community-theme-link.tests.ps1') -Root $Root
   & (Join-Path $PSScriptRoot 'theme-zip-import.tests.ps1') -Root $Root
+  & (Join-Path $PSScriptRoot 'layered-theme-store.tests.ps1')
   & (Join-Path $PSScriptRoot 'config-startup-rollback.tests.ps1') -Root $Root
   & (Join-Path $PSScriptRoot 'start-result-contract.tests.ps1') -Root $Root
   & (Join-Path $PSScriptRoot 'start-cdp-failure-appearance-recovery.tests.ps1') -Root $Root

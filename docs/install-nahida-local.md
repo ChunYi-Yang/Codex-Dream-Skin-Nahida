@@ -1,14 +1,17 @@
-# 安装纳西妲 1.6.0 本地候选包
+# 纳西妲安装包与构建方式
 
-此包用于当前 Windows Codex/Work 纳西妲主题。新增设置与工具卡片的绿色玻璃样式、文字配色，以及多图主题保存修复。
+新电脑的安装步骤以[主 README](../README.md#安装)为准。本页说明纳西妲安装包的构建与核验。
+默认构建和源码使用同一套七张分层图片，包含绿色玻璃卡片、自适应人物卡片、次级标签页专用背景与多图保存修复。
 
 1. 对照安装包旁的 `.sha256` 文件核对 SHA-256。
-2. 保存当前输入与任务，退出桌面应用后运行 `CodexDreamSkin-Nahida-Setup-v1.6.0.exe`。
+2. 保存当前输入与任务，退出桌面应用和主题托盘后运行 `CodexDreamSkin-Setup-vX.Y.Z.exe`。
 3. 使用安装器创建的快捷方式启动。已有登录配置和历史主题保留，启动入口优先采用已保存的配置。
 4. 检查首页、任务页、设置和工具面板；再次启动确认登录保持。
 
 如需恢复原生外观，使用安装目录中的恢复入口或主题托盘的恢复功能。不要删除登录配置或历史备份来排障。
 
-安装包尚未由本会话在当前运行中的应用上现场安装。现有桌面快捷方式仍可使用，安装器完成后指向正式运行目录。
-
-构建命令：`windows/installer/build-release.ps1 -ThemeFlavor NahidaLocal`。默认公共构建仍使用已审阅的 Gothic 素材。软件与素材许可分别见 LICENSE 和 NOTICE.md。
+通过 Windows 回归与安装器静态检查后，运行 `windows/installer/build-release.ps1`。
+默认 `ThemeFlavor=Nahida` 生成标准文件名；兼容选项 `-ThemeFlavor NahidaLocal` 生成带 `Nahida` 的独立文件名。
+只有显式使用 `-ThemeFlavor Public` 时才选择上游 Gothic 预设，日常安装无需使用此选项。
+构建包含签名校验的 Node 运行时，生成 SHA-256 文件；源码推送不会自动创建新的 Release，若无新版安装包请从 main 安装。
+软件与素材许可分别见 LICENSE 和 NOTICE.md。

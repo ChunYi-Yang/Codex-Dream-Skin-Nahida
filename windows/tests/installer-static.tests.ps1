@@ -2,6 +2,8 @@
 param()
 
 $ErrorActionPreference = 'Stop'
+& (Join-Path $PSScriptRoot 'installer-nahida-payload.tests.ps1')
+& (Join-Path $PSScriptRoot 'install-shortcuts.tests.ps1')
 $windowsRoot = Split-Path -Parent $PSScriptRoot
 $installerRoot = Join-Path $windowsRoot 'installer'
 $definitionPath = Join-Path $installerRoot 'codex-dream-skin.iss'

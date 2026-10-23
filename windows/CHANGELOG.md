@@ -23,6 +23,9 @@
 - Fixed the desktop theme shortcut waiting on a stock background Codex instance: open the retained independent theme profile before resource checks and record in-progress launcher state.
 ### Installation
 
+- Unified fresh source and default installer builds on the complete layered Nahida theme. Newly created theme shortcuts use the managed Node launcher, preserving the independent native Codex entry.
+- Documented main-branch installation on another computer, signed dependency preparation, first sign-in, status checks, verification and recovery. Updated the reviewed preset checksum after the repository URL changed.
+
 - Added a conversation installation guide and a preflight/setup entry point that prepares a signed, hash-checked Node runtime when needed, waits for the user to close Codex, then installs and verifies the managed engine.
 - Aligned layered Nahida renderer state with startup verification, restored Windows-only regression coverage, and removed the normal launcher's execution-policy bypass.
 

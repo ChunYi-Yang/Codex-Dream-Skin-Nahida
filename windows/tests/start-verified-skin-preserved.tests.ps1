@@ -96,6 +96,8 @@ function Invoke-DreamSkinStartupFixture {
   function Stop-DreamSkinRecordedInjector { param([object]$State); return $true }
   function Set-DreamSkinPaused { param([bool]$Paused, [string]$StateRoot); return $true }
   function Invoke-DreamSkinCodexWindowActivation { param([object]$Codex); return $true }
+  function Find-DreamSkinRunningProfilePort { param($Codex, $ProfilePath); return $null }
+  function Open-DreamSkinIndependentProfile { param($Codex, $Port, $ProfilePath) }
   function ConvertTo-DreamSkinProcessArgument { param([string]$Value); return $Value }
   function Get-DreamSkinProcessStartedAt { param([int]$ProcessId); return '2026-07-25T00:00:00.0000000Z' }
   function Write-DreamSkinState { param([string]$Path, [object]$State) }

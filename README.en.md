@@ -55,11 +55,34 @@ composer remain native and interactive.
 - Windows 10 or newer, x64.
 - The official `OpenAI.Codex` app installed from Microsoft Store and
   registered to the current user.
-- Release installers bundle Node.js. Source checkouts require Node.js 22 or
-  newer.
+- Release installers bundle Node.js. Source setup can prepare a signed,
+  hash-checked Node.js 22+ runtime automatically.
 - Windows PowerShell 5.1 or PowerShell 7.
 
 ## Installation
+
+### Set up another computer
+
+Install and sign in to the official Microsoft Store Codex app first. Download
+the **entire main branch** using **Code → Download ZIP**, or clone it over HTTPS
+(no SSH key is needed):
+
+```powershell
+git clone --branch main https://github.com/ChunYi-Yang/Codex-Dream-Skin-Nahida.git
+cd Codex-Dream-Skin-Nahida
+```
+
+Use either the conversation workflow or manual setup below. The repository
+includes all seven artwork files, the renderer, styles, and launch helpers.
+Fresh installations use Nahida by default, including the responsive portrait
+that follows the banner and the separate secondary-tab artwork.
+
+Launch **Codex Dream Skin** for the theme; the ordinary **Codex** entry remains
+the stock app. The theme uses a local independent profile and may require its
+own first sign-in. Do not copy another computer's app data, `config.toml`,
+credentials, SSH keys, or shortcuts. Paths are resolved on the destination
+computer. Projects, plugins, pets, and local tools are separate account or
+machine setup, not part of the theme.
 
 ### Install with a Codex conversation
 
@@ -72,19 +95,46 @@ the pinned signed runtime), then waits for normal app exit before installing and
 launching. It preserves authentication and chats. See the
 [conversation installation guide](./docs/install-with-codex.md) for status and recovery.
 
-### Installer
+### Manual setup
+
+Run from the source root (paths containing spaces or Chinese are supported):
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\windows\setup.ps1 -CheckOnly
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\windows\setup.ps1 -PrepareOnly
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\windows\setup.ps1
+```
+
+The last command starts a hidden worker; installation is still pending. Save
+unsent input, use the app's Quit/Exit command, and exit the theme tray if it is
+running. Closing the last window may leave a background process. The worker
+waits up to 15 minutes, installs, and opens the themed app.
+Keep the source folder in place until this finishes. The installed engine is
+copied to `%LOCALAPPDATA%\CodexDreamSkin\engine`; its shortcuts then work
+independently of the source folder.
+
+If downloaded ZIP scripts are blocked by execution policy, use a Git clone or
+contact your administrator; do not change global policy. Allow network access
+to GitHub, Microsoft Store, `nodejs.org`, and Codex sign-in services.
+
+### Installer (optional)
 
 Download `CodexDreamSkin-Setup-vX.Y.Z.exe` from this repository's
 [Releases](https://github.com/ChunYi-Yang/Codex-Dream-Skin-Nahida/releases).
 Close Codex, then follow the installer.
 
+An existing release may predate the latest fixes. If no matching release has
+been published, install from the main-branch source above. A main-branch push
+does not update old installers. Default builds now include the full Nahida theme.
+
 The installer is per-user and does not take ownership of WindowsApps. An
 unsigned download may trigger SmartScreen; verify the repository and checksum,
 then use **More info → Run anyway**. Do not disable Defender.
 
-### From source
+### Direct installation with an existing Node runtime
 
-After cloning the repository, run this from its root:
+With signed Node.js 22+ installed, save your work and exit Codex and the tray,
+then run from the source root:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy RemoteSigned `
@@ -104,12 +154,21 @@ unsent input first.
 
 ## Verify and restore
 
+Check the home screen, a normal task, and the secondary New Tab: backgrounds
+should be distinct and native controls should work. Resize to check that the
+portrait follows the banner, then close and reopen the theme window using its
+shortcut. App updates may require adapting the theme to a changed desktop UI.
+
+Setup status is saved in `%LOCALAPPDATA%\CodexDreamSkin\conversation-install.json`:
+`waiting` is not installed; `verified` means startup checks passed. On `failed`,
+read the recorded message and `conversation-install.err.log` in the same folder.
+
 After launch, verify loopback CDP ownership, native controls, and theme markers
 while capturing a screenshot:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy RemoteSigned `
-  -File .\windows\scripts\verify-dream-skin.ps1 `
+  -File "$env:LOCALAPPDATA\CodexDreamSkin\engine\scripts\verify-dream-skin.ps1" `
   -ScreenshotPath "$env:TEMP\codex-dream-skin.png"
 ```
 
@@ -117,7 +176,7 @@ Restore the official appearance:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy RemoteSigned `
-  -File .\windows\scripts\restore-dream-skin.ps1 `
+  -File "$env:LOCALAPPDATA\CodexDreamSkin\engine\scripts\restore-dream-skin.ps1" `
   -RestoreBaseTheme -PromptRestart
 ```
 

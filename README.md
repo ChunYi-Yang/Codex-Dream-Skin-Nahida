@@ -45,10 +45,30 @@ Codex 的侧栏、项目选择、任务菜单、设置项和输入框仍是原�
 
 - Windows 10 或更高版本，x64。
 - 从 Microsoft Store 安装并已注册到当前用户的官方 `OpenAI.Codex`。
-- 使用 Release 安装包时无需另装 Node.js；从源码运行需要 Node.js 22 或更高版本。
+- 使用 Release 安装包时无需另装 Node.js；源码安装的 `windows/setup.ps1` 可准备经过签名和哈希校验的 Node.js 22+。
 - Windows PowerShell 5.1 或 PowerShell 7。
 
 ## 安装
+
+### 在另一台电脑获得同样的主题
+
+1. 在新电脑上安装官方 Microsoft Store Codex，并先确认原生应用可以正常启动和登录。
+2. 获取本仓库 **main 分支的完整源码**。有 Git 时，在 PowerShell 中运行以下命令；
+   没有 Git 时可使用仓库页面的 **Code → Download ZIP**，解压整个文件夹，不能只下载脚本。
+
+   ```powershell
+   git clone --branch main https://github.com/ChunYi-Yang/Codex-Dream-Skin-Nahida.git
+   cd Codex-Dream-Skin-Nahida
+   ```
+
+3. 按下面的“让 Codex 帮你安装”或“手动准备安装”完成安装。
+4. 安装后使用 **Codex Dream Skin** 快捷方式进入主题窗口。普通 **Codex** 入口保留原生外观。
+   主题使用这台电脑自己的独立配置目录，首次打开可能需要再登录一次。
+
+仓库已包含主背景、侧栏、横幅、右侧标签页背景、人物卡片、装饰和场景共七张图片，以及完整样式和启动程序。
+新装默认使用纳西妲分层主题：人物卡片随内容区缩放并与横幅同步显隐，次级标签页使用专用背景。
+不需要复制本机的 `%LOCALAPPDATA%`、`config.toml`、登录文件、SSH 密钥或桌面快捷方式；路径由新电脑自行生成。
+主题外观和交互由项目提供，账号中的项目、插件、宠物及本机工具需在新电脑另行配置。
 
 ### 让 Codex 帮你安装（新电脑推荐）
 
@@ -60,17 +80,39 @@ Codex 会检查环境、准备经过校验的 Node 依赖，并启动等待任�
 后台安装完成后会重新打开应用。无需复制其他电脑的账号或 SSH 密钥。
 详细步骤、状态检查与恢复方法见 [通过 Codex 安装](./docs/install-with-codex.md)。
 
-### 安装包
+### 手动准备安装
+
+在完整源码的根目录依次运行（也适用于含中文或空格的目录）：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\windows\setup.ps1 -CheckOnly
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\windows\setup.ps1 -PrepareOnly
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File .\windows\setup.ps1
+```
+
+前两步检查官方应用并准备已校验的 Node 依赖。第三步启动隐藏的等待任务，**此时尚未安装完成**。
+保存未发送的输入，使用应用的“退出”命令完全退出 Codex；仅点窗口右上角 × 可能仍留下后台进程。
+如果主题托盘已在运行，也先退出托盘。
+后台任务最多等待 15 分钟，随后安装并重新打开主题窗口。等待期间保持源码目录原位。
+安装完成后运行文件会复制到 `%LOCALAPPDATA%\CodexDreamSkin\engine`，快捷方式不依赖原源码目录。
+
+若 ZIP 下载标记或企业策略阻止脚本执行，优先改用 Git 克隆，或联系管理员处理具体策略；不要修改全局执行策略。
+网络需要允许访问 GitHub、Microsoft Store、`nodejs.org` 和 Codex 登录服务。
+
+### 安装包（可选）
 
 从本仓库的 [Releases](https://github.com/ChunYi-Yang/Codex-Dream-Skin-Nahida/releases)
 下载 `CodexDreamSkin-Setup-vX.Y.Z.exe`。关闭 Codex 后运行安装器，按向导完成即可。
 
+只有安装包的版本包含本次修改时，才与最新主分支具有相同效果。若 Releases 尚无对应版本，使用上述源码安装；
+推送主分支不会自动更新旧安装包。仓库默认构建现在使用完整纳西妲素材。
+
 安装器按当前用户安装，不需要接管 WindowsApps 权限。未签名的新下载可能触发 SmartScreen；
 请核对仓库与校验值后使用“更多信息 → 仍要运行”，不要关闭 Defender。
 
-### 从源码安装
+### 已有 Node 的直接安装
 
-克隆仓库后，在仓库根目录运行：
+如已安装经过签名校验的 Node.js 22+，也可保存工作、退出 Codex 和主题托盘后，在源码根目录直接运行：
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy RemoteSigned `
@@ -88,11 +130,19 @@ powershell.exe -NoProfile -ExecutionPolicy RemoteSigned `
 
 ## 验证与恢复
 
+安装后先检查首页、普通聊天/任务页和右侧“新标签页”：背景应分开显示，输入框、侧栏和工具按钮应可操作。
+缩放窗口时人物卡片与横幅应同步显示或隐藏。关闭主题窗口后再次点击快捷方式，确认窗口能恢复。
+官方应用更新可能改变界面结构，遇到不兼容时先查看诊断，不能以“存在进程/快捷方式”判断安装成功。
+
+通过 setup 安装的状态记录位于 `%LOCALAPPDATA%\CodexDreamSkin\conversation-install.json`；
+`waiting` 是等待退出，`verified` 才表示启动验证通过，`failed` 的原因和同目录的
+`conversation-install.err.log` 用于排障。其他使用问题见[新电脑安装与排障](./docs/install-with-codex.md)。
+
 启动后可生成验证截图，并检查 CDP、原生侧栏、输入框和主题标记：
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy RemoteSigned `
-  -File .\windows\scripts\verify-dream-skin.ps1 `
+  -File "$env:LOCALAPPDATA\CodexDreamSkin\engine\scripts\verify-dream-skin.ps1" `
   -ScreenshotPath "$env:TEMP\codex-dream-skin.png"
 ```
 
@@ -100,7 +150,7 @@ powershell.exe -NoProfile -ExecutionPolicy RemoteSigned `
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy RemoteSigned `
-  -File .\windows\scripts\restore-dream-skin.ps1 `
+  -File "$env:LOCALAPPDATA\CodexDreamSkin\engine\scripts\restore-dream-skin.ps1" `
   -RestoreBaseTheme -PromptRestart
 ```
 
