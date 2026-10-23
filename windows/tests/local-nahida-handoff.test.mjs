@@ -25,6 +25,11 @@ assert.match(localInstall, /Codex Dream Skin Auto Start\.lnk/);
 const selfTest = spawnSync(process.execPath, [loginLauncherPath, "--self-test"], {
   cwd: windowsRoot,
   encoding: "utf8",
+  env: {
+    ...process.env,
+    LOCALAPPDATA: `C:\\DreamSkinSelfTest-${process.pid}\\Local`,
+    SystemRoot: "C:\\Windows",
+  },
 });
 assert.equal(selfTest.status, 0, selfTest.stderr || selfTest.stdout);
 const selfTestResult = JSON.parse(selfTest.stdout);
