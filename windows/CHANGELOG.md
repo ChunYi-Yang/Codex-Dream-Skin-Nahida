@@ -26,6 +26,7 @@
 ### Installation
 
 - Normalized canonical renderer source and generated assets to LF so Windows Git checkouts with automatic CRLF conversion match the same deployment payload.
+- Allowed CRLF when reading the injector version for release builds, keeping source ZIP and Git checkout builds consistent.
 
 - Unified fresh source and default installer builds on the complete layered Nahida theme. Newly created theme shortcuts use the managed Node launcher, preserving the independent native Codex entry.
 - Documented main-branch installation on another computer, signed dependency preparation, first sign-in, status checks, verification and recovery. Updated the reviewed preset checksum after the repository URL changed.

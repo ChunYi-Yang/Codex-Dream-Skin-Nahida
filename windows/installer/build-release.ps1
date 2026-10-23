@@ -285,7 +285,7 @@ if ($version -cnotmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') {
 $injectorSource = Read-ReleaseTextFile -Path (Join-Path $windowsRoot 'scripts\injector.mjs')
 $injectorVersionMatch = [regex]::Match(
   $injectorSource,
-  '(?m)^const SKIN_VERSION = "([^"]+)";$'
+  '(?m)^const SKIN_VERSION = "([^"]+)";\r?$'
 )
 if (-not $injectorVersionMatch.Success -or $injectorVersionMatch.Groups[1].Value -cne $version) {
   $injectorVersion = if ($injectorVersionMatch.Success) {

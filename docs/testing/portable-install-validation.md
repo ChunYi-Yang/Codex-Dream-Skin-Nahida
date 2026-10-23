@@ -13,7 +13,8 @@
 - setup 只读预检、README 本地链接、PowerShell 编码检查通过。
 
 限制：这些是当前 Windows 主机、隔离目录和模拟首次安装环境中的结果，不代表已经在第二台实体电脑上登录验收。
-本机未安装 Inno Setup，因此未在本机编译新的 EXE；GitHub CI 配置会在 main 推送后构建默认安装器并检查产物。
+已使用隔离的 Inno Setup 6.7.3 编译默认安装包，核验 SHA-256，并使用包内签名校验过的 Node 22.23.1 检查分层主题负载。
+GitHub CI 另使用固定 Inno Setup 版本检查构建；其运行状态以 Actions 为准，不将排队或取消报告为通过。
 源码 main 的更新不会替换已有 Release；如尚无包含这些修复的安装包，应按 README 从 main 完整安装。
 
 公开仓库不包含本机 profile、账号认证、运行日志、私人聊天截图或 SSH 密钥。

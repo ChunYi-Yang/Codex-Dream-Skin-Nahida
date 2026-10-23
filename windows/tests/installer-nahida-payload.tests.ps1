@@ -5,6 +5,16 @@ $windowsRoot = Split-Path -Parent $PSScriptRoot
 $tokens = $null
 $errors = $null
 $ast = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $windowsRoot 'installer\build-release.ps1'), [ref]$tokens, [ref]$errors)
+$versionProbe = $ast.Find({ param($node)
+  $node -is [System.Management.Automation.Language.AssignmentStatementAst] -and $node.Left.Extent.Text -ceq '$injectorVersionMatch'
+}, $true)
+foreach ($ending in @("`n", "`r`n")) {
+  $injectorSource = 'const SKIN_VERSION = "1.6.0";' + $ending
+  Invoke-Expression $versionProbe.Extent.Text
+  if (-not $injectorVersionMatch.Success -or $injectorVersionMatch.Groups[1].Value -cne '1.6.0') {
+    throw 'Release version discovery must accept both LF and CRLF checkouts.'
+  }
+}
 $flavor = $ast.ParamBlock.Parameters | Where-Object { $_.Name.VariablePath.UserPath -eq 'ThemeFlavor' }
 if ($null -eq $flavor -or $flavor.DefaultValue.Value -cne 'Nahida') {
   throw 'Default releases must ship the same layered Nahida theme as source installations.'
