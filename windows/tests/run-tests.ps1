@@ -1490,6 +1490,7 @@ try {
   & (Join-Path $PSScriptRoot 'start-verified-skin-preserved.tests.ps1') -Root $Root
   & (Join-Path $PSScriptRoot 'packaged-command-launch.tests.ps1') -Root $Root
   & (Join-Path $PSScriptRoot 'start-profile-recovery.tests.ps1') -Root $Root
+  & (Join-Path $PSScriptRoot 'recorded-injector-reuse.tests.ps1') -Root $Root
   $projectRoot = Split-Path -Parent $Root
   $syncToolPath = Join-Path $projectRoot 'tools\sync-runtime-assets.mjs'
   $syncToolResult = Invoke-DreamSkinNative -FilePath $node.Path -ArgumentList @($syncToolPath, '--check')

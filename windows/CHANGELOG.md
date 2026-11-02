@@ -14,6 +14,8 @@
 
 ## Unreleased
 
+- Recover stale injector records when Windows reuses a PID for a process with a different verified creation time. The replacement process is never stopped; ambiguous identities still preserve state and fail closed.
+
 - Removed personal profile paths and private session identifiers from public documentation. Replaced two legacy captures containing private conversations and project names with reviewed public illustrations, clearly marked as illustrations rather than legacy test evidence.
 
 - Restored the dedicated secondary-tab background on the actual right-panel canvas while preserving the existing background wash and glass controls.

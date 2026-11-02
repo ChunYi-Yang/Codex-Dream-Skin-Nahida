@@ -1366,6 +1366,20 @@ function Stop-DreamSkinRecordedInjector {
     throw "The recorded injector PID $processId is running, but its start time cannot be inspected. State was preserved."
   }
   $startMatches = -not $State.injectorStartedAt -or $startedAt -eq "$($State.injectorStartedAt)"
+  if (-not $startMatches) {
+    $recordedStart = [DateTimeOffset]::MinValue
+    $currentStart = [DateTimeOffset]::MinValue
+    $culture = [Globalization.CultureInfo]::InvariantCulture
+    $styles = [Globalization.DateTimeStyles]::None
+    if (-not [DateTimeOffset]::TryParseExact("$($State.injectorStartedAt)", 'o', $culture, $styles, [ref]$recordedStart) -or
+      -not [DateTimeOffset]::TryParseExact($startedAt, 'o', $culture, $styles, [ref]$currentStart)) {
+      throw "The recorded injector PID $processId has an invalid start-time identity. State was preserved."
+    }
+    # A different creation time proves the saved process is gone. Leave the
+    # replacement process untouched; callers archive the obsolete state.
+    if ($recordedStart.UtcDateTime -ne $currentStart.UtcDateTime) { return $false }
+    $startMatches = $true
+  }
   $identityMatches = [bool]($isNodeExecutable -and $nodeMatches -and $injectorMatches -and $startMatches)
 
   if (-not $identityMatches) {
