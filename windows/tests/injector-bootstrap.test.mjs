@@ -8,6 +8,8 @@ import { cleanupExcludedSurface, earlyPayloadFor } from "../scripts/injector.mjs
 const here = path.dirname(fileURLToPath(import.meta.url));
 const injectorPath = path.resolve(here, "../scripts/injector.mjs");
 const source = await fs.readFile(injectorPath, "utf8");
+const { selectors } = JSON.parse(await fs.readFile(path.resolve(here, "../../tools/selectors.json"), "utf8"));
+const settingsSelector = selectors.find(({ key }) => key === "settings-panel").selector;
 const shellSelector = 'main:is(.main-surface, [data-app-shell-main-surface], [class*="_MainContentSurface_"])';
 
 function createFixture() {
@@ -37,7 +39,7 @@ function createFixture() {
         if (selector === "aside.app-shell-left-panel") return markers.sidebar ? {} : null;
         if (selector === "[role=\"main\"]") return markers.main ? {} : null;
         if (selector === "main, [role=\"main\"]") return markers.main ? {} : null;
-        if (selector === '[data-settings-panel-slug="general-settings"]') {
+        if (selector === settingsSelector) {
           return markers.settingsPanel ? {} : null;
         }
         if (selector.includes("textarea") || selector.includes("contenteditable") || selector.includes("textbox")) {
@@ -108,7 +110,7 @@ vm.runInNewContext(
 settingsPanel.markers.settingsPanel = true;
 settingsPanel.tick();
 assert.deepEqual(settingsPanel.context.window.installs, ["settings-panel"],
-  "Codex 26.727 Settings must accept its stable general-settings panel without legacy appearance controls.");
+  "Settings must accept the settings panel without legacy appearance controls.");
 
 const generations = createFixture();
 generations.makeNotReady();

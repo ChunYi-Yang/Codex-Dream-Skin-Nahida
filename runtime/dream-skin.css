@@ -130,20 +130,25 @@ html[data-dream-skin="active"] [data-ds-part="composer"] {
 }
 html[data-dream-skin="active"][data-nahida-page="home"]:not([data-nahida-hero-mode="off"])
   [data-ds-part="home"] [data-feature="game-source"] { visibility: hidden; }
+/* Chat's native greeting sits outside the Work game-source wrapper. */
+html[data-dream-skin="active"][data-nahida-page="home"]:not([data-nahida-hero-mode="off"])
+  [data-ds-part="home"] [class~="group/home-composer-layout"] [class~="heading-xl"]:has(h1) {
+  opacity: 0 !important;
+}
 html[data-dream-skin="active"] [data-ds-part="composer"] :is(
-  [class*="_ComposerLayoutBody_"], [class*="_ComposerLayoutFooter_"],
+  [data-composer-body], [class*="_ComposerLayoutBody_"], [class*="_ComposerLayoutFooter_"],
   [data-composer-footer-responsive]
 ) { background-color: transparent !important; }
-html[data-dream-skin="active"] [data-codex-composer-root] :is(
+html[data-dream-skin="active"] :is([data-codex-composer-root], [data-ds-part="composer"]) :is(
   button[class~="bg-primary-solid"], button[class~="bg-token-text-primary"]
 ) {
   background-color: var(--dream-accent) !important;
   color: #fff !important;
 }
-html[data-dream-skin="active"] [data-codex-composer-root] [contenteditable="true"] {
+html[data-dream-skin="active"] :is([data-codex-composer-root], [data-ds-part="composer"]) [contenteditable="true"] {
   color: var(--dream-text);
 }
-html[data-dream-skin="active"] [data-codex-composer-root] [class*="placeholder"] {
+html[data-dream-skin="active"] :is([data-codex-composer-root], [data-ds-part="composer"]) [class*="placeholder"] {
   color: var(--dream-muted);
 }
 html[data-dream-skin="active"] .thread-scroll-container .bg-gradient-to-t.from-token-main-surface-primary {
@@ -200,6 +205,102 @@ html[data-dream-skin="active"] :is(
   background-color: var(--nahida-floating) !important;
   border-color: var(--dream-line) !important;
 }
+
+/* The native settings split view shares its chrome across all subpages. */
+html[data-dream-skin="active"] [role="dialog"].settings-dialog:has([data-settings-panel]) {
+  --nahida-settings-surface: color-mix(in srgb, var(--dream-panel) 90%, var(--dream-panel-alt));
+  --nahida-settings-inset: color-mix(in srgb, var(--dream-panel-alt) 48%, var(--dream-panel));
+  --nahida-settings-switch: #497b37;
+  background: linear-gradient(145deg, var(--nahida-settings-surface), var(--nahida-floating)) !important;
+  box-shadow: 0 20px 56px rgba(14, 35, 24, .24), inset 0 0 0 1px var(--dream-line);
+  color: var(--dream-text);
+}
+html[data-dream-skin="active"][data-dream-shell="dark"] [role="dialog"].settings-dialog:has([data-settings-panel]) {
+  --nahida-settings-surface: #1f3529;
+  --nahida-settings-inset: #233d2f;
+  --nahida-settings-switch: #6c9b50;
+  --dream-text: #e5efdc;
+  --dream-muted: #b7c8b7;
+  --dream-line: rgba(162, 205, 126, .28);
+  --color-text-primary-surface: var(--dream-text);
+  --color-text-secondary-surface: var(--dream-muted);
+  --color-text-primary: var(--dream-text);
+  --color-text-secondary: var(--dream-muted);
+  --color-border-default: var(--dream-line);
+}
+html[data-dream-skin="active"] .settings-dialog .settings-dialog-sidebar {
+  background: linear-gradient(165deg, var(--nahida-settings-inset), var(--nahida-glass));
+  border-inline-end: 1px solid var(--dream-line);
+}
+html[data-dream-skin="active"] .settings-dialog .settings-dialog-sidebar button[data-settings-panel-slug]:not(:disabled, [aria-current="page"]):hover {
+  background-color: color-mix(in srgb, var(--dream-accent) 13%, transparent) !important;
+}
+html[data-dream-skin="active"] .settings-dialog .settings-dialog-sidebar button[data-settings-panel-slug][aria-current="page"] {
+  background-color: color-mix(in srgb, var(--dream-accent) 23%, var(--nahida-glass)) !important;
+  color: var(--dream-text) !important;
+  box-shadow: inset 0 0 0 1px var(--dream-line);
+  font-weight: 600;
+}
+html[data-dream-skin="active"] .settings-dialog :is(
+  .settings-dialog-sidebar [data-sidebar-header-search] > div:has(> input),
+  [data-settings-panel] [class~="bg-page-search"]
+) {
+  background-color: var(--nahida-floating) !important;
+  border-color: var(--dream-line) !important;
+}
+html[data-dream-skin="active"] .settings-dialog :is(
+  .settings-dialog-sidebar [data-sidebar-header-search] > div:has(> input),
+  [data-settings-panel] [class~="bg-page-search"]
+):focus-within {
+  border-color: var(--dream-accent) !important;
+}
+html[data-dream-skin="active"] .settings-dialog :is(
+  .settings-dialog-sidebar h1,
+  .settings-dialog-panel-header h1,
+  [data-settings-panel] :is(h2, h3, h4),
+  [data-settings-panel] section > div:first-child > div > .font-medium.text-default
+) {
+  color: var(--nahida-heading) !important;
+}
+html[data-dream-skin="active"] .settings-dialog [data-settings-panel] [class~="group/settings"] section
+  > :is(.justify-between, [role="group"]:has(> .justify-between)):first-child
+  + :is(div.flex.flex-col[class~="gap-1.5"], ul.list-none.flex.flex-col) {
+  margin-block-start: 12px;
+}
+html[data-dream-skin="active"] .settings-dialog [data-settings-panel] [class~="group/settings"] :is(
+  .rounded-2xl.border-default,
+  section > div.flex.flex-col[class~="gap-1.5"]:not(:empty, :has(.rounded-2xl.border-default)),
+  section:has(> .bg-surface.sticky) > ul.list-none.flex.flex-col:has(> li)
+) {
+  --settings-row-padding-inline: clamp(12px, 2.5vw, 20px) !important;
+  background-color: var(--nahida-glass) !important;
+  border-radius: 14px !important;
+  box-shadow: inset 0 0 0 1px var(--dream-line);
+}
+html[data-dream-skin="active"] .settings-dialog [data-settings-panel] [class~="group/settings"]
+  section > div.flex.flex-col[class~="gap-1.5"]:not(:empty, :has(.rounded-2xl.border-default)) {
+  padding: 12px var(--settings-row-padding-inline, 16px);
+}
+html[data-dream-skin="active"] .settings-dialog [data-settings-panel] [class~="group/settings"]
+  section:has(> .bg-surface.sticky) > ul.list-none.flex.flex-col > li {
+  padding-inline: var(--settings-row-padding-inline, 16px);
+}
+html[data-dream-skin="active"] .settings-dialog [data-settings-panel] [class~="group/settings"] > div > p.text-sm.select-none {
+  padding: 12px 16px;
+  background-color: var(--nahida-glass);
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 1px var(--dream-line);
+}
+html[data-dream-skin="active"] .settings-dialog [data-settings-panel] .bg-surface:is(.sticky, .border-t) {
+  --color-surface: var(--nahida-settings-surface);
+  background-color: var(--nahida-settings-surface) !important;
+  border-color: var(--dream-line);
+}
+html[data-dream-skin="active"] .settings-dialog [data-settings-panel]
+  [role="switch"][aria-checked="true"]:not(:disabled, [aria-disabled="true"]) > span[data-state="checked"] {
+  --switch-track-color-checked: var(--nahida-settings-switch);
+}
+
 html[data-dream-skin="active"] :is(input:not([type="radio"]):not([type="checkbox"]), select) {
   border-color: var(--dream-line);
 }

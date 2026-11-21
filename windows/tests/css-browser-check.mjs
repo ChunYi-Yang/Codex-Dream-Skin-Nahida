@@ -44,6 +44,101 @@ try {
   }));
   assert.equal(dark.settings, "rgba(32, 55, 44, 0.78)");
   assert.equal(dark.title, "rgb(201, 237, 145)");
+  await page.setContent(`<html data-dream-skin="active" data-dream-shell="light"><head><style>
+    .text-default { color: var(--color-text-primary-surface); }
+    section { display: flex; flex-direction: column; }
+    section > * { margin-block: 0; }
+    [role="switch"] > span { --switch-track-color-checked: #0169cc; background-color: var(--switch-track-color-checked); }
+  </style></head><body>
+    <div role="dialog" class="settings-dialog">
+      <aside class="settings-dialog-sidebar">
+        <div data-sidebar-header-search><div style="background:transparent"><input aria-label="Search settings"></div></div>
+        <button data-settings-panel-slug="account" aria-current="page" style="background:#ddd">Account</button>
+        <button data-settings-panel-slug="voice">Voice</button>
+      </aside>
+      <div data-settings-panel>
+        <div class="settings-dialog-panel-header"><h1>Account</h1></div>
+        <div class="group/settings">
+          <section>
+            <div class="justify-between" id="details-heading"><div><div class="font-medium text-default">Details</div></div></div>
+            <div class="flex flex-col gap-1.5"><div class="rounded-2xl border-default" style="border-radius:0;--settings-row-padding-inline:0px">
+              <div data-settings-search-entry style="padding-inline:var(--settings-row-padding-inline)">
+                <button role="switch" aria-checked="true"><span data-state="checked">Enabled</span></button>
+                <button role="switch" aria-checked="true" disabled><span data-state="checked">Unavailable</span></button>
+                <button role="switch" aria-checked="false"><span data-state="unchecked">Off</span></button>
+                <button data-color="danger" style="color:rgb(170,0,0)">Delete</button>
+              </div>
+            </div></div>
+          </section>
+          <section><div class="flex flex-col gap-1.5"><p class="text-default">Empty state</p></div></section>
+          <section>
+            <div class="bg-surface sticky justify-between" id="shortcuts-heading"><h3>Shortcuts</h3></div>
+            <ul class="list-none flex flex-col"><li id="shortcut-row"><kbd>Ctrl</kbd></li></ul>
+          </section>
+          <section>
+            <div role="group" id="usage-heading"><div class="justify-between"><h3>Usage by chat</h3></div></div>
+            <div class="flex flex-col gap-1.5"><div class="rounded-2xl border-default">
+              <table><thead><tr><th>Chat</th></tr></thead></table>
+            </div></div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div id="foreign" class="rounded-2xl border-default" style="background:white">Unrelated</div>
+  </body></html>`);
+  await page.addStyleTag({ content: await fs.readFile("windows/assets/dream-skin.css", "utf8") });
+  const settingsContract = await fs.readFile("tools/selectors.json", "utf8");
+  const settingsLayout = await page.evaluate(`(() => {
+    const layout = (${createLayoutAdapter.toString()})(document, window, ${settingsContract}).discover();
+    return {page:layout.page, region:layout.regions.settings?.classList.contains("settings-dialog")};
+  })()`);
+  assert.deepEqual(settingsLayout, {page:"settings", region:true}, "Settings must be recognized without a General button or main shell");
+  for (const shell of ["light", "dark"]) {
+    await page.evaluate(value => document.documentElement.setAttribute("data-dream-shell", value), shell);
+    const modal = await page.evaluate(() => {
+      const style = selector => getComputedStyle(document.querySelector(selector));
+      const groupGap = id => {
+        const heading = document.getElementById(id);
+        return heading.nextElementSibling.getBoundingClientRect().top - heading.getBoundingClientRect().bottom;
+      };
+      return {
+        heading: style(".settings-dialog h1").color,
+        selected: style('[aria-current="page"]').backgroundColor,
+        radius: style("[data-settings-panel] .rounded-2xl").borderRadius,
+        padding: parseFloat(style("[data-settings-search-entry]").paddingInlineStart),
+        empty: style('section > div[class~="gap-1.5"]:not(:has(.rounded-2xl))').backgroundColor,
+        emptyText: style('section > div[class~="gap-1.5"] p').color,
+        sticky: style(".bg-surface.sticky").backgroundColor,
+        shortcuts: style("section > ul").borderRadius,
+        shortcutPadding: parseFloat(style("#shortcut-row").paddingInlineStart),
+        gaps: ["details-heading", "shortcuts-heading", "usage-heading"].map(groupGap),
+        search: style("[data-sidebar-header-search] > div").backgroundColor,
+        danger: style('[data-color="danger"]').color,
+        enabled: document.querySelector('[role="switch"]').getAttribute("aria-checked"),
+        track: style('[role="switch"]:enabled[aria-checked="true"] > span').backgroundColor,
+        disabledTrack: style('[role="switch"]:disabled > span').backgroundColor,
+        offTrack: style('[role="switch"][aria-checked="false"] > span').backgroundColor,
+        foreign: style("#foreign").backgroundColor,
+      };
+    });
+    assert.equal(modal.heading, shell === "light" ? "rgb(55, 106, 69)" : "rgb(201, 237, 145)");
+    assert.notEqual(modal.selected, "rgb(221, 221, 221)");
+    assert.equal(modal.radius, "14px");
+    assert.ok(modal.padding >= 12);
+    assert.notEqual(modal.empty, "rgba(0, 0, 0, 0)");
+    assert.equal(modal.emptyText, shell === "light" ? "rgb(24, 55, 45)" : "rgb(229, 239, 220)");
+    if (shell === "dark") assert.equal(modal.sticky, "rgb(31, 53, 41)");
+    assert.equal(modal.shortcuts, "14px");
+    assert.ok(modal.shortcutPadding >= 12);
+    assert.deepEqual(modal.gaps, [12, 12, 12]);
+    assert.notEqual(modal.search, "rgba(0, 0, 0, 0)");
+    assert.equal(modal.danger, "rgb(170, 0, 0)");
+    assert.equal(modal.enabled, "true");
+    assert.equal(modal.track, shell === "light" ? "rgb(73, 123, 55)" : "rgb(108, 155, 80)");
+    assert.equal(modal.disabledTrack, "rgb(1, 105, 204)");
+    assert.equal(modal.offTrack, "rgb(1, 105, 204)");
+    assert.equal(modal.foreign, "rgb(255, 255, 255)");
+  }
   for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 1080 }]) {
     await page.setViewportSize(viewport);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
@@ -105,5 +200,54 @@ try {
   assert.ok(portraits[2].width < portraits[1].width, 'Shorter windows must shrink the portrait');
   assert.ok(portraits[1].border > portraits[0].border && portraits[1].font > portraits[0].font, 'Frame and caption must scale with the image');
   assert.ok(portraits.every(p => Math.abs(p.width / p.height - 98 / 130) < .01 && p.inside), 'Portrait must retain its proportions and stay inside the page');
+  await page.setContent(`<html data-dream-skin="active" data-dream-shell="light" data-nahida-page="home" data-nahida-hero-mode="full"><body>
+    <main data-app-shell-main-surface>
+      <header data-app-shell-titlebar="true" data-app-shell-application-menu-bar="true">Title bar</header>
+      <div role="main">
+        <div class="group/home-composer-layout">
+          <div id="native-greeting" class="heading-xl"><div><h1>Native greeting</h1></div></div>
+        </div>
+        <h1 id="other-heading">Recommendations</h1>
+        <form data-composer-placement="home">
+          <div data-composer-surface-variant="default" data-composer-radius-variant="default">
+            <div data-composer-body style="background-color:white">
+              <div contenteditable="true" role="textbox">Draft</div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="thread-scroll-container" hidden>Inactive thread</div>
+    </main>
+  </body></html>`);
+  await page.addStyleTag({ content: await fs.readFile("windows/assets/dream-skin.css", "utf8") });
+  const contract = await fs.readFile("tools/selectors.json", "utf8");
+  await page.evaluate(`(() => { window.checkAdapter = (${createLayoutAdapter.toString()})(document, window, ${contract}); })()`);
+  const currentHome = await page.evaluate(() => {
+    const layout = window.checkAdapter.discover();
+    return {
+      page: layout.page,
+      home: layout.regions.home?.getAttribute("data-ds-part"),
+      header: layout.regions.header?.getAttribute("data-ds-part"),
+      composer: getComputedStyle(layout.regions.composer).backgroundColor,
+      body: getComputedStyle(document.querySelector("[data-composer-body]")).backgroundColor,
+    };
+  });
+  assert.deepEqual(currentHome, {
+    page: "home", home: "home", header: "header",
+    composer: "rgba(229, 241, 212, 0.66)", body: "rgba(0, 0, 0, 0)",
+  });
+  assert.deepEqual(await page.evaluate(() => {
+    const opacity = id => getComputedStyle(document.getElementById(id)).opacity;
+    const themed = opacity("native-greeting");
+    const unrelated = opacity("other-heading");
+    document.documentElement.setAttribute("data-nahida-hero-mode", "off");
+    return { themed, unrelated, fallback: opacity("native-greeting") };
+  }), { themed: "0", unrelated: "1", fallback: "1" });
+  assert.equal(await page.evaluate(() => {
+    document.querySelector("[role=main]").setAttribute("data-app-shell-active-page", "false");
+    document.querySelector(".thread-scroll-container").hidden = false;
+    const layout = window.checkAdapter.discover();
+    return layout.page === "thread" && !document.querySelector('[data-ds-part="home"]');
+  }), true);
   console.log(JSON.stringify({ pass: true, portraits, ...result }));
 } finally { await browser.close(); }

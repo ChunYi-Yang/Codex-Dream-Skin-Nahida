@@ -171,7 +171,7 @@
     },
     {
       "key": "header-tint",
-      "selector": "header:is(.app-header-tint, [data-app-shell-header-edge-scroll], [class*=\"_Header_\"])",
+      "selector": "header:is(.app-header-tint, [data-app-shell-header-edge-scroll], [class*=\"_Header_\"], [data-app-shell-titlebar=\"true\"][data-app-shell-application-menu-bar=\"true\"])",
       "tier": "L1",
       "scope": "all",
       "required": true,
@@ -195,11 +195,11 @@
     },
     {
       "key": "home-route",
-      "selector": "[role=\"main\"]:has([data-codex-composer-root][data-composer-placement=\"home\"]), [role=\"main\"]:has([data-testid=\"home-icon\"])",
+      "selector": "[role=\"main\"]:has([data-codex-composer-root][data-composer-placement=\"home\"], form[data-composer-placement=\"home\"] [data-composer-body], [data-testid=\"home-icon\"])",
       "tier": "L1",
       "scope": "home",
       "required": true,
-      "notes": "Home placement verified on Windows 26.1007.2314.0; retained legacy home-icon fallback."
+      "notes": "Windows 26.1117.4957.0 moved the home placement marker to a form containing data-composer-body. Retains legacy composer and home-icon anchors."
     },
     {
       "key": "home-route-css",
@@ -289,11 +289,11 @@
     },
     {
       "key": "settings-panel",
-      "selector": "[data-settings-panel-slug=\"general-settings\"]",
+      "selector": "[role=\"dialog\"].settings-dialog:has([data-settings-panel]), [data-settings-panel-slug=\"general-settings\"]:not(.settings-dialog *)",
       "tier": "L2",
       "scope": "settings",
       "required": false,
-      "notes": "Codex 26.727 设置页稳定导航锚点；设置页可先落在 General，不再保证 appearance-theme 或 theme-preview 存在"
+      "notes": "Windows 26.1117.4957.0: native settings dialog and content panel across all subpages, independent of the General link. Retains the legacy General anchor outside the dialog."
     },
     {
       "key": "appearance-radio",
@@ -326,7 +326,7 @@
     },
     {
       "key": "home-composer",
-      "selector": "[data-codex-composer-root][data-composer-placement=\"home\"]",
+      "selector": "[data-codex-composer-root][data-composer-placement=\"home\"], [role=\"main\"] form[data-composer-placement=\"home\"]:has([data-composer-body])",
       "tier": "L2",
       "scope": "home",
       "required": false,

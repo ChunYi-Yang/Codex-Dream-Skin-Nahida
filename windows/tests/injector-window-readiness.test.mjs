@@ -8,13 +8,14 @@ import { SKIN_VERSION, verifySession } from "../scripts/injector.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const startPath = path.resolve(here, "../scripts/start-dream-skin.ps1");
+const selectorContract = JSON.parse(await fs.readFile(new URL("../assets/selectors.json", import.meta.url), "utf8"));
 
 const selectors = {
   shell: 'main:is(.main-surface, [data-app-shell-main-surface], [class*="_MainContentSurface_"])',
   sidebar: "aside.app-shell-left-panel",
   composer: ".composer-surface-chrome",
   homeIcon: '[data-testid="home-icon"]',
-  home: '[role="main"]:has([data-codex-composer-root][data-composer-placement="home"]), [role="main"]:has([data-testid="home-icon"])',
+  home: selectorContract.selectors.find(({ key }) => key === "home-route").selector,
   gameSource: '[data-feature="game-source"]',
   suggestions: ".group\\/home-suggestions",
   settings: 'input[name="appearance-theme"]',
