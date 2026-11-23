@@ -4,7 +4,8 @@ import { resolveNahidaLayout } from "../../runtime/nahida-layout.mjs";
 
 for (const [name, input, expected] of [
   ["spacious main", { width: 1080, height: 900 }, "full"],
-  ["main narrowed by right dock", { width: 820, height: 720 }, "compact"],
+  ["medium main", { width: 820, height: 720 }, "compact"],
+  ["right dock open in a wide window", { width: 1080, height: 900, rightPanelOpen: true }, "off"],
   ["narrow main", { width: 560, height: 700 }, "off"],
   ["short main", { width: 1000, height: 500 }, "off"],
   ["large composer in short main", { width: 1000, height: 650, composerHeight: 280 }, "off"],

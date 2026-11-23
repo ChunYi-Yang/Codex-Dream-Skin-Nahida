@@ -1254,7 +1254,10 @@ export async function verifySession(
     // Codex 26.721.x can render the home content before home-icon. Reuse the
     // already-resolved semantic home container so a healthy home session is
     // not rejected solely because the stricter home-icon selector is late.
-    const home = document.querySelector(${selectorLiteral("home-route")}) ?? homeRoute;
+    const shell = document.querySelector(${selectorLiteral("shell-main")});
+    const activeMain = document.querySelector('[data-ds-part="main"]') ?? shell;
+    const home = activeMain?.closest?.(${selectorLiteral("non-home-shell")}) ? null :
+      document.querySelector(${selectorLiteral("home-route")}) ?? homeRoute;
     const suggestions = home?.querySelector(${selectorLiteral("home-suggestions")}) ?? null;
     const cardButtons = suggestions ? [...suggestions.querySelectorAll('button')] : [];
     const cards = cardButtons.map(box);
@@ -1330,7 +1333,7 @@ export async function verifySession(
       suggestionLabels,
       suggestionLabelColorsMatch,
       composer: box(document.querySelector(${selectorLiteral("composer-chrome")})),
-      shell: box(document.querySelector(${selectorLiteral("shell-main")})),
+      shell: box(shell),
       sidebar: box(document.querySelector(${selectorLiteral("left-panel")})),
       genericMain: box(document.querySelector('[data-ds-part="main"], [data-ds-part="home"]')),
       genericInput: box(document.querySelector('[data-ds-part="composer"]')),

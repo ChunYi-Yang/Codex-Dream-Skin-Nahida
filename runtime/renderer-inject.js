@@ -30,6 +30,7 @@
   let decorations;
   let observedMain;
   let observedComposer;
+  let observedRightPanel;
   const setAttribute = (name, value) => {
     if (!attributes.has(name)) attributes.set(name, root.getAttribute(name));
     if (root.getAttribute(name) !== value) root.setAttribute(name, value);
@@ -117,6 +118,7 @@
     const composerRect = layout.regions.composer?.getBoundingClientRect();
     const policy = resolveLayout({
       ...layout.viewport, composerHeight: composerRect?.height ?? 140, page: layout.page,
+      rightPanelOpen: Boolean(layout.regions.rightPanelCanvas),
       reducedMotion: root.getAttribute("data-reduced-motion") === "true" ||
         Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches),
     });
@@ -168,12 +170,15 @@
       chrome.setAttribute("data-hero-mode", showHero ? policy.heroMode : "off");
       setAttribute("data-nahida-hero-mode", showHero ? policy.heroMode : "off");
     }
-    if (resizeObserver && (observedMain !== layout.regions.main || observedComposer !== layout.regions.composer)) {
+    if (resizeObserver && (observedMain !== layout.regions.main || observedComposer !== layout.regions.composer ||
+      observedRightPanel !== layout.regions.rightPanelCanvas)) {
       resizeObserver.disconnect();
       observedMain = layout.regions.main;
       observedComposer = layout.regions.composer;
+      observedRightPanel = layout.regions.rightPanelCanvas;
       if (observedMain) resizeObserver.observe(observedMain);
       if (observedComposer) resizeObserver.observe(observedComposer);
+      if (observedRightPanel) resizeObserver.observe(observedRightPanel);
     }
     if (state) {
       state.scope = {
@@ -215,7 +220,7 @@
   observer = new MutationObserver(scheduleEnsure);
   observer.observe(root, {
     childList: true, subtree: true, attributes: true,
-    attributeFilter: ["class", "data-theme", "data-appearance", "data-app-shell-active-page", "data-composer-placement", "data-reduced-motion"],
+    attributeFilter: ["class", "aria-current", "data-theme", "data-appearance", "data-app-shell-active-page", "data-composer-placement", "data-reduced-motion"],
   });
   if (typeof ResizeObserver === "function") resizeObserver = new ResizeObserver(scheduleEnsure);
   window.addEventListener?.("resize", scheduleEnsure);

@@ -128,6 +128,14 @@
       "notes": "home-route 的 CSS 可组合别名：不含 :has()。CSS 禁止 :has() 嵌套，home-route 原选择器一旦写进 :has()/:not(:has()) 整条规则会被解析器丢弃（v1.3.1 全窗口首页与任务页氛围背景因此失效）。依据与 home-route 相同的实测：[role=main] 仅存在于首页；该锚点缺失时 CSS 路由门控整体失效，故必须按 L1 必需项监控"
     },
     {
+      "key": "non-home-shell",
+      "selector": "[data-app-shell-frame=\"true\"]:has([data-app-navigation-rail] [data-sidebar-destination=\"builtin:home\"]):not(:has([data-app-navigation-rail] [data-sidebar-destination=\"builtin:home\"][aria-current=\"page\"]))",
+      "tier": "L2",
+      "scope": "all",
+      "required": false,
+      "notes": "Native feature and plugin pages can reuse the home composer. An inactive Home destination excludes that shell from home decoration and verification."
+    },
+    {
       "key": "home-banners",
       "selector": ".home-banners",
       "tier": "L2",

@@ -16,6 +16,7 @@ const selectors = {
   composer: ".composer-surface-chrome",
   homeIcon: '[data-testid="home-icon"]',
   home: selectorContract.selectors.find(({ key }) => key === "home-route").selector,
+  nonHomeShell: selectorContract.selectors.find(({ key }) => key === "non-home-shell").selector,
   gameSource: '[data-feature="game-source"]',
   suggestions: ".group\\/home-suggestions",
   settings: 'input[name="appearance-theme"]',
@@ -216,6 +217,21 @@ test("normal L1 renderer requires and records the exact target window binding", 
     { method: "Browser.getWindowForTarget", params: { targetId: "page-main" } },
     { method: "Browser.getWindowBounds", params: { windowId: 41 } },
   ]);
+});
+
+test("a feature page with a home-style composer verifies without a home surface", async () => {
+  const shell = makeElement();
+  shell.closest = selector => selector === selectors.nonHomeShell ? makeElement() : null;
+  const { result } = await verify({
+    dom: makeDomFixture({
+      scope: { level: "L1", baseState: "unknown", missingL1: [] },
+      shell,
+      home: makeHome(),
+    }),
+  });
+  assert.equal(result.homePresent, false);
+  assert.equal(result.homeSurface, null);
+  assert.equal(result.pass, true);
 });
 
 test("visible settings is the only L0 structure exception", async () => {

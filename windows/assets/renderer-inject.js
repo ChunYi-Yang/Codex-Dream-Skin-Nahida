@@ -39,7 +39,8 @@
   };
   const discover = () => {
     const main = first("shell-main");
-    const homeComposer = first("home-composer");
+    const nonHomeShell = selectors.get("non-home-shell");
+    const homeComposer = nonHomeShell && main?.closest(nonHomeShell) ? null : first("home-composer");
     const thread = first("thread-surface");
     const settings = first("settings-panel");
     const secondary = first("secondary-page");
@@ -47,10 +48,13 @@
     const page = settings ? "settings" : secondary ? "secondary" : thread ? "thread" : homeComposer ? "home" : "unknown";
     const modeValue = document.documentElement.getAttribute("data-app-shell-mode");
     const mode = ["codex", "work"].includes(modeValue) ? modeValue : "unknown";
+    const rightPanels = nodes("right-panel");
     const regions = {
       main, navigation: first("navigation-rail"), sidebar: first("left-panel"),
       header: first("header-tint"), composer: first("composer-chrome") ?? first("composer-root"),
-      rightPanel: first("right-panel"), home: page === "home" ? home : null,
+      rightPanel: rightPanels[0] ?? null,
+      rightPanelCanvas: rightPanels.find(node => node.tagName === "ASIDE" && main?.contains(node)) ?? null,
+      home: page === "home" ? home : null,
       thread, settings, toolbar: first("composer-toolbar"),
     };
     const desired = new Map([[document.documentElement, "root"]]);
@@ -208,6 +212,14 @@
       "scope": "home",
       "required": true,
       "notes": "home-route 的 CSS 可组合别名：不含 :has()。CSS 禁止 :has() 嵌套，home-route 原选择器一旦写进 :has()/:not(:has()) 整条规则会被解析器丢弃（v1.3.1 全窗口首页与任务页氛围背景因此失效）。依据与 home-route 相同的实测：[role=main] 仅存在于首页；该锚点缺失时 CSS 路由门控整体失效，故必须按 L1 必需项监控"
+    },
+    {
+      "key": "non-home-shell",
+      "selector": "[data-app-shell-frame=\"true\"]:has([data-app-navigation-rail] [data-sidebar-destination=\"builtin:home\"]):not(:has([data-app-navigation-rail] [data-sidebar-destination=\"builtin:home\"][aria-current=\"page\"]))",
+      "tier": "L2",
+      "scope": "all",
+      "required": false,
+      "notes": "Native feature and plugin pages can reuse the home composer. An inactive Home destination excludes that shell from home decoration and verification."
     },
     {
       "key": "home-banners",
@@ -391,10 +403,10 @@
     "跨端适配 = 版本管理：同版本双端 DOM 同源；升级 Codex 后先跑 doctor 对本清单，再决定是否改适配"
   ]
 });
-  const resolveLayout = function resolveNahidaLayout({ width, height, composerHeight = 140, page, reducedMotion = false }) {
+  const resolveLayout = function resolveNahidaLayout({ width, height, composerHeight = 140, page, rightPanelOpen = false, reducedMotion = false }) {
   const available = height - Math.max(140, composerHeight) - 220;
   let heroMode = "off";
-  if (page === "home" && Number.isFinite(width) && Number.isFinite(height)) {
+  if (page === "home" && !rightPanelOpen && Number.isFinite(width) && Number.isFinite(height)) {
     if (width >= 900 && height >= 760 && available >= 260) heroMode = "full";
     else if (width >= 640 && height >= 600 && available >= 200) heroMode = "compact";
   }
@@ -417,6 +429,7 @@
   let decorations;
   let observedMain;
   let observedComposer;
+  let observedRightPanel;
   const setAttribute = (name, value) => {
     if (!attributes.has(name)) attributes.set(name, root.getAttribute(name));
     if (root.getAttribute(name) !== value) root.setAttribute(name, value);
@@ -504,6 +517,7 @@
     const composerRect = layout.regions.composer?.getBoundingClientRect();
     const policy = resolveLayout({
       ...layout.viewport, composerHeight: composerRect?.height ?? 140, page: layout.page,
+      rightPanelOpen: Boolean(layout.regions.rightPanelCanvas),
       reducedMotion: root.getAttribute("data-reduced-motion") === "true" ||
         Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches),
     });
@@ -555,12 +569,15 @@
       chrome.setAttribute("data-hero-mode", showHero ? policy.heroMode : "off");
       setAttribute("data-nahida-hero-mode", showHero ? policy.heroMode : "off");
     }
-    if (resizeObserver && (observedMain !== layout.regions.main || observedComposer !== layout.regions.composer)) {
+    if (resizeObserver && (observedMain !== layout.regions.main || observedComposer !== layout.regions.composer ||
+      observedRightPanel !== layout.regions.rightPanelCanvas)) {
       resizeObserver.disconnect();
       observedMain = layout.regions.main;
       observedComposer = layout.regions.composer;
+      observedRightPanel = layout.regions.rightPanelCanvas;
       if (observedMain) resizeObserver.observe(observedMain);
       if (observedComposer) resizeObserver.observe(observedComposer);
+      if (observedRightPanel) resizeObserver.observe(observedRightPanel);
     }
     if (state) {
       state.scope = {
@@ -602,7 +619,7 @@
   observer = new MutationObserver(scheduleEnsure);
   observer.observe(root, {
     childList: true, subtree: true, attributes: true,
-    attributeFilter: ["class", "data-theme", "data-appearance", "data-app-shell-active-page", "data-composer-placement", "data-reduced-motion"],
+    attributeFilter: ["class", "aria-current", "data-theme", "data-appearance", "data-app-shell-active-page", "data-composer-placement", "data-reduced-motion"],
   });
   if (typeof ResizeObserver === "function") resizeObserver = new ResizeObserver(scheduleEnsure);
   window.addEventListener?.("resize", scheduleEnsure);

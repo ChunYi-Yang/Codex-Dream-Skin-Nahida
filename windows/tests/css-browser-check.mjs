@@ -48,6 +48,9 @@ try {
     .text-default { color: var(--color-text-primary-surface); }
     section { display: flex; flex-direction: column; }
     section > * { margin-block: 0; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .mode-row::after { content: ""; }
     [role="switch"] > span { --switch-track-color-checked: #0169cc; background-color: var(--switch-track-color-checked); }
   </style></head><body>
     <div role="dialog" class="settings-dialog">
@@ -81,6 +84,22 @@ try {
               <table><thead><tr><th>Chat</th></tr></thead></table>
             </div></div>
           </section>
+          <section>
+            <div class="justify-between" id="permission-heading"><h3>Permissions</h3></div>
+            <div class="rounded-2xl border-default"><p>Permission group</p></div>
+          </section>
+          <section>
+            <div class="justify-between" id="advanced-heading"><button aria-expanded="true">Advanced</button></div>
+            <div><div class="rounded-2xl border-default"><p>Font size</p></div></div>
+          </section>
+          <section class="flex flex-col">
+            <section class="flex flex-col" id="first-agent-group"><div class="rounded-2xl border-default"><p>First group</p></div></section>
+            <section class="flex flex-col"><div class="rounded-2xl border-default"><p>Second group</p></div></section>
+          </section>
+          <div id="appearance-stack" class="flex flex-col rounded-2xl border-default">
+            <div id="appearance-mode" class="mode-row" data-settings-search-entry>Mode</div>
+            <div class="flex flex-col"><section><div id="appearance-theme" class="rounded-2xl border-default">Theme</div></section></div>
+          </div>
         </div>
       </div>
     </div>
@@ -111,7 +130,12 @@ try {
         sticky: style(".bg-surface.sticky").backgroundColor,
         shortcuts: style("section > ul").borderRadius,
         shortcutPadding: parseFloat(style("#shortcut-row").paddingInlineStart),
-        gaps: ["details-heading", "shortcuts-heading", "usage-heading"].map(groupGap),
+        gaps: ["details-heading", "shortcuts-heading", "usage-heading", "permission-heading",
+          "advanced-heading", "first-agent-group", "appearance-mode"].map(groupGap),
+        appearanceStack: style("#appearance-stack").backgroundColor,
+        appearanceMode: style("#appearance-mode").borderRadius,
+        appearanceTheme: style("#appearance-theme").borderRadius,
+        appearanceDivider: getComputedStyle(document.getElementById("appearance-mode"), "::after").content,
         search: style("[data-sidebar-header-search] > div").backgroundColor,
         danger: style('[data-color="danger"]').color,
         enabled: document.querySelector('[role="switch"]').getAttribute("aria-checked"),
@@ -130,7 +154,11 @@ try {
     if (shell === "dark") assert.equal(modal.sticky, "rgb(31, 53, 41)");
     assert.equal(modal.shortcuts, "14px");
     assert.ok(modal.shortcutPadding >= 12);
-    assert.deepEqual(modal.gaps, [12, 12, 12]);
+    assert.deepEqual(modal.gaps, [12, 12, 12, 12, 12, 12, 12]);
+    assert.equal(modal.appearanceStack, "rgba(0, 0, 0, 0)");
+    assert.equal(modal.appearanceMode, "14px");
+    assert.equal(modal.appearanceTheme, "14px");
+    assert.equal(modal.appearanceDivider, "none");
     assert.notEqual(modal.search, "rgba(0, 0, 0, 0)");
     assert.equal(modal.danger, "rgb(170, 0, 0)");
     assert.equal(modal.enabled, "true");
@@ -201,11 +229,13 @@ try {
   assert.ok(portraits[1].border > portraits[0].border && portraits[1].font > portraits[0].font, 'Frame and caption must scale with the image');
   assert.ok(portraits.every(p => Math.abs(p.width / p.height - 98 / 130) < .01 && p.inside), 'Portrait must retain its proportions and stay inside the page');
   await page.setContent(`<html data-dream-skin="active" data-dream-shell="light" data-nahida-page="home" data-nahida-hero-mode="full"><body>
-    <main data-app-shell-main-surface>
+    <main data-app-shell-main-surface data-app-shell-frame="true">
+      <nav data-app-navigation-rail><button data-sidebar-destination="builtin:home" aria-current="page">Home</button></nav>
       <header data-app-shell-titlebar="true" data-app-shell-application-menu-bar="true">Title bar</header>
       <div role="main">
         <div class="group/home-composer-layout">
           <div id="native-greeting" class="heading-xl"><div><h1>Native greeting</h1></div></div>
+          <div data-testid="home-icon">Native Codex emblem</div>
         </div>
         <h1 id="other-heading">Recommendations</h1>
         <form data-composer-placement="home">
@@ -240,14 +270,126 @@ try {
     const opacity = id => getComputedStyle(document.getElementById(id)).opacity;
     const themed = opacity("native-greeting");
     const unrelated = opacity("other-heading");
+    const emblem = document.querySelector('[data-testid="home-icon"]');
+    const emblemWithHero = getComputedStyle(emblem).visibility;
     document.documentElement.setAttribute("data-nahida-hero-mode", "off");
-    return { themed, unrelated, fallback: opacity("native-greeting") };
-  }), { themed: "0", unrelated: "1", fallback: "1" });
+    return { themed, unrelated, fallback: opacity("native-greeting"), emblemWithHero,
+      emblemWithoutHero: getComputedStyle(emblem).visibility };
+  }), { themed: "0", unrelated: "1", fallback: "1", emblemWithHero: "hidden", emblemWithoutHero: "visible" });
+  assert.deepEqual(await page.evaluate(() => {
+    const destination = document.querySelector('[data-sidebar-destination="builtin:home"]');
+    const composer = document.querySelector('[data-composer-placement="home"]');
+    const homeContainer = composer.parentElement;
+    destination.removeAttribute('aria-current');
+    composer.setAttribute('data-codex-composer-root', '');
+    document.body.append(composer);
+    const app = window.checkAdapter.discover();
+    homeContainer.append(composer);
+    composer.removeAttribute('data-codex-composer-root');
+    destination.setAttribute('aria-current', 'page');
+    const home = window.checkAdapter.discover();
+    return { app: app.page, appHomeMarked: Boolean(app.regions.home), home: home.page };
+  }), { app: "unknown", appHomeMarked: false, home: "home" });
   assert.equal(await page.evaluate(() => {
     document.querySelector("[role=main]").setAttribute("data-app-shell-active-page", "false");
     document.querySelector(".thread-scroll-container").hidden = false;
     const layout = window.checkAdapter.discover();
     return layout.page === "thread" && !document.querySelector('[data-ds-part="home"]');
   }), true);
+  await page.setContent(`<html data-dream-skin="active"><head><style>
+    [data-app-shell-surface-backing], main { border-start-start-radius: 12px; }
+  </style></head><body>
+    <div data-app-shell-frame="true" data-app-shell-application-menu-bar="true"
+        style="position:relative;height:200px;--app-shell-titlebar-height:8px">
+      <nav data-app-navigation-rail style="position:absolute;inset:44px auto 0 0;width:52px"></nav>
+      <div data-app-shell-surface-backing="true" style="position:absolute;inset:36px 0 0 52px"></div>
+      <header data-ds-part="header" data-app-shell-titlebar="true" data-app-shell-application-menu-bar="true"
+          class="bg-[var(--codex-titlebar-tint,transparent)]" style="position:absolute;inset:36px 0 auto 52px;height:8px"></header>
+      <main data-ds-part="main" data-app-shell-main-surface="default" class="mt-(--app-shell-titlebar-height)"
+          style="position:absolute;inset:44px 0 0 52px"></main>
+    </div>
+  </body></html>`);
+  await page.addStyleTag({ content: await fs.readFile("windows/assets/dream-skin.css", "utf8") });
+  const edges = await page.evaluate(() => {
+    const backing = document.querySelector('[data-app-shell-surface-backing]');
+    const main = document.querySelector('main');
+    const header = document.querySelector('header');
+    const frame = document.querySelector('[data-app-shell-frame]');
+    const rail = document.querySelector('[data-app-navigation-rail]');
+    const measure = () => ({
+      railOffset: main.getBoundingClientRect().top - rail.getBoundingClientRect().top,
+      backingOffset: main.getBoundingClientRect().top - backing.getBoundingClientRect().top,
+      bottom: main.getBoundingClientRect().bottom - backing.getBoundingClientRect().bottom,
+      corners: [backing, main].map(node => getComputedStyle(node).borderStartStartRadius),
+      titlebar: getComputedStyle(header).backgroundColor,
+      titlebarHeight: header.getBoundingClientRect().height,
+    });
+    const compact = measure();
+    header.className = 'bg-transparent';
+    const compactTransparent = measure();
+    header.className = '[--app-shell-titlebar-height:var(--app-shell-header-height)]';
+    header.style.top = '44px';
+    header.style.height = '46px';
+    const full = measure();
+    frame.removeAttribute('data-app-shell-application-menu-bar');
+    return { compact, compactTransparent, full, otherShell: measure() };
+  });
+  const aligned = { railOffset: 0, backingOffset: 0, bottom: 0, corners: ["0px", "0px"] };
+  assert.deepEqual(edges.compact, { ...aligned, titlebar: "rgba(0, 0, 0, 0)", titlebarHeight: 8 });
+  assert.deepEqual(edges.compactTransparent, edges.compact);
+  assert.equal(edges.full.titlebarHeight, 46);
+  assert.notEqual(edges.full.titlebar, "rgba(0, 0, 0, 0)");
+  assert.equal(edges.full.backingOffset, 0);
+  assert.deepEqual(edges.full.corners, aligned.corners);
+  assert.equal(edges.otherShell.backingOffset, 8);
+  assert.deepEqual(edges.otherShell.corners, ["12px", "12px"]);
+  await page.setContent(`<html data-dream-skin="active"><head><style>
+    .me-1 { margin-inline-end: 4px; }
+  </style></head><body>
+    <header data-app-shell-titlebar="true" data-app-shell-application-menu-bar="true" class="me-1"
+        style="position:fixed;inset:44px 0 auto 200px;height:46px">
+      <div data-app-shell-focus-area="right-panel" style="position:absolute;inset:0 0 0 auto;width:400px">
+        <div data-app-shell-tab-row="true">New tab</div>
+      </div>
+    </header>
+    <aside data-app-shell-focus-area="right-panel" style="position:fixed;inset:90px 0 0 auto;width:400px"></aside>
+  </body></html>`);
+  await page.addStyleTag({ content: await fs.readFile("windows/assets/dream-skin.css", "utf8") });
+  const dock = await page.evaluate(() => {
+    const titlebar = document.querySelector("header");
+    const strip = titlebar.querySelector('[data-app-shell-focus-area="right-panel"]');
+    const body = document.querySelector("aside");
+    const start = node => node.getBoundingClientRect().left;
+    const open = { offset: start(strip) - start(body), titlebarStart: start(titlebar) };
+    strip.firstElementChild.remove();
+    return { ...open, closedMargin: getComputedStyle(titlebar).marginInlineEnd };
+  });
+  assert.deepEqual(dock, { offset: 0, titlebarStart: 200, closedMargin: "4px" });
+  await page.setContent(`<html data-dream-skin="active" data-dream-shell="light"><head><style>
+    .native-tooltip { background-color: #0d0d0d; color: white; border-radius: 16px; }
+  </style></head><body>
+    <div data-radix-popper-content-wrapper id="rail-tip"><div role="tooltip" class="native-tooltip">Sites</div></div>
+    <div data-radix-popper-content-wrapper id="usage-menu"><div role="menu">Usage</div></div>
+    <div data-radix-popper-content-wrapper id="usage-tip"><div role="tooltip" class="native-tooltip">Weekly reset</div></div>
+  </body></html>`);
+  await page.addStyleTag({ content: await fs.readFile("windows/assets/dream-skin.css", "utf8") });
+  for (const shell of ["light", "dark"]) {
+    const tips = await page.evaluate(scheme => {
+      document.documentElement.dataset.dreamShell = scheme;
+      const style = selector => getComputedStyle(document.querySelector(selector));
+      const tooltip = id => ({
+        fill: style(`${id} > [role="tooltip"]`).backgroundColor,
+        text: style(`${id} > [role="tooltip"]`).color,
+        radius: style(`${id} > [role="tooltip"]`).borderRadius,
+        wrapper: style(id).backgroundColor,
+      });
+      return { rail: tooltip("#rail-tip"), usage: tooltip("#usage-tip"), menu: style('[role="menu"]').backgroundColor };
+    }, shell);
+    const fill = shell === "light" ? "rgba(247, 250, 239, 0.94)" : "rgba(28, 46, 36, 0.97)";
+    const color = shell === "light" ? "rgb(55, 106, 69)" : "rgb(201, 237, 145)";
+    assert.deepEqual(tips.rail, { fill, text: color, radius: "16px", wrapper: "rgba(0, 0, 0, 0)" });
+    assert.deepEqual(tips.usage, tips.rail);
+    assert.equal(tips.menu, fill);
+  }
   console.log(JSON.stringify({ pass: true, portraits, ...result }));
 } finally { await browser.close(); }

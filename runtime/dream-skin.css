@@ -85,6 +85,30 @@ html[data-dream-skin="active"] [data-ds-part="header"] {
   background: color-mix(in srgb, var(--dream-panel) 82%, transparent) !important;
   border-color: var(--dream-line) !important;
 }
+/* The dock body reaches the window edge, so its tab row must do the same. */
+html[data-dream-skin="active"] header[data-app-shell-titlebar="true"][data-app-shell-application-menu-bar="true"][class~="me-1"]:has(
+  [data-app-shell-focus-area="right-panel"] [data-app-shell-tab-row="true"]
+) {
+  margin-inline-end: 0;
+}
+/* Match the Windows frame to the content inset and square off the sidebar seam. */
+html[data-dream-skin="active"] [data-app-shell-frame="true"][data-app-shell-application-menu-bar="true"]:has(
+  main[data-app-shell-main-surface][class~="mt-(--app-shell-titlebar-height)"]
+) [data-app-shell-surface-backing="true"] {
+  margin-block-start: var(--app-shell-titlebar-height, 0px);
+  border-start-start-radius: 0;
+}
+html[data-dream-skin="active"] [data-app-shell-frame="true"][data-app-shell-application-menu-bar="true"]
+  main[data-app-shell-main-surface][class~="mt-(--app-shell-titlebar-height)"] {
+  border-start-start-radius: 0;
+}
+/* The compact titlebar sits above the content, in the same strip as the rail inset. */
+html[data-dream-skin="active"] [data-app-shell-frame="true"][data-app-shell-application-menu-bar="true"]
+  header[data-ds-part="header"][data-app-shell-titlebar="true"]:is(
+    [class~="bg-transparent"], [class~="bg-[var(--codex-titlebar-tint,transparent)]"]
+  ) {
+  background-color: transparent !important;
+}
 html[data-dream-skin="active"] [class~="group/application-menu-top-bar"] {
   background-color: color-mix(in srgb, var(--dream-panel-alt) 80%, transparent) !important;
 }
@@ -129,7 +153,7 @@ html[data-dream-skin="active"] [data-ds-part="composer"] {
   backdrop-filter: blur(12px);
 }
 html[data-dream-skin="active"][data-nahida-page="home"]:not([data-nahida-hero-mode="off"])
-  [data-ds-part="home"] [data-feature="game-source"] { visibility: hidden; }
+  [data-ds-part="home"] :is([data-feature="game-source"], [data-testid="home-icon"]) { visibility: hidden; }
 /* Chat's native greeting sits outside the Work game-source wrapper. */
 html[data-dream-skin="active"][data-nahida-page="home"]:not([data-nahida-hero-mode="off"])
   [data-ds-part="home"] [class~="group/home-composer-layout"] [class~="heading-xl"]:has(h1) {
@@ -197,7 +221,8 @@ html[data-dream-skin="active"] :is([data-ds-part="right-panel"], [data-new-tab-s
   background-color: color-mix(in srgb, var(--dream-accent) 18%, var(--nahida-glass)) !important;
 }
 html[data-dream-skin="active"] :is(
-  [role="dialog"], [role="menu"], [role="listbox"], [data-radix-popper-content-wrapper],
+  [role="dialog"], [role="menu"], [role="listbox"],
+  [data-radix-popper-content-wrapper]:not(:has(> [role="tooltip"])),
   [data-composer-overlay-floating-ui], [class~="bg-surface-elevated-secondary"]
 ) {
   --color-surface: var(--nahida-floating);
@@ -205,12 +230,19 @@ html[data-dream-skin="active"] :is(
   background-color: var(--nahida-floating) !important;
   border-color: var(--dream-line) !important;
 }
+html[data-dream-skin="active"] [role="tooltip"] {
+  background-color: var(--nahida-floating) !important;
+  color: var(--nahida-heading) !important;
+  border-color: var(--dream-line) !important;
+  backdrop-filter: blur(8px);
+}
 
 /* The native settings split view shares its chrome across all subpages. */
 html[data-dream-skin="active"] [role="dialog"].settings-dialog:has([data-settings-panel]) {
   --nahida-settings-surface: color-mix(in srgb, var(--dream-panel) 90%, var(--dream-panel-alt));
   --nahida-settings-inset: color-mix(in srgb, var(--dream-panel-alt) 48%, var(--dream-panel));
   --nahida-settings-switch: #497b37;
+  --nahida-settings-section-gap: 12px;
   background: linear-gradient(145deg, var(--nahida-settings-surface), var(--nahida-floating)) !important;
   box-shadow: 0 20px 56px rgba(14, 35, 24, .24), inset 0 0 0 1px var(--dream-line);
   color: var(--dream-text);
@@ -262,20 +294,42 @@ html[data-dream-skin="active"] .settings-dialog :is(
 ) {
   color: var(--nahida-heading) !important;
 }
-html[data-dream-skin="active"] .settings-dialog [data-settings-panel] [class~="group/settings"] section
-  > :is(.justify-between, [role="group"]:has(> .justify-between)):first-child
-  + :is(div.flex.flex-col[class~="gap-1.5"], ul.list-none.flex.flex-col) {
-  margin-block-start: 12px;
+html[data-dream-skin="active"] .settings-dialog [data-settings-panel] [class~="group/settings"] :is(
+  section > :is(.justify-between, [role="group"]:has(> .justify-between)):first-child
+    + :is(.rounded-2xl.border-default, div:has(.rounded-2xl.border-default, table), table,
+      div.flex.flex-col[class~="gap-1.5"], ul.list-none.flex.flex-col),
+  section > section.flex.flex-col:has(.rounded-2xl.border-default)
+    + section.flex.flex-col:has(.rounded-2xl.border-default)
+) {
+  margin-block-start: var(--nahida-settings-section-gap);
 }
 html[data-dream-skin="active"] .settings-dialog [data-settings-panel] [class~="group/settings"] :is(
-  .rounded-2xl.border-default,
+  .rounded-2xl.border-default:not(:has(> [data-settings-search-entry] + div > section > .rounded-2xl.border-default)),
   section > div.flex.flex-col[class~="gap-1.5"]:not(:empty, :has(.rounded-2xl.border-default)),
-  section:has(> .bg-surface.sticky) > ul.list-none.flex.flex-col:has(> li)
+  section:has(> .bg-surface.sticky) > ul.list-none.flex.flex-col:has(> li),
+  .rounded-2xl.border-default:has(> [data-settings-search-entry] + div > section > .rounded-2xl.border-default)
+    > [data-settings-search-entry]
 ) {
   --settings-row-padding-inline: clamp(12px, 2.5vw, 20px) !important;
   background-color: var(--nahida-glass) !important;
   border-radius: 14px !important;
   box-shadow: inset 0 0 0 1px var(--dream-line);
+}
+/* A nested appearance group already owns its border. Give the preceding row its own card. */
+html[data-dream-skin="active"] .settings-dialog [data-settings-panel] [class~="group/settings"]
+  .rounded-2xl.border-default:has(> [data-settings-search-entry] + div > section > .rounded-2xl.border-default) {
+  row-gap: var(--nahida-settings-section-gap);
+  background-color: transparent !important;
+  border: 0;
+  border-radius: 0 !important;
+  box-shadow: none;
+  backdrop-filter: none;
+  overflow: visible;
+}
+html[data-dream-skin="active"] .settings-dialog [data-settings-panel] [class~="group/settings"]
+  .rounded-2xl.border-default:has(> [data-settings-search-entry] + div > section > .rounded-2xl.border-default)
+  > [data-settings-search-entry]::after {
+  content: none;
 }
 html[data-dream-skin="active"] .settings-dialog [data-settings-panel] [class~="group/settings"]
   section > div.flex.flex-col[class~="gap-1.5"]:not(:empty, :has(.rounded-2xl.border-default)) {

@@ -1,7 +1,7 @@
-export function resolveNahidaLayout({ width, height, composerHeight = 140, page, reducedMotion = false }) {
+export function resolveNahidaLayout({ width, height, composerHeight = 140, page, rightPanelOpen = false, reducedMotion = false }) {
   const available = height - Math.max(140, composerHeight) - 220;
   let heroMode = "off";
-  if (page === "home" && Number.isFinite(width) && Number.isFinite(height)) {
+  if (page === "home" && !rightPanelOpen && Number.isFinite(width) && Number.isFinite(height)) {
     if (width >= 900 && height >= 760 && available >= 260) heroMode = "full";
     else if (width >= 640 && height >= 600 && available >= 200) heroMode = "compact";
   }

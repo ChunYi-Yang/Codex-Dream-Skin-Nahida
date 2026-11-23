@@ -14,8 +14,16 @@
 
 ## Unreleased
 
+- Restored theme colors on tooltips and removed the visible square behind their rounded corners.
+- Hid the native Codex home emblem while the theme banner is visible and hid the home banner and portrait together when the right tab pane opens.
+
+- Aligned the left navigation and main surface along the top edge of the Windows shell, including compact-titlebar feature pages.
+- Aligned the right-side tab bar divider with the content pane below it.
+- Restricted the Nahida banner and portrait to the actual New Chat home, so they no longer cover Data, tldraw, and other views that reuse the home composer.
+
 - Updated the native settings subpages with Nahida navigation, headings, rounded glass groups, and matching switches, search, and sticky surfaces in light and dark mode.
 - Added breathing room between settings section headers and their tables, cards, and lists.
+- Extended settings spacing to direct groups and expanded sections, and separated the appearance mode and theme cards.
 
 - Restored the Nahida new-chat banner and responsive portrait on Codex for Windows 26.1117.4957.0 by detecting the native home composer form. Restored the glass composer and title bar through their stable native markers. Hide the native Chat greeting while the banner is visible to prevent text from showing under it.
 

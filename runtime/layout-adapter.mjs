@@ -25,7 +25,8 @@ export function createLayoutAdapter(document, window, contract) {
   };
   const discover = () => {
     const main = first("shell-main");
-    const homeComposer = first("home-composer");
+    const nonHomeShell = selectors.get("non-home-shell");
+    const homeComposer = nonHomeShell && main?.closest(nonHomeShell) ? null : first("home-composer");
     const thread = first("thread-surface");
     const settings = first("settings-panel");
     const secondary = first("secondary-page");
@@ -33,10 +34,13 @@ export function createLayoutAdapter(document, window, contract) {
     const page = settings ? "settings" : secondary ? "secondary" : thread ? "thread" : homeComposer ? "home" : "unknown";
     const modeValue = document.documentElement.getAttribute("data-app-shell-mode");
     const mode = ["codex", "work"].includes(modeValue) ? modeValue : "unknown";
+    const rightPanels = nodes("right-panel");
     const regions = {
       main, navigation: first("navigation-rail"), sidebar: first("left-panel"),
       header: first("header-tint"), composer: first("composer-chrome") ?? first("composer-root"),
-      rightPanel: first("right-panel"), home: page === "home" ? home : null,
+      rightPanel: rightPanels[0] ?? null,
+      rightPanelCanvas: rightPanels.find(node => node.tagName === "ASIDE" && main?.contains(node)) ?? null,
+      home: page === "home" ? home : null,
       thread, settings, toolbar: first("composer-toolbar"),
     };
     const desired = new Map([[document.documentElement, "root"]]);
