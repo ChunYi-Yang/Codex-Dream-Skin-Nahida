@@ -14,6 +14,7 @@
 
 ## Unreleased
 
+- Matched full-page settings opened from Manage usage to the settings dialog's palette, card spacing, and navigation styles.
 - Restored theme colors on tooltips and removed the visible square behind their rounded corners.
 - Hid the native Codex home emblem while the theme banner is visible and hid the home banner and portrait together when the right tab pane opens.
 

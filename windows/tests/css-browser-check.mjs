@@ -44,7 +44,7 @@ try {
   }));
   assert.equal(dark.settings, "rgba(32, 55, 44, 0.78)");
   assert.equal(dark.title, "rgb(201, 237, 145)");
-  await page.setContent(`<html data-dream-skin="active" data-dream-shell="light"><head><style>
+  await page.setContent(`<html data-dream-skin="active" data-dream-shell="light" data-nahida-page="settings"><head><style>
     .text-default { color: var(--color-text-primary-surface); }
     section { display: flex; flex-direction: column; }
     section > * { margin-block: 0; }
@@ -112,6 +112,7 @@ try {
     return {page:layout.page, region:layout.regions.settings?.classList.contains("settings-dialog")};
   })()`);
   assert.deepEqual(settingsLayout, {page:"settings", region:true}, "Settings must be recognized without a General button or main shell");
+  const settingsStylesByShell = {};
   for (const shell of ["light", "dark"]) {
     await page.evaluate(value => document.documentElement.setAttribute("data-dream-shell", value), shell);
     const modal = await page.evaluate(() => {
@@ -123,6 +124,9 @@ try {
       return {
         heading: style(".settings-dialog h1").color,
         selected: style('[aria-current="page"]').backgroundColor,
+        selectedShadow: style('[aria-current="page"]').boxShadow,
+        surface: style(".settings-dialog").backgroundImage,
+        sidebar: style(".settings-dialog-sidebar").backgroundImage,
         radius: style("[data-settings-panel] .rounded-2xl").borderRadius,
         padding: parseFloat(style("[data-settings-search-entry]").paddingInlineStart),
         empty: style('section > div[class~="gap-1.5"]:not(:has(.rounded-2xl))').backgroundColor,
@@ -166,6 +170,56 @@ try {
     assert.equal(modal.disabledTrack, "rgb(1, 105, 204)");
     assert.equal(modal.offTrack, "rgb(1, 105, 204)");
     assert.equal(modal.foreign, "rgb(255, 255, 255)");
+    settingsStylesByShell[shell] = modal;
+  }
+  // The usage menu opens settings as a full page in the same renderer.
+  await page.evaluate(() => {
+    const dialog = document.querySelector(".settings-dialog");
+    const sidebar = dialog.querySelector("aside");
+    const panel = dialog.querySelector("[data-settings-panel]");
+    const main = document.createElement("main");
+    main.setAttribute("data-app-shell-main-surface", "");
+    main.setAttribute("data-ds-part", "main");
+    sidebar.className = "app-shell-left-panel";
+    sidebar.setAttribute("data-ds-part", "sidebar");
+    sidebar.querySelector('[aria-current="page"]').setAttribute("data-settings-panel-slug", "usage");
+    panel.setAttribute("data-codex-history-swipe-page", "");
+    document.documentElement.style.setProperty("--dream-background-art", 'url("main.png")');
+    document.documentElement.style.setProperty("--dream-sidebar-art", 'url("sidebar.png")');
+    main.append(panel);
+    dialog.replaceWith(sidebar, main);
+  });
+  const fullSettings = await page.evaluate(`(() => {
+    const layout = (${createLayoutAdapter.toString()})(document, window, ${settingsContract}).discover();
+    return {page:layout.page, region:layout.regions.settings?.hasAttribute("data-codex-history-swipe-page")};
+  })()`);
+  assert.deepEqual(fullSettings, {page:"settings", region:true}, "Manage usage must be recognized with no modal or General button");
+  for (const shell of ["light", "dark"]) {
+    await page.evaluate(value => {
+      document.documentElement.dataset.dreamShell = value;
+      document.documentElement.dataset.nahidaPage = "settings";
+    }, shell);
+    const full = await page.evaluate(() => {
+      const style = selector => getComputedStyle(document.querySelector(selector));
+      const heading = document.getElementById("usage-heading");
+      return {
+        surface: style("main").backgroundImage,
+        sidebar: style("aside").backgroundImage,
+        search: style("[data-sidebar-header-search] > div").backgroundColor,
+        selected: style('[aria-current="page"]').backgroundColor,
+        selectedShadow: style('[aria-current="page"]').boxShadow,
+        cardRadius: style("[data-settings-panel] .rounded-2xl").borderRadius,
+        padding: parseFloat(style("[data-settings-search-entry]").paddingInlineStart),
+        text: style('section > div[class~="gap-1.5"] p').color,
+        gap: heading.nextElementSibling.getBoundingClientRect().top - heading.getBoundingClientRect().bottom,
+      };
+    });
+    const modal = settingsStylesByShell[shell];
+    assert.deepEqual(full, {
+      surface: modal.surface, sidebar: modal.sidebar, search: modal.search,
+      selected: modal.selected, selectedShadow: modal.selectedShadow,
+      cardRadius: modal.radius, padding: modal.padding, text: modal.emptyText, gap: 12,
+    });
   }
   for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 1080 }]) {
     await page.setViewportSize(viewport);

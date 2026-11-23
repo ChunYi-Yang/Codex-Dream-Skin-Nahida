@@ -215,7 +215,7 @@
     },
     {
       "key": "settings-panel",
-      "selector": "[role=\"dialog\"].settings-dialog:has([data-settings-panel]), [data-settings-panel-slug=\"general-settings\"]:not(.settings-dialog *)",
+      "selector": "[role=\"dialog\"].settings-dialog:has([data-settings-panel]), main [data-settings-panel][data-codex-history-swipe-page], [data-settings-panel-slug=\"general-settings\"]:not(.settings-dialog *)",
       "tier": "L2",
       "scope": "settings",
       "required": false,
